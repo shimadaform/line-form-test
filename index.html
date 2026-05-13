@@ -1,35 +1,375 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>二次検診予約フォーム</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin: 8px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #06c755;
+    }
+    .badge {
+      display: inline-block;
+      background: #06c755;
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .field {
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+    .required {
+      color: #e74c3c;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+    .recommended {
+      color: #f39c12;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+    .help {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #06c755;
+    }
+    .checkboxes label {
+      display: block;
+      padding: 6px 0;
+      font-size: 0.95rem;
+    }
+    .checkboxes input { margin-right: 8px; }
+    button.submit {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+      background: #06c755;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-top: 16px;
+    }
+    button.submit:disabled {
+      background: #aaa;
+    }
+    #result {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    #result.ok {
+      background: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+    #result.ng {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+  </style>
 </head>
 <body>
+
+<div id="loading" class="loading">読み込み中...</div>
+
+<div id="app" style="display:none;">
+  <h1>二次検診予約 <span class="badge" id="typeBadge"></span></h1>
+
   <form id="form" onsubmit="return false;">
-    <input name="name" placeholder="お名前" required>
-    <button type="button" id="submitBtn">送信</button>
+    <!-- ▼ 共通フィールド -->
+    <div class="field">
+      <label class="label">氏名<span class="required">必須</span></label>
+      <input type="text" name="name" required placeholder="例: 山田 太郎">
+    </div>
+
+    <div class="field">
+      <label class="label">フリガナ<span class="required">必須</span></label>
+      <input type="text" name="kana" required placeholder="例: ヤマダ タロウ">
+    </div>
+
+    <div class="field">
+      <label class="label">生年月日<span class="required">必須</span></label>
+      <input type="date" name="birthday" required>
+    </div>
+
+    <div class="field">
+      <label class="label">電話番号<span class="required">必須</span></label>
+      <input type="tel" name="phone" required placeholder="例: 09012345678">
+    </div>
+
+    <!-- ▼ 他院専用：当院受診歴 -->
+    <div class="field other-only" style="display:none;">
+      <label class="label">当院受診歴<span class="recommended">推奨</span></label>
+      <select name="visitHistory">
+        <option value="">選択してください</option>
+        <option value="あり">あり</option>
+        <option value="なし">なし</option>
+        <option value="不明">不明</option>
+      </select>
+    </div>
+
+    <!-- ▼ 診察券番号（当院は推奨、他院は受診歴ありなら推奨） -->
+    <div class="field">
+      <label class="label">診察券番号<span class="recommended">推奨</span></label>
+      <input type="text" name="patientId" placeholder="お持ちの方のみ">
+      <div class="help other-only" style="display:none;">当院の受診歴がある方はご記入ください</div>
+    </div>
+
+    <!-- ▼ 他院専用：医療機関名 -->
+    <div class="field other-only" style="display:none;">
+      <label class="label">健診を受けた医療機関名<span class="required">必須</span></label>
+      <input type="text" name="clinicName" placeholder="例: ○○病院">
+    </div>
+
+    <!-- ▼ 健診日 -->
+    <div class="field">
+      <label class="label">健診を受けた日<span class="required">必須</span></label>
+      <input type="date" name="checkupDate" required>
+    </div>
+
+    <!-- ▼ 他院専用：書類の有無 -->
+    <div class="field other-only" style="display:none;">
+      <label class="label">健診結果票の有無<span class="required">必須</span></label>
+      <select name="resultDoc">
+        <option value="">選択してください</option>
+        <option value="あり">あり（持参可能）</option>
+        <option value="なし">なし</option>
+      </select>
+    </div>
+
+    <div class="field other-only" style="display:none;">
+      <label class="label">紹介状・診療情報提供書の有無<span class="required">必須</span></label>
+      <select name="referralDoc">
+        <option value="">選択してください</option>
+        <option value="あり">あり（持参可能）</option>
+        <option value="なし">なし</option>
+      </select>
+    </div>
+
+    <div class="field other-only" style="display:none;">
+      <label class="label">精密検査依頼票の有無<span class="recommended">推奨</span></label>
+      <select name="examRequestDoc">
+        <option value="">選択してください</option>
+        <option value="あり">あり（持参可能）</option>
+        <option value="なし">なし</option>
+        <option value="不明">不明</option>
+      </select>
+    </div>
+
+    <!-- ▼ 指摘された項目（共通） -->
+    <div class="field">
+      <label class="label">指摘された項目<span class="required">必須</span></label>
+      <div class="checkboxes">
+        <label><input type="checkbox" name="findings" value="胃">胃</label>
+        <label><input type="checkbox" name="findings" value="大腸">大腸</label>
+        <label><input type="checkbox" name="findings" value="肺">肺</label>
+        <label><input type="checkbox" name="findings" value="乳腺">乳腺</label>
+        <label><input type="checkbox" name="findings" value="子宮">子宮</label>
+        <label><input type="checkbox" name="findings" value="肝臓">肝臓</label>
+        <label><input type="checkbox" name="findings" value="腎臓">腎臓</label>
+        <label><input type="checkbox" name="findings" value="血圧">血圧</label>
+        <label><input type="checkbox" name="findings" value="血糖">血糖</label>
+        <label><input type="checkbox" name="findings" value="脂質">脂質</label>
+        <label><input type="checkbox" name="findings" value="心電図">心電図</label>
+        <label><input type="checkbox" name="findings" value="その他">その他</label>
+      </div>
+      <input type="text" name="findingsOther" placeholder="その他の場合は内容を記入" style="margin-top:8px;">
+    </div>
+
+    <!-- ▼ 判定内容（共通） -->
+    <div class="field">
+      <label class="label">判定内容<span class="recommended">推奨</span></label>
+      <select name="judgment">
+        <option value="">選択してください</option>
+        <option value="要精密検査">要精密検査</option>
+        <option value="要再検査">要再検査</option>
+        <option value="要治療">要治療</option>
+        <option value="要経過観察">要経過観察</option>
+        <option value="不明">不明</option>
+      </select>
+    </div>
+
+    <!-- ▼ 希望日（共通） -->
+    <div class="field">
+      <label class="label">第1希望日<span class="required">必須</span></label>
+      <input type="date" name="preferredDate1" required>
+    </div>
+
+    <div class="field">
+      <label class="label">第2希望日<span class="recommended">推奨</span></label>
+      <input type="date" name="preferredDate2">
+    </div>
+
+    <div class="field">
+      <label class="label">第3希望日<span class="recommended">推奨</span></label>
+      <input type="date" name="preferredDate3">
+    </div>
+
+    <!-- ▼ 連絡可能時間帯 -->
+    <div class="field">
+      <label class="label">連絡可能な時間帯<span class="recommended">推奨</span></label>
+      <select name="contactTime">
+        <option value="">選択してください</option>
+        <option value="午前(9-12時)">午前（9〜12時）</option>
+        <option value="午後(12-15時)">午後（12〜15時）</option>
+        <option value="夕方(15-18時)">夕方（15〜18時）</option>
+        <option value="いつでも可">いつでも可</option>
+      </select>
+    </div>
+
+    <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
   </form>
+
   <div id="result"></div>
+</div>
 
 <script>
 const LIFF_ID = '2010076084-TAppgjXG';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
 
-(async () => {
-  await liff.init({ liffId: LIFF_ID });
-  if (!liff.isLoggedIn()) { liff.login(); return; }
+// URLパラメータから type を取得（own / other）
+function getType() {
+  const params = new URLSearchParams(location.search);
+  let type = params.get('type');
+  // liff.state経由のパラメータも見る
+  if (!type) {
+    const state = params.get('liff.state');
+    if (state) {
+      const m = decodeURIComponent(state).match(/[?&]type=([^&]+)/);
+      if (m) type = m[1];
+    }
+  }
+  return (type === 'other') ? 'other' : 'own';  // デフォルトは当院
+}
 
-  document.getElementById('submitBtn').addEventListener('click', async () => {
-    const idToken = liff.getIDToken();
-    const formData = Object.fromEntries(new FormData(document.getElementById('form')));
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify({ idToken, formData })
+(async () => {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+
+    const type = getType();
+    document.getElementById('typeBadge').textContent =
+      (type === 'own') ? '当院で一次健診' : '他院で一次健診';
+
+    // 他院専用フィールドを表示
+    if (type === 'other') {
+      document.querySelectorAll('.other-only').forEach(el => el.style.display = '');
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = '';
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const form = document.getElementById('form');
+      const btn = document.getElementById('submitBtn');
+      const result = document.getElementById('result');
+
+      // バリデーション
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      // 指摘項目（チェックボックス複数）の収集
+      const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
+        .map(el => el.value);
+      if (findings.length === 0) {
+        alert('指摘された項目を1つ以上選択してください');
+        return;
+      }
+
+      // フォームデータをオブジェクト化
+      const formData = {};
+      new FormData(form).forEach((v, k) => {
+        if (k === 'findings') return;  // 後で配列でセット
+        formData[k] = v;
+      });
+      formData.findings = findings;
+      formData.type = type;
+
+      btn.disabled = true;
+      btn.textContent = '送信中...';
+      result.className = '';
+      result.style.display = 'none';
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ idToken: liff.getIDToken(), formData })
+        });
+        const data = JSON.parse(await res.text());
+        if (data.ok) {
+          result.className = 'ok';
+          result.textContent = '予約申込を受け付けました。担当者よりご連絡いたします。';
+          form.style.display = 'none';
+        } else {
+          result.className = 'ng';
+          result.textContent = '送信に失敗しました: ' + (data.error || '不明なエラー');
+          btn.disabled = false;
+          btn.textContent = '予約を申し込む';
+        }
+      } catch (err) {
+        result.className = 'ng';
+        result.textContent = '通信エラー: ' + err.message;
+        btn.disabled = false;
+        btn.textContent = '予約を申し込む';
+      }
     });
-    document.getElementById('result').textContent = await res.text();
-  });
+  } catch (err) {
+    document.getElementById('loading').textContent = 'エラー: ' + err.message;
+  }
 })();
 </script>
+
 </body>
 </html>
