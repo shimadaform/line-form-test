@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <form id="form" onsubmit="return false;">
+    <input name="name" placeholder="お名前" required>
+    <button type="button" id="submitBtn">送信</button>
+  </form>
+  <div id="result"></div>
+
+<script>
+const LIFF_ID = '2010076084-TAppgjXG';
+const GAS_URL = 'ここにGASのexec URLを貼る';
+
+(async () => {
+  await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) { liff.login(); return; }
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const idToken = liff.getIDToken();
+    const formData = Object.fromEntries(new FormData(document.getElementById('form')));
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ idToken, formData })
+    });
+    document.getElementById('result').textContent = await res.text();
+  });
+})();
+</script>
+</body>
+</html>
