@@ -42,8 +42,6 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-
-    /* ▼ デバッグ情報用 */
     .debug {
       background: #fff8e1;
       border: 1px solid #ffd54f;
@@ -76,10 +74,6 @@
       color: #333;
       font-size: 0.75rem;
     }
-    .debug-value.empty {
-      color: #999;
-      font-style: italic;
-    }
     .copy-btn {
       background: #06c755;
       color: #fff;
@@ -104,30 +98,20 @@
   <p>お手数ですが、LINEのメニューから再度お試しください。</p>
   <p id="errorDetail" style="font-size:0.85rem; color:#888;"></p>
 
-  <!-- ▼ デバッグ情報 -->
   <div class="debug">
-    <h3>🔍 デバッグ情報(原因調査用)</h3>
-
+    <h3>🔍 デバッグ情報</h3>
     <div class="debug-item">
-      <span class="debug-label">現在のURL全体</span>
+      <span class="debug-label">現在のURL</span>
       <span class="debug-value" id="debugFullUrl"></span>
     </div>
-
-    <div class="debug-item">
-      <span class="debug-label">クエリ部分 (location.search)</span>
-      <span class="debug-value" id="debugSearch"></span>
-    </div>
-
     <div class="debug-item">
       <span class="debug-label">パラメータ一覧</span>
       <span class="debug-value" id="debugParams"></span>
     </div>
-
     <div class="debug-item">
-      <span class="debug-label">liff.state の中身</span>
+      <span class="debug-label">liff.state</span>
       <span class="debug-value" id="debugLiffState"></span>
     </div>
-
     <button class="copy-btn" id="copyBtn">この情報をコピー</button>
   </div>
 </div>
@@ -141,77 +125,79 @@
     // 'vaccine': 'vaccine.html',
   };
 
-  // ▼ クエリパラメータから form を取得(liff.state 経由にも対応)
-  function getFormParam() {
+  // ▼ 既知のフォームHTMLファイル名(パス指定で来た場合の照合用)
+  const KNOWN_FORM_FILES = Object.values(FORM_MAP);
+
+  // ▼ 振り分け先を決定する処理(複数のパターンに対応)
+  function resolveTarget() {
     const params = new URLSearchParams(location.search);
 
-    let form = params.get('form');
-    if (form) return form;
+    // ▼ パターン1: 通常の ?form=xxx
+    const form = params.get('form');
+    if (form && FORM_MAP[form]) {
+      return {
+        file: FORM_MAP[form],
+        query: location.search,
+      };
+    }
 
-    const state = params.get('liff.state');
-    if (state) {
-      const m = decodeURIComponent(state).match(/[?&]form=([^&]+)/);
-      if (m) return m[1];
+    // ▼ パターン2: liff.state にパラメータが入っている場合
+    const liffState = params.get('liff.state');
+    if (liffState) {
+      const decoded = decodeURIComponent(liffState);
+
+      // パターン2a: liff.state="?form=xxx" 形式
+      const formMatch = decoded.match(/[?&]form=([^&]+)/);
+      if (formMatch && FORM_MAP[formMatch[1]]) {
+        return {
+          file: FORM_MAP[formMatch[1]],
+          query: location.search,
+        };
+      }
+
+      // パターン2b: liff.state="/xxx.html?yyy" 形式(パス指定)
+      // 例: "/followup_exam_reservation.html?liff.hback=2"
+      const pathMatch = decoded.match(/^\/?([^?#]+\.html)(\?.*)?$/);
+      if (pathMatch) {
+        const filename = pathMatch[1];
+        if (KNOWN_FORM_FILES.includes(filename)) {
+          return {
+            file: filename,
+            query: location.search,
+          };
+        }
+      }
     }
 
     return null;
   }
 
-  // ▼ デバッグ情報を画面に表示
   function showDebugInfo() {
-    document.getElementById('debugFullUrl').textContent = location.href || '(なし)';
+    document.getElementById('debugFullUrl').textContent = location.href;
 
-    const search = location.search;
-    const searchEl = document.getElementById('debugSearch');
-    if (search) {
-      searchEl.textContent = search;
-    } else {
-      searchEl.textContent = '(なし - パラメータが消失している可能性大)';
-      searchEl.classList.add('empty');
-    }
-
-    // パラメータ一覧
     const params = new URLSearchParams(location.search);
     const paramsList = [];
     for (const [key, value] of params.entries()) {
-      paramsList.push(key + ' = "' + value + '"');
+      const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+      paramsList.push(key + ' = ' + displayValue);
     }
-    const paramsEl = document.getElementById('debugParams');
-    if (paramsList.length > 0) {
-      paramsEl.textContent = paramsList.join('\n');
-    } else {
-      paramsEl.textContent = '(パラメータなし)';
-      paramsEl.classList.add('empty');
-    }
+    document.getElementById('debugParams').textContent =
+      paramsList.length > 0 ? paramsList.join('\n') : '(なし)';
 
-    // liff.state
     const liffState = params.get('liff.state');
-    const liffStateEl = document.getElementById('debugLiffState');
-    if (liffState) {
-      liffStateEl.textContent = liffState + '\n(デコード後: ' + decodeURIComponent(liffState) + ')';
-    } else {
-      liffStateEl.textContent = '(なし)';
-      liffStateEl.classList.add('empty');
-    }
+    document.getElementById('debugLiffState').textContent =
+      liffState ? decodeURIComponent(liffState) : '(なし)';
 
-    // コピーボタン
     document.getElementById('copyBtn').addEventListener('click', () => {
-      const text = [
-        '【LIFFデバッグ情報】',
-        '現在のURL: ' + location.href,
-        'クエリ: ' + (location.search || '(なし)'),
-        'パラメータ一覧:',
-        paramsList.length > 0 ? paramsList.join('\n') : '(なし)',
-        'liff.state: ' + (liffState || '(なし)'),
-      ].join('\n');
+      const text = '【デバッグ情報】\n' +
+        'URL: ' + location.href + '\n' +
+        'パラメータ:\n' + paramsList.join('\n') + '\n' +
+        'liff.state: ' + (liffState ? decodeURIComponent(liffState) : '(なし)');
 
-      // クリップボードにコピー
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => {
-          alert('デバッグ情報をコピーしました');
-        }).catch(() => {
-          fallbackCopy(text);
-        });
+        navigator.clipboard.writeText(text)
+          .then(() => alert('コピーしました'))
+          .catch(() => fallbackCopy(text));
       } else {
         fallbackCopy(text);
       }
@@ -223,40 +209,26 @@
     ta.value = text;
     document.body.appendChild(ta);
     ta.select();
-    try {
-      document.execCommand('copy');
-      alert('デバッグ情報をコピーしました');
-    } catch (e) {
-      alert('コピーに失敗しました。手動で選択してコピーしてください。');
-    }
+    document.execCommand('copy');
     document.body.removeChild(ta);
+    alert('コピーしました');
   }
 
-  // ▼ エラー表示
   function showError(message) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error').style.display = '';
-    if (message) {
-      document.getElementById('errorDetail').textContent = message;
-    }
+    if (message) document.getElementById('errorDetail').textContent = message;
     showDebugInfo();
   }
 
   // ▼ メイン処理
-  const form = getFormParam();
-
-  if (!form) {
-    showError('form パラメータが指定されていません');
+  const target = resolveTarget();
+  if (!target) {
+    showError('フォーム種別を特定できませんでした');
     return;
   }
 
-  const targetFile = FORM_MAP[form];
-  if (!targetFile) {
-    showError('不明なフォーム種別: ' + form);
-    return;
-  }
-
-  location.replace('./' + targetFile + location.search);
+  location.replace('./' + target.file + target.query);
 })();
 </script>
 
