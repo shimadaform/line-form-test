@@ -42,6 +42,54 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* ▼ デバッグ情報用 */
+    .debug {
+      background: #fff8e1;
+      border: 1px solid #ffd54f;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      word-break: break-all;
+    }
+    .debug h3 {
+      margin: 0 0 8px 0;
+      font-size: 0.9rem;
+      color: #f57c00;
+    }
+    .debug-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #fff;
+      border-radius: 4px;
+    }
+    .debug-label {
+      font-weight: bold;
+      color: #555;
+      font-size: 0.75rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .debug-value {
+      font-family: "Courier New", monospace;
+      color: #333;
+      font-size: 0.75rem;
+    }
+    .debug-value.empty {
+      color: #999;
+      font-style: italic;
+    }
+    .copy-btn {
+      background: #06c755;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -55,12 +103,38 @@
   <h2>URLが正しくありません</h2>
   <p>お手数ですが、LINEのメニューから再度お試しください。</p>
   <p id="errorDetail" style="font-size:0.85rem; color:#888;"></p>
+
+  <!-- ▼ デバッグ情報 -->
+  <div class="debug">
+    <h3>🔍 デバッグ情報(原因調査用)</h3>
+
+    <div class="debug-item">
+      <span class="debug-label">現在のURL全体</span>
+      <span class="debug-value" id="debugFullUrl"></span>
+    </div>
+
+    <div class="debug-item">
+      <span class="debug-label">クエリ部分 (location.search)</span>
+      <span class="debug-value" id="debugSearch"></span>
+    </div>
+
+    <div class="debug-item">
+      <span class="debug-label">パラメータ一覧</span>
+      <span class="debug-value" id="debugParams"></span>
+    </div>
+
+    <div class="debug-item">
+      <span class="debug-label">liff.state の中身</span>
+      <span class="debug-value" id="debugLiffState"></span>
+    </div>
+
+    <button class="copy-btn" id="copyBtn">この情報をコピー</button>
+  </div>
 </div>
 
 <script>
 (function () {
   // ▼ フォーム種別 → ファイル名のマッピング
-  // 新しいフォームを追加するときは、ここに1行追加するだけでOK
   const FORM_MAP = {
     'followup': 'followup_exam_reservation.html',
     // 'consultation': 'consultation.html',
@@ -71,11 +145,9 @@
   function getFormParam() {
     const params = new URLSearchParams(location.search);
 
-    // 通常の ?form=xxx を確認
     let form = params.get('form');
     if (form) return form;
 
-    // LINEログイン経由のときは liff.state の中に元のパラメータが入っている
     const state = params.get('liff.state');
     if (state) {
       const m = decodeURIComponent(state).match(/[?&]form=([^&]+)/);
@@ -85,6 +157,81 @@
     return null;
   }
 
+  // ▼ デバッグ情報を画面に表示
+  function showDebugInfo() {
+    document.getElementById('debugFullUrl').textContent = location.href || '(なし)';
+
+    const search = location.search;
+    const searchEl = document.getElementById('debugSearch');
+    if (search) {
+      searchEl.textContent = search;
+    } else {
+      searchEl.textContent = '(なし - パラメータが消失している可能性大)';
+      searchEl.classList.add('empty');
+    }
+
+    // パラメータ一覧
+    const params = new URLSearchParams(location.search);
+    const paramsList = [];
+    for (const [key, value] of params.entries()) {
+      paramsList.push(key + ' = "' + value + '"');
+    }
+    const paramsEl = document.getElementById('debugParams');
+    if (paramsList.length > 0) {
+      paramsEl.textContent = paramsList.join('\n');
+    } else {
+      paramsEl.textContent = '(パラメータなし)';
+      paramsEl.classList.add('empty');
+    }
+
+    // liff.state
+    const liffState = params.get('liff.state');
+    const liffStateEl = document.getElementById('debugLiffState');
+    if (liffState) {
+      liffStateEl.textContent = liffState + '\n(デコード後: ' + decodeURIComponent(liffState) + ')';
+    } else {
+      liffStateEl.textContent = '(なし)';
+      liffStateEl.classList.add('empty');
+    }
+
+    // コピーボタン
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      const text = [
+        '【LIFFデバッグ情報】',
+        '現在のURL: ' + location.href,
+        'クエリ: ' + (location.search || '(なし)'),
+        'パラメータ一覧:',
+        paramsList.length > 0 ? paramsList.join('\n') : '(なし)',
+        'liff.state: ' + (liffState || '(なし)'),
+      ].join('\n');
+
+      // クリップボードにコピー
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('デバッグ情報をコピーしました');
+        }).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    });
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      alert('デバッグ情報をコピーしました');
+    } catch (e) {
+      alert('コピーに失敗しました。手動で選択してコピーしてください。');
+    }
+    document.body.removeChild(ta);
+  }
+
   // ▼ エラー表示
   function showError(message) {
     document.getElementById('loading').style.display = 'none';
@@ -92,6 +239,7 @@
     if (message) {
       document.getElementById('errorDetail').textContent = message;
     }
+    showDebugInfo();
   }
 
   // ▼ メイン処理
@@ -108,8 +256,6 @@
     return;
   }
 
-  // ▼ 元のクエリパラメータを引き継いでリダイレクト
-  // location.replace を使うことで、戻るボタンでindex.htmlに戻ってこない
   location.replace('./' + targetFile + location.search);
 })();
 </script>
