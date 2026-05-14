@@ -14,12 +14,20 @@
       padding: 16px;
       background: #f5f5f5;
       color: #333;
+      line-height: 1.5;
     }
     h1 {
       font-size: 1.3rem;
       margin: 8px 0 16px;
       padding-bottom: 8px;
       border-bottom: 2px solid #06c755;
+    }
+    h2 {
+      font-size: 1rem;
+      margin: 20px 0 10px;
+      color: #06c755;
+      padding-left: 8px;
+      border-left: 4px solid #06c755;
     }
     .badge {
       display: inline-block;
@@ -49,8 +57,8 @@
       font-size: 0.75rem;
       margin-left: 6px;
     }
-    .recommended {
-      color: #f39c12;
+    .optional {
+      color: #888;
       font-size: 0.75rem;
       margin-left: 6px;
     }
@@ -75,6 +83,9 @@
       outline: none;
       border-color: #06c755;
     }
+    input:invalid {
+      border-color: #e74c3c;
+    }
     .checkboxes label {
       display: block;
       padding: 6px 0;
@@ -91,9 +102,11 @@
       border-radius: 8px;
       font-weight: bold;
       margin-top: 16px;
+      cursor: pointer;
     }
     button.submit:disabled {
       background: #aaa;
+      cursor: not-allowed;
     }
     #result {
       margin-top: 16px;
@@ -113,14 +126,79 @@
     }
     .loading {
       text-align: center;
-      padding: 40px;
+      padding: 60px 20px;
       color: #888;
     }
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #ddd;
+      border-top-color: #06c755;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ▼ ここから選択画面用のスタイル */
+    /* ▼ はじめに画面 */
+    .alert-box {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+    .alert-box .icon { font-size: 1.2rem; margin-right: 4px; }
+    .alert-box .phone {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #d84315;
+      text-decoration: none;
+    }
+    .terms {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .terms h3 {
+      font-size: 1rem;
+      margin: 0 0 10px;
+      color: #06c755;
+    }
+    .terms ul {
+      padding-left: 1.2em;
+      margin: 0;
+    }
+    .terms li { margin-bottom: 6px; }
+    .terms strong { color: #c62828; }
+    .agree-box {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .agree-box label {
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .agree-box input { margin-right: 10px; transform: scale(1.2); }
+
+    /* ▼ 選択画面 */
     #selectScreen .intro {
       background: #fff;
-      padding: 16px;
+      padding: 14px;
       border-radius: 8px;
       margin-bottom: 16px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
@@ -133,7 +211,7 @@
       background: #fff;
       border: 2px solid #06c755;
       border-radius: 12px;
-      padding: 20px 16px;
+      padding: 18px 16px;
       margin-bottom: 12px;
       text-align: left;
       cursor: pointer;
@@ -144,7 +222,7 @@
       background: #e8f5e9;
     }
     .select-btn .title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: bold;
       color: #06c755;
       margin-bottom: 4px;
@@ -172,45 +250,111 @@
       cursor: pointer;
       font-family: inherit;
     }
-    .back-btn:hover {
-      text-decoration: underline;
+    .back-btn:hover { text-decoration: underline; }
+
+    /* ▼ 紹介状あり画面 */
+    .referral-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      text-align: center;
+      line-height: 1.7;
     }
+    .referral-box .phone-link {
+      display: block;
+      margin-top: 16px;
+      padding: 14px;
+      background: #06c755;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    /* 症状詳細欄(条件表示) */
+    .symptom-detail { margin-top: 8px; display: none; }
+    .symptom-detail.show { display: block; }
   </style>
 </head>
 <body>
 
-<div id="loading" class="loading">読み込み中...</div>
+<!-- ▼ 読み込み中 -->
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  <p>読み込み中...</p>
+</div>
+
+<!-- ▼ ステップ0: はじめに画面 -->
+<div id="introScreen" style="display:none;">
+  <h1>二次検診予約フォーム</h1>
+
+  <div class="alert-box">
+    <span class="icon">⚠️</span><strong>強い症状(血便、しこり、強い痛みなど)がある場合は、本フォームでの予約をお待ちにならず、お電話にてご連絡ください。</strong>
+    <a href="tel:XXXXXXXXXX" class="phone">📞 XXX-XXXX-XXXX</a>
+  </div>
+
+  <div class="terms">
+    <h3>ご利用にあたって</h3>
+    <ul>
+      <li><strong>本フォームは「予約申込」であり、「予約確定」ではありません。</strong>内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
+      <li><strong>個人情報の取扱い:</strong>ご記入いただいた情報は、二次検診のご予約・診療目的にのみ使用し、それ以外の目的には利用しません。</li>
+      <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更はお電話(XXX-XXXX-XXXX)にてご連絡ください。</li>
+      <li><strong>来院時のお持ち物:</strong>保険証、診察券(お持ちの方)、健診結果票、精密検査依頼表など。</li>
+      <li><strong>ご連絡について:</strong>受付後、診療時間内(平日 9:00〜17:00)にお電話にてご連絡いたします。お電話に出られなかった場合は再度ご連絡いたしますので、しばらくお待ちください。</li>
+    </ul>
+  </div>
+
+  <div class="agree-box">
+    <label>
+      <input type="checkbox" id="agreeCheck">
+      上記内容に同意します
+    </label>
+  </div>
+
+  <button type="button" class="submit" id="proceedBtn" disabled>次へ進む</button>
+</div>
 
 <!-- ▼ ステップ1: 選択画面 -->
 <div id="selectScreen" style="display:none;">
-  <h1>二次検診予約</h1>
+  <button type="button" class="back-btn" data-back="intro">← はじめに戻る</button>
+  <h1>受診状況の選択</h1>
 
   <div class="intro">
-    一次健診はどちらの医療機関で受けられましたか?<br>
-    該当する方を選んでください。
+    該当するものを選択してください。
   </div>
 
   <button type="button" class="select-btn" data-type="own">
     <span class="arrow">›</span>
-    <div class="title">当院で受けた</div>
-    <div class="desc">当院で一次健診を受けられた方はこちら</div>
+    <div class="title">当院で受けた健診の結果</div>
+    <div class="desc">当院の健診結果で再検査・精密検査等を指摘された方</div>
   </button>
 
   <button type="button" class="select-btn" data-type="other">
     <span class="arrow">›</span>
-    <div class="title">他院で受けた</div>
-    <div class="desc">他の医療機関で一次健診を受けられた方はこちら<br>
-    (健診結果票・紹介状などの情報をお伺いします)</div>
+    <div class="title">他院・職場・人間ドック・自治体健診の結果</div>
+    <div class="desc">他の医療機関等の健診結果で再検査・精密検査等を指摘された方</div>
+  </button>
+
+  <button type="button" class="select-btn" data-type="referral">
+    <span class="arrow">›</span>
+    <div class="title">紹介状を持っている</div>
+    <div class="desc">他院から紹介状(診療情報提供書)を渡された方<br>
+    <span style="color:#c62828; font-size:0.8rem;">※健診結果票や精密検査依頼表は紹介状ではありません</span></div>
   </button>
 </div>
 
-<!-- ▼ ステップ2: フォーム画面 -->
+<!-- ▼ ステップ2-A/B: フォーム画面 -->
 <div id="formScreen" style="display:none;">
-  <button type="button" class="back-btn" id="backBtn">← 選択に戻る</button>
+  <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
   <h1>二次検診予約 <span class="badge" id="typeBadge"></span></h1>
 
   <form id="form" onsubmit="return false;">
-    <!-- ▼ 共通フィールド -->
+
+    <!-- ① ご本人について -->
+    <h2>① ご本人について</h2>
+
     <div class="field">
       <label class="label">氏名<span class="required">必須</span></label>
       <input type="text" name="name" required placeholder="例: 山田 太郎">
@@ -228,127 +372,89 @@
 
     <div class="field">
       <label class="label">電話番号<span class="required">必須</span></label>
-      <input type="tel" name="phone" required placeholder="例: 09012345678">
+      <input type="tel" name="phone" required placeholder="例: 09012345678(ハイフンなし)">
+      <div class="help">日中ご連絡可能な番号をご記入ください</div>
     </div>
 
-    <!-- ▼ 他院専用:当院受診歴 -->
+    <!-- ② 健康診断について -->
+    <h2>② 健康診断について</h2>
+
+    <!-- 他院専用:医療機関名 -->
     <div class="field other-only" style="display:none;">
-      <label class="label">当院受診歴<span class="recommended">推奨</span></label>
-      <select name="visitHistory">
-        <option value="">選択してください</option>
-        <option value="あり">あり</option>
-        <option value="なし">なし</option>
-        <option value="不明">不明</option>
-      </select>
+      <label class="label">健診実施機関名<span class="required">必須</span></label>
+      <input type="text" name="clinicName" placeholder="例: ○○病院、△△健診センター">
     </div>
 
-    <!-- ▼ 診察券番号 -->
-    <div class="field">
-      <label class="label">診察券番号<span class="recommended">推奨</span></label>
-      <input type="text" name="patientId" placeholder="お持ちの方のみ">
-      <div class="help other-only" style="display:none;">当院の受診歴がある方はご記入ください</div>
-    </div>
-
-    <!-- ▼ 他院専用:医療機関名 -->
-    <div class="field other-only" style="display:none;">
-      <label class="label">健診を受けた医療機関名<span class="required">必須</span></label>
-      <input type="text" name="clinicName" placeholder="例: ○○病院">
-    </div>
-
-    <!-- ▼ 健診日 -->
     <div class="field">
       <label class="label">健診を受けた日<span class="required">必須</span></label>
       <input type="date" name="checkupDate" required>
+      <div class="help">本日以前の日付を選択してください</div>
     </div>
 
-    <!-- ▼ 他院専用:書類の有無 -->
-    <div class="field other-only" style="display:none;">
-      <label class="label">健診結果票の有無<span class="required">必須</span></label>
-      <select name="resultDoc">
-        <option value="">選択してください</option>
-        <option value="あり">あり(持参可能)</option>
-        <option value="なし">なし</option>
-      </select>
-    </div>
-
-    <div class="field other-only" style="display:none;">
-      <label class="label">紹介状・診療情報提供書の有無<span class="required">必須</span></label>
-      <select name="referralDoc">
-        <option value="">選択してください</option>
-        <option value="あり">あり(持参可能)</option>
-        <option value="なし">なし</option>
-      </select>
-    </div>
-
-    <div class="field other-only" style="display:none;">
-      <label class="label">精密検査依頼票の有無<span class="recommended">推奨</span></label>
-      <select name="examRequestDoc">
-        <option value="">選択してください</option>
-        <option value="あり">あり(持参可能)</option>
-        <option value="なし">なし</option>
-        <option value="不明">不明</option>
-      </select>
-    </div>
-
-    <!-- ▼ 指摘された項目(共通) -->
     <div class="field">
-      <label class="label">指摘された項目<span class="required">必須</span></label>
+      <label class="label">指摘された項目<span class="required">必須・複数選択可</span></label>
       <div class="checkboxes">
-        <label><input type="checkbox" name="findings" value="胃">胃</label>
-        <label><input type="checkbox" name="findings" value="大腸">大腸</label>
-        <label><input type="checkbox" name="findings" value="肺">肺</label>
-        <label><input type="checkbox" name="findings" value="乳腺">乳腺</label>
-        <label><input type="checkbox" name="findings" value="子宮">子宮</label>
-        <label><input type="checkbox" name="findings" value="肝臓">肝臓</label>
-        <label><input type="checkbox" name="findings" value="腎臓">腎臓</label>
         <label><input type="checkbox" name="findings" value="血圧">血圧</label>
-        <label><input type="checkbox" name="findings" value="血糖">血糖</label>
-        <label><input type="checkbox" name="findings" value="脂質">脂質</label>
+        <label><input type="checkbox" name="findings" value="血糖・HbA1c">血糖・HbA1c</label>
+        <label><input type="checkbox" name="findings" value="脂質・コレステロール・中性脂肪">脂質・コレステロール・中性脂肪</label>
+        <label><input type="checkbox" name="findings" value="肝機能">肝機能</label>
+        <label><input type="checkbox" name="findings" value="腎機能・尿検査">腎機能・尿検査</label>
+        <label><input type="checkbox" name="findings" value="貧血">貧血</label>
         <label><input type="checkbox" name="findings" value="心電図">心電図</label>
+        <label><input type="checkbox" name="findings" value="胸部X線・肺">胸部X線・肺</label>
+        <label><input type="checkbox" name="findings" value="胃">胃</label>
+        <label><input type="checkbox" name="findings" value="大腸・便潜血">大腸・便潜血</label>
+        <label><input type="checkbox" name="findings" value="腹部エコー">腹部エコー</label>
+        <label><input type="checkbox" name="findings" value="乳房">乳房</label>
+        <label><input type="checkbox" name="findings" value="子宮・婦人科">子宮・婦人科</label>
         <label><input type="checkbox" name="findings" value="その他">その他</label>
       </div>
-      <input type="text" name="findingsOther" placeholder="その他の場合は内容を記入" style="margin-top:8px;">
+      <input type="text" name="findingsOther" placeholder="その他の場合は内容をご記入ください" style="margin-top:8px;">
     </div>
 
-    <!-- ▼ 判定内容(共通) -->
     <div class="field">
-      <label class="label">判定内容<span class="recommended">推奨</span></label>
-      <select name="judgment">
+      <label class="label">症状の有無<span class="required">必須</span></label>
+      <select name="hasSymptom" id="hasSymptom" required>
         <option value="">選択してください</option>
-        <option value="要精密検査">要精密検査</option>
-        <option value="要再検査">要再検査</option>
-        <option value="要治療">要治療</option>
-        <option value="要経過観察">要経過観察</option>
-        <option value="不明">不明</option>
+        <option value="なし">なし</option>
+        <option value="あり">あり(軽度)</option>
       </select>
+      <div class="symptom-detail" id="symptomDetail">
+        <input type="text" name="symptomDetail" placeholder="症状の内容をご記入ください" style="margin-top:8px;">
+        <div class="help" style="color:#c62828;">※ 強い症状(血便、しこり、強い痛みなど)がある場合はお電話でご連絡ください</div>
+      </div>
     </div>
 
-    <!-- ▼ 希望日(共通) -->
+    <!-- ③ 他院専用: 当日のお持ち物 -->
+    <div class="other-only" style="display:none;">
+      <h2>③ 当日のお持ち物</h2>
+      <div class="field">
+        <label class="label">当日持参できる書類<span class="required">必須・複数選択可</span></label>
+        <div class="checkboxes">
+          <label><input type="checkbox" name="documents" value="健診結果票">健診結果票</label>
+          <label><input type="checkbox" name="documents" value="精密検査依頼表">精密検査依頼表</label>
+          <label><input type="checkbox" name="documents" value="なし">いずれも持参できない</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ ご希望の日程 -->
+    <h2 id="dateSectionTitle">③ ご希望の日程</h2>
+
     <div class="field">
       <label class="label">第1希望日<span class="required">必須</span></label>
       <input type="date" name="preferredDate1" required>
+      <div class="help">本日から3日後以降の日付を選択してください</div>
     </div>
 
     <div class="field">
-      <label class="label">第2希望日<span class="recommended">推奨</span></label>
+      <label class="label">第2希望日<span class="optional">任意</span></label>
       <input type="date" name="preferredDate2">
     </div>
 
     <div class="field">
-      <label class="label">第3希望日<span class="recommended">推奨</span></label>
+      <label class="label">第3希望日<span class="optional">任意</span></label>
       <input type="date" name="preferredDate3">
-    </div>
-
-    <!-- ▼ 連絡可能時間帯 -->
-    <div class="field">
-      <label class="label">連絡可能な時間帯<span class="recommended">推奨</span></label>
-      <select name="contactTime">
-        <option value="">選択してください</option>
-        <option value="午前(9-12時)">午前(9〜12時)</option>
-        <option value="午後(12-15時)">午後(12〜15時)</option>
-        <option value="夕方(15-18時)">夕方(15〜18時)</option>
-        <option value="いつでも可">いつでも可</option>
-      </select>
     </div>
 
     <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
@@ -357,11 +463,40 @@
   <div id="result"></div>
 </div>
 
+<!-- ▼ ステップ2-C: 紹介状あり画面 -->
+<div id="referralScreen" style="display:none;">
+  <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
+  <h1>紹介状をお持ちの方へ</h1>
+
+  <div class="referral-box">
+    <p>紹介状をお持ちの方、または紹介元医療機関から受診を案内された方は、<br>
+    お手数ですが下記までお電話にてご連絡ください。</p>
+    <a href="tel:XXXXXXXXXX" class="phone-link">📞 XXX-XXXX-XXXX</a>
+    <p style="margin-top:16px; font-size:0.85rem; color:#888;">
+      診療時間:平日 9:00〜17:00
+    </p>
+  </div>
+</div>
+
 <script>
 const LIFF_ID = '2010076084-TAppgjXG';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
 
-// 現在のtypeを保持(選択画面で決定)
+// ▼ 日付ユーティリティ
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+const today = new Date();
+const TODAY_STR = formatDate(today);
+const threeDaysLater = new Date(today);
+threeDaysLater.setDate(today.getDate() + 3);
+const PREFERRED_MIN_STR = formatDate(threeDaysLater);
+
+// 現在のtypeを保持
 let currentType = null;
 
 (async () => {
@@ -369,24 +504,54 @@ let currentType = null;
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) { liff.login(); return; }
 
-    // 初期画面:選択画面を表示
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('selectScreen').style.display = '';
+    // 日付フィールドの上限・下限を設定
+    document.querySelector('input[name="birthday"]').setAttribute('max', TODAY_STR);
+    document.querySelector('input[name="checkupDate"]').setAttribute('max', TODAY_STR);
+    ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
+      document.querySelector(`input[name="${name}"]`).setAttribute('min', PREFERRED_MIN_STR);
+    });
 
-    // ▼ 選択ボタンの動作
+    // 初期画面:はじめに画面を表示
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('introScreen').style.display = '';
+
+    // ▼ 同意チェック → 次へ進むボタン有効化
+    const agreeCheck = document.getElementById('agreeCheck');
+    const proceedBtn = document.getElementById('proceedBtn');
+    agreeCheck.addEventListener('change', () => {
+      proceedBtn.disabled = !agreeCheck.checked;
+    });
+    proceedBtn.addEventListener('click', () => {
+      showScreen('select');
+    });
+
+    // ▼ 選択ボタン
     document.querySelectorAll('.select-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const type = btn.dataset.type;
-        showForm(type);
+        if (type === 'referral') {
+          showScreen('referral');
+        } else {
+          showForm(type);
+        }
       });
     });
 
     // ▼ 戻るボタン
-    document.getElementById('backBtn').addEventListener('click', () => {
-      document.getElementById('formScreen').style.display = 'none';
-      document.getElementById('selectScreen').style.display = '';
-      // 画面トップへスクロール
-      window.scrollTo(0, 0);
+    document.querySelectorAll('.back-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showScreen(btn.dataset.back);
+      });
+    });
+
+    // ▼ 症状あり/なしで詳細欄を表示制御
+    document.getElementById('hasSymptom').addEventListener('change', (e) => {
+      const detail = document.getElementById('symptomDetail');
+      if (e.target.value === 'あり') {
+        detail.classList.add('show');
+      } else {
+        detail.classList.remove('show');
+      }
     });
 
     // ▼ 送信ボタン
@@ -397,13 +562,22 @@ let currentType = null;
   }
 })();
 
-// ▼ フォーム画面への切替
+// ▼ 画面切替(intro / select / referral)
+function showScreen(name) {
+  ['intro', 'select', 'form', 'referral'].forEach(s => {
+    const el = document.getElementById(s + 'Screen');
+    if (el) el.style.display = (s === name) ? '' : 'none';
+  });
+  window.scrollTo(0, 0);
+}
+
+// ▼ フォーム画面への切替(当院/他院)
 function showForm(type) {
   currentType = type;
 
   // バッジ表示
   document.getElementById('typeBadge').textContent =
-    (type === 'own') ? '当院で一次健診' : '他院で一次健診';
+    (type === 'own') ? '当院で健診' : '他院等で健診';
 
   // 他院専用フィールドの表示制御
   const isOther = (type === 'other');
@@ -411,16 +585,17 @@ function showForm(type) {
     el.style.display = isOther ? '' : 'none';
   });
 
-  // 他院専用フィールド内のrequired属性も連動させる
-  // (当院モードのとき、非表示の必須項目で送信ブロックされないように)
+  // 日程セクションの番号調整
+  document.getElementById('dateSectionTitle').textContent =
+    isOther ? '④ ご希望の日程' : '③ ご希望の日程';
+
+  // 他院専用フィールドのrequired属性を連動
   document.querySelectorAll('.other-only select, .other-only input').forEach(el => {
     if (isOther) {
-      // 元々requiredだったものを復活させる(data属性で記憶)
       if (el.dataset.originallyRequired === 'true') {
         el.setAttribute('required', '');
       }
     } else {
-      // requiredを一時的に外す
       if (el.hasAttribute('required')) {
         el.dataset.originallyRequired = 'true';
         el.removeAttribute('required');
@@ -428,31 +603,40 @@ function showForm(type) {
     }
   });
 
-  // 画面切替
-  document.getElementById('selectScreen').style.display = 'none';
-  document.getElementById('formScreen').style.display = '';
-  window.scrollTo(0, 0);
+  showScreen('form');
 }
 
-// ▼ 送信処理(元のロジックを関数化)
+// ▼ 電話番号バリデーション(日本の電話番号:0始まりの10〜11桁)
+function isValidPhone(phone) {
+  const digits = phone.replace(/[\D]/g, '');
+  return /^0\d{9,10}$/.test(digits);
+}
+
+// ▼ 送信処理
 async function handleSubmit() {
   const form = document.getElementById('form');
   const btn = document.getElementById('submitBtn');
   const result = document.getElementById('result');
 
-  // typeが選ばれていなければ中断(通常起きないはずだが念のため)
   if (!currentType) {
-    alert('一次健診を受けた場所を選択してください');
+    alert('受診状況を選択してください');
     return;
   }
 
-  // バリデーション
+  // 標準バリデーション
   if (!form.checkValidity()) {
     form.reportValidity();
     return;
   }
 
-  // 指摘項目(チェックボックス複数)の収集
+  // 電話番号の追加バリデーション
+  const phone = form.querySelector('input[name="phone"]').value;
+  if (!isValidPhone(phone)) {
+    alert('電話番号の形式が正しくありません。0から始まる10〜11桁の番号を入力してください。');
+    return;
+  }
+
+  // 指摘項目(必須・複数)
   const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
     .map(el => el.value);
   if (findings.length === 0) {
@@ -460,13 +644,43 @@ async function handleSubmit() {
     return;
   }
 
+  // 他院の場合:持参書類(必須・複数)
+  let documents = [];
+  if (currentType === 'other') {
+    documents = Array.from(form.querySelectorAll('input[name="documents"]:checked'))
+      .map(el => el.value);
+    if (documents.length === 0) {
+      alert('当日持参できる書類を選択してください(持参できない場合は「いずれも持参できない」を選択)');
+      return;
+    }
+  }
+
+  // 日付の追加チェック(ブラウザのmin/maxを迂回されたケース対策)
+  const birthday = form.querySelector('input[name="birthday"]').value;
+  const checkupDate = form.querySelector('input[name="checkupDate"]').value;
+  const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
+
+  if (birthday > TODAY_STR) {
+    alert('生年月日は本日以前の日付を入力してください');
+    return;
+  }
+  if (checkupDate > TODAY_STR) {
+    alert('健診日は本日以前の日付を入力してください');
+    return;
+  }
+  if (preferredDate1 < PREFERRED_MIN_STR) {
+    alert('第1希望日は本日から3日後以降の日付を入力してください');
+    return;
+  }
+
   // フォームデータをオブジェクト化
   const formData = {};
   new FormData(form).forEach((v, k) => {
-    if (k === 'findings') return;
+    if (k === 'findings' || k === 'documents') return;
     formData[k] = v;
   });
   formData.findings = findings;
+  if (currentType === 'other') formData.documents = documents;
   formData.type = currentType;
 
   btn.disabled = true;
@@ -482,10 +696,10 @@ async function handleSubmit() {
     const data = JSON.parse(await res.text());
     if (data.ok) {
       result.className = 'ok';
-      result.textContent = '予約申込を受け付けました。担当者よりご連絡いたします。';
+      result.innerHTML = '✅ <strong>予約申込を受け付けました。</strong><br>' +
+        '内容を確認のうえ、当院よりお電話にてご連絡いたします。';
       form.style.display = 'none';
-      // 戻るボタンも消す(完了画面風に)
-      document.getElementById('backBtn').style.display = 'none';
+      document.querySelector('#formScreen .back-btn').style.display = 'none';
     } else {
       result.className = 'ng';
       result.textContent = '送信に失敗しました: ' + (data.error || '不明なエラー');
