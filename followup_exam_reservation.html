@@ -116,13 +116,97 @@
       padding: 40px;
       color: #888;
     }
+
+    /* ▼ ここから選択画面用のスタイル */
+    #selectScreen .intro {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .select-btn {
+      display: block;
+      width: 100%;
+      background: #fff;
+      border: 2px solid #06c755;
+      border-radius: 12px;
+      padding: 20px 16px;
+      margin-bottom: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .select-btn:hover, .select-btn:active {
+      background: #e8f5e9;
+    }
+    .select-btn .title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #06c755;
+      margin-bottom: 4px;
+    }
+    .select-btn .desc {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.5;
+    }
+    .select-btn .arrow {
+      float: right;
+      color: #06c755;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    /* ▼ 戻るボタン */
+    .back-btn {
+      background: none;
+      border: none;
+      color: #06c755;
+      font-size: 0.95rem;
+      padding: 4px 0;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .back-btn:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
 <div id="loading" class="loading">読み込み中...</div>
 
-<div id="app" style="display:none;">
+<!-- ▼ ステップ1: 選択画面 -->
+<div id="selectScreen" style="display:none;">
+  <h1>二次検診予約</h1>
+
+  <div class="intro">
+    一次健診はどちらの医療機関で受けられましたか?<br>
+    該当する方を選んでください。
+  </div>
+
+  <button type="button" class="select-btn" data-type="own">
+    <span class="arrow">›</span>
+    <div class="title">当院で受けた</div>
+    <div class="desc">当院で一次健診を受けられた方はこちら</div>
+  </button>
+
+  <button type="button" class="select-btn" data-type="other">
+    <span class="arrow">›</span>
+    <div class="title">他院で受けた</div>
+    <div class="desc">他の医療機関で一次健診を受けられた方はこちら<br>
+    (健診結果票・紹介状などの情報をお伺いします)</div>
+  </button>
+</div>
+
+<!-- ▼ ステップ2: フォーム画面 -->
+<div id="formScreen" style="display:none;">
+  <button type="button" class="back-btn" id="backBtn">← 選択に戻る</button>
   <h1>二次検診予約 <span class="badge" id="typeBadge"></span></h1>
 
   <form id="form" onsubmit="return false;">
@@ -147,7 +231,7 @@
       <input type="tel" name="phone" required placeholder="例: 09012345678">
     </div>
 
-    <!-- ▼ 他院専用：当院受診歴 -->
+    <!-- ▼ 他院専用:当院受診歴 -->
     <div class="field other-only" style="display:none;">
       <label class="label">当院受診歴<span class="recommended">推奨</span></label>
       <select name="visitHistory">
@@ -158,14 +242,14 @@
       </select>
     </div>
 
-    <!-- ▼ 診察券番号（当院は推奨、他院は受診歴ありなら推奨） -->
+    <!-- ▼ 診察券番号 -->
     <div class="field">
       <label class="label">診察券番号<span class="recommended">推奨</span></label>
       <input type="text" name="patientId" placeholder="お持ちの方のみ">
       <div class="help other-only" style="display:none;">当院の受診歴がある方はご記入ください</div>
     </div>
 
-    <!-- ▼ 他院専用：医療機関名 -->
+    <!-- ▼ 他院専用:医療機関名 -->
     <div class="field other-only" style="display:none;">
       <label class="label">健診を受けた医療機関名<span class="required">必須</span></label>
       <input type="text" name="clinicName" placeholder="例: ○○病院">
@@ -177,12 +261,12 @@
       <input type="date" name="checkupDate" required>
     </div>
 
-    <!-- ▼ 他院専用：書類の有無 -->
+    <!-- ▼ 他院専用:書類の有無 -->
     <div class="field other-only" style="display:none;">
       <label class="label">健診結果票の有無<span class="required">必須</span></label>
       <select name="resultDoc">
         <option value="">選択してください</option>
-        <option value="あり">あり（持参可能）</option>
+        <option value="あり">あり(持参可能)</option>
         <option value="なし">なし</option>
       </select>
     </div>
@@ -191,7 +275,7 @@
       <label class="label">紹介状・診療情報提供書の有無<span class="required">必須</span></label>
       <select name="referralDoc">
         <option value="">選択してください</option>
-        <option value="あり">あり（持参可能）</option>
+        <option value="あり">あり(持参可能)</option>
         <option value="なし">なし</option>
       </select>
     </div>
@@ -200,13 +284,13 @@
       <label class="label">精密検査依頼票の有無<span class="recommended">推奨</span></label>
       <select name="examRequestDoc">
         <option value="">選択してください</option>
-        <option value="あり">あり（持参可能）</option>
+        <option value="あり">あり(持参可能)</option>
         <option value="なし">なし</option>
         <option value="不明">不明</option>
       </select>
     </div>
 
-    <!-- ▼ 指摘された項目（共通） -->
+    <!-- ▼ 指摘された項目(共通) -->
     <div class="field">
       <label class="label">指摘された項目<span class="required">必須</span></label>
       <div class="checkboxes">
@@ -226,7 +310,7 @@
       <input type="text" name="findingsOther" placeholder="その他の場合は内容を記入" style="margin-top:8px;">
     </div>
 
-    <!-- ▼ 判定内容（共通） -->
+    <!-- ▼ 判定内容(共通) -->
     <div class="field">
       <label class="label">判定内容<span class="recommended">推奨</span></label>
       <select name="judgment">
@@ -239,7 +323,7 @@
       </select>
     </div>
 
-    <!-- ▼ 希望日（共通） -->
+    <!-- ▼ 希望日(共通) -->
     <div class="field">
       <label class="label">第1希望日<span class="required">必須</span></label>
       <input type="date" name="preferredDate1" required>
@@ -260,9 +344,9 @@
       <label class="label">連絡可能な時間帯<span class="recommended">推奨</span></label>
       <select name="contactTime">
         <option value="">選択してください</option>
-        <option value="午前(9-12時)">午前（9〜12時）</option>
-        <option value="午後(12-15時)">午後（12〜15時）</option>
-        <option value="夕方(15-18時)">夕方（15〜18時）</option>
+        <option value="午前(9-12時)">午前(9〜12時)</option>
+        <option value="午後(12-15時)">午後(12〜15時)</option>
+        <option value="夕方(15-18時)">夕方(15〜18時)</option>
         <option value="いつでも可">いつでも可</option>
       </select>
     </div>
@@ -277,98 +361,144 @@
 const LIFF_ID = '2010076084-TAppgjXG';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
 
-// URLパラメータから type を取得（own / other）
-function getType() {
-  const params = new URLSearchParams(location.search);
-  let type = params.get('type');
-  // liff.state経由のパラメータも見る
-  if (!type) {
-    const state = params.get('liff.state');
-    if (state) {
-      const m = decodeURIComponent(state).match(/[?&]type=([^&]+)/);
-      if (m) type = m[1];
-    }
-  }
-  return (type === 'other') ? 'other' : 'own';  // デフォルトは当院
-}
+// 現在のtypeを保持(選択画面で決定)
+let currentType = null;
 
 (async () => {
   try {
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) { liff.login(); return; }
 
-    const type = getType();
-    document.getElementById('typeBadge').textContent =
-      (type === 'own') ? '当院で一次健診' : '他院で一次健診';
-
-    // 他院専用フィールドを表示
-    if (type === 'other') {
-      document.querySelectorAll('.other-only').forEach(el => el.style.display = '');
-    }
-
+    // 初期画面:選択画面を表示
     document.getElementById('loading').style.display = 'none';
-    document.getElementById('app').style.display = '';
+    document.getElementById('selectScreen').style.display = '';
 
-    document.getElementById('submitBtn').addEventListener('click', async () => {
-      const form = document.getElementById('form');
-      const btn = document.getElementById('submitBtn');
-      const result = document.getElementById('result');
-
-      // バリデーション
-      if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-      }
-
-      // 指摘項目（チェックボックス複数）の収集
-      const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
-        .map(el => el.value);
-      if (findings.length === 0) {
-        alert('指摘された項目を1つ以上選択してください');
-        return;
-      }
-
-      // フォームデータをオブジェクト化
-      const formData = {};
-      new FormData(form).forEach((v, k) => {
-        if (k === 'findings') return;  // 後で配列でセット
-        formData[k] = v;
+    // ▼ 選択ボタンの動作
+    document.querySelectorAll('.select-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.type;
+        showForm(type);
       });
-      formData.findings = findings;
-      formData.type = type;
-
-      btn.disabled = true;
-      btn.textContent = '送信中...';
-      result.className = '';
-      result.style.display = 'none';
-
-      try {
-        const res = await fetch(GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({ idToken: liff.getIDToken(), formData })
-        });
-        const data = JSON.parse(await res.text());
-        if (data.ok) {
-          result.className = 'ok';
-          result.textContent = '予約申込を受け付けました。担当者よりご連絡いたします。';
-          form.style.display = 'none';
-        } else {
-          result.className = 'ng';
-          result.textContent = '送信に失敗しました: ' + (data.error || '不明なエラー');
-          btn.disabled = false;
-          btn.textContent = '予約を申し込む';
-        }
-      } catch (err) {
-        result.className = 'ng';
-        result.textContent = '通信エラー: ' + err.message;
-        btn.disabled = false;
-        btn.textContent = '予約を申し込む';
-      }
     });
+
+    // ▼ 戻るボタン
+    document.getElementById('backBtn').addEventListener('click', () => {
+      document.getElementById('formScreen').style.display = 'none';
+      document.getElementById('selectScreen').style.display = '';
+      // 画面トップへスクロール
+      window.scrollTo(0, 0);
+    });
+
+    // ▼ 送信ボタン
+    document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+
   } catch (err) {
     document.getElementById('loading').textContent = 'エラー: ' + err.message;
   }
 })();
+
+// ▼ フォーム画面への切替
+function showForm(type) {
+  currentType = type;
+
+  // バッジ表示
+  document.getElementById('typeBadge').textContent =
+    (type === 'own') ? '当院で一次健診' : '他院で一次健診';
+
+  // 他院専用フィールドの表示制御
+  const isOther = (type === 'other');
+  document.querySelectorAll('.other-only').forEach(el => {
+    el.style.display = isOther ? '' : 'none';
+  });
+
+  // 他院専用フィールド内のrequired属性も連動させる
+  // (当院モードのとき、非表示の必須項目で送信ブロックされないように)
+  document.querySelectorAll('.other-only select, .other-only input').forEach(el => {
+    if (isOther) {
+      // 元々requiredだったものを復活させる(data属性で記憶)
+      if (el.dataset.originallyRequired === 'true') {
+        el.setAttribute('required', '');
+      }
+    } else {
+      // requiredを一時的に外す
+      if (el.hasAttribute('required')) {
+        el.dataset.originallyRequired = 'true';
+        el.removeAttribute('required');
+      }
+    }
+  });
+
+  // 画面切替
+  document.getElementById('selectScreen').style.display = 'none';
+  document.getElementById('formScreen').style.display = '';
+  window.scrollTo(0, 0);
+}
+
+// ▼ 送信処理(元のロジックを関数化)
+async function handleSubmit() {
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const result = document.getElementById('result');
+
+  // typeが選ばれていなければ中断(通常起きないはずだが念のため)
+  if (!currentType) {
+    alert('一次健診を受けた場所を選択してください');
+    return;
+  }
+
+  // バリデーション
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+
+  // 指摘項目(チェックボックス複数)の収集
+  const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
+    .map(el => el.value);
+  if (findings.length === 0) {
+    alert('指摘された項目を1つ以上選択してください');
+    return;
+  }
+
+  // フォームデータをオブジェクト化
+  const formData = {};
+  new FormData(form).forEach((v, k) => {
+    if (k === 'findings') return;
+    formData[k] = v;
+  });
+  formData.findings = findings;
+  formData.type = currentType;
+
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+  result.className = '';
+  result.style.display = 'none';
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ idToken: liff.getIDToken(), formData })
+    });
+    const data = JSON.parse(await res.text());
+    if (data.ok) {
+      result.className = 'ok';
+      result.textContent = '予約申込を受け付けました。担当者よりご連絡いたします。';
+      form.style.display = 'none';
+      // 戻るボタンも消す(完了画面風に)
+      document.getElementById('backBtn').style.display = 'none';
+    } else {
+      result.className = 'ng';
+      result.textContent = '送信に失敗しました: ' + (data.error || '不明なエラー');
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+  } catch (err) {
+    result.className = 'ng';
+    result.textContent = '通信エラー: ' + err.message;
+    btn.disabled = false;
+    btn.textContent = '予約を申し込む';
+  }
+}
 </script>
 
 </body>
