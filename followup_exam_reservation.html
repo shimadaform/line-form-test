@@ -354,7 +354,7 @@
     <ul>
       <li><strong>本フォームは「予約申込」であり、「予約確定」ではありません。</strong>内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
       <li><strong>個人情報の取扱い:</strong>ご記入いただいた情報は、二次検診のご予約・診療目的にのみ使用し、それ以外の目的には利用しません。</li>
-      <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更は<a href="https://www.xxxxx.com" target="_blank" rel="noopener">こちら</a>からお申し込みください。</li>
+      <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更は<a href="https://docs.google.com/forms/d/e/1FAIpQLSedWjSU3L4nRL3X-XiYu2iKte4P5W2xd9y3MrSUHM13aCBz2A/viewform?usp=header" target="_blank" rel="noopener">こちら</a>からお申し込みください。</li>
       <li><strong>来院時のお持ち物:</strong>マイナ保険証(マイナンバーカード)または資格確認書、健診結果表または精密検査依頼表をお持ちください。</li>
       <li><strong>ご連絡について:</strong>受付後、診療時間内(平日 9:00〜17:00)にLINEにてご返事いたします。ご予約内容に不足や確認事項がある場合は、LINEにてお伺いしたうえでご予約を確定いたします。</li>
     </ul>
@@ -444,14 +444,14 @@
 
     <div class="field">
       <label class="label">生年月日<span class="required">必須</span></label>
-      <input type="date" name="birthday" required>
-      <div class="help" id="birthdayHelp"></div>
+      <input type="text" name="birthday" id="birthdayInput" required placeholder="例:1980/01/15">
+      <div class="inline-error" id="birthdayError">生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)</div>
     </div>
 
     <div class="field">
       <label class="label">電話番号<span class="required">必須</span></label>
       <input type="tel" name="phone" id="phoneInput" required placeholder="例:09012345678 または 03-1234-5678">
-      <div class="help">日中ご連絡可能な番号をご記入ください(固定電話・携帯どちらも可、ハイフンあり/なしどちらも可)</div>
+      <div class="help">日中ご連絡可能な番号をご記入ください</div>
       <div class="inline-error" id="phoneError">電話番号の形式が正しくありません</div>
     </div>
 
@@ -467,7 +467,6 @@
     <div class="field">
       <label class="label">健診を受けた日<span class="required">必須</span></label>
       <input type="date" name="checkupDate" required>
-      <div class="help" id="checkupDateHelp"></div>
     </div>
 
     <div class="field">
@@ -617,10 +616,6 @@ let currentType = null;
     }
 
     // 日付フィールドの上限・下限を設定
-    const birthdayInput = document.querySelector('input[name="birthday"]');
-    birthdayInput.setAttribute('min', BIRTHDAY_MIN_STR);
-    birthdayInput.setAttribute('max', TODAY_STR);
-
     const checkupDateInput = document.querySelector('input[name="checkupDate"]');
     checkupDateInput.setAttribute('min', CHECKUP_MIN_STR);
     checkupDateInput.setAttribute('max', YESTERDAY_STR);
@@ -631,11 +626,7 @@ let currentType = null;
       el.setAttribute('max', PREFERRED_MAX_STR);
     });
 
-    // 各日付のヘルプテキスト・注意書きを動的生成
-    document.getElementById('birthdayHelp').textContent =
-      `${BIRTHDAY_MIN_STR} 〜 ${TODAY_STR} の日付を選択してください`;
-    document.getElementById('checkupDateHelp').textContent =
-      `${CHECKUP_MIN_STR} 〜 ${YESTERDAY_STR} の日付を選択してください`;
+    // 希望日セクションの注意書きを動的生成
     document.getElementById('preferredDateNotice').textContent =
       `${PREFERRED_MIN_STR}以降の日付を選択してください`;
 
@@ -734,6 +725,26 @@ let currentType = null;
       }
     });
 
+    // ▼ 生年月日(テキスト)検証(blur時)
+    const birthdayInput = document.getElementById('birthdayInput');
+    const birthdayError = document.getElementById('birthdayError');
+    birthdayInput.addEventListener('blur', () => {
+      const v = birthdayInput.value.trim();
+      if (v && !parseBirthday(v)) {
+        birthdayInput.classList.add('has-error');
+        birthdayError.classList.add('show');
+      } else {
+        birthdayInput.classList.remove('has-error');
+        birthdayError.classList.remove('show');
+      }
+    });
+    birthdayInput.addEventListener('input', () => {
+      if (birthdayInput.classList.contains('has-error')) {
+        birthdayInput.classList.remove('has-error');
+        birthdayError.classList.remove('show');
+      }
+    });
+
     // ▼ 日付入力の範囲・形式チェック(手入力対策)
     document.querySelectorAll('input[type="date"]').forEach(input => {
       input.addEventListener('change', () => {
@@ -825,6 +836,24 @@ function isValidPhone(phone) {
   return /^0\d{9,10}$/.test(digits);
 }
 
+// ▼ 生年月日のパース(YYYY/MM/DD、YYYY-MM-DD、YYYY.MM.DD、YYYY年MM月DD日 を許容)
+// 戻り値:有効な日付なら YYYY-MM-DD、不正なら null
+function parseBirthday(s) {
+  const v = s.trim();
+  // YYYY/MM/DD、YYYY-MM-DD、YYYY.MM.DD
+  let m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  // YYYY年MM月DD日(日は省略可)
+  if (!m) m = v.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日?$/);
+  if (!m) return null;
+  const y = parseInt(m[1], 10);
+  const mo = parseInt(m[2], 10);
+  const d = parseInt(m[3], 10);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const date = new Date(y, mo - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 // ▼ 送信処理
 async function handleSubmit() {
   const form = document.getElementById('form');
@@ -870,6 +899,18 @@ async function handleSubmit() {
     return;
   }
 
+  // 生年月日検証(テキスト入力 → YYYY-MM-DD に正規化)
+  const birthdayInput = document.getElementById('birthdayInput');
+  const birthdayError = document.getElementById('birthdayError');
+  const birthday = parseBirthday(birthdayInput.value);
+  if (!birthday) {
+    birthdayInput.classList.add('has-error');
+    birthdayError.classList.add('show');
+    birthdayInput.focus();
+    alert('生年月日の形式が正しくありません。例:1980/01/15、1980-01-15、1980年01月15日 のように入力してください');
+    return;
+  }
+
   // 指摘項目(必須・複数)
   const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
     .map(el => el.value);
@@ -879,16 +920,15 @@ async function handleSubmit() {
   }
 
   // 日付の追加チェック(min/max迂回対策)
-  const birthday = form.querySelector('input[name="birthday"]').value;
   const checkupDate = form.querySelector('input[name="checkupDate"]').value;
   const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
   const preferredDate2 = form.querySelector('input[name="preferredDate2"]').value;
   const preferredDate3 = form.querySelector('input[name="preferredDate3"]').value;
 
-  // 全日付フィールドが YYYY-MM-DD 形式(年4桁)であること
+  // 各日付フィールドが YYYY-MM-DD 形式(年4桁)であること
+  // ※ 生年月日は上記で既に検証済みのためスキップ
   const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
   for (const [label, v] of [
-    ['生年月日', birthday],
     ['健診日', checkupDate],
     ['第1希望日', preferredDate1],
     ['第2希望日', preferredDate2],
@@ -934,6 +974,7 @@ async function handleSubmit() {
   });
   formData.findings = findings;
   formData.type = currentType;
+  formData.birthday = birthday; // テキスト入力を YYYY-MM-DD に正規化
   // 他院の場合、お持ち物確認画面で「はい」を選択済み
   if (currentType === 'other') formData.hasDocuments = true;
 
