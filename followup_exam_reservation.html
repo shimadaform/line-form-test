@@ -154,22 +154,18 @@
       border-color: #06c755;
     }
 
-    /* ▼ エラー表示は「ユーザーが操作した後」のみ */
     input:user-invalid,
     select:user-invalid {
       border-color: #e74c3c;
     }
-    /* 送信ボタン押下後は全ての無効フィールドを赤枠に */
     form.form-submitted input:invalid,
     form.form-submitted select:invalid {
       border-color: #e74c3c;
     }
-    /* 個別エラー(カナ・電話番号)用 */
     input.has-error {
       border-color: #e74c3c !important;
     }
 
-    /* 無効化された入力欄 */
     input:disabled {
       background: #f0f0f0;
       color: #999;
@@ -199,7 +195,6 @@
       cursor: not-allowed;
     }
 
-    /* 送信ボタン内のスピナー */
     .btn-spinner {
       display: inline-block;
       width: 14px;
@@ -212,7 +207,6 @@
       vertical-align: -2px;
     }
 
-    /* 送信成功メッセージ内の「LINEに戻る」ボタン */
     .close-line-btn {
       margin-top: 14px;
       max-width: 260px;
@@ -253,7 +247,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ▼ はじめに画面 */
     .alert-box {
       background: #fff3e0;
       border: 2px solid #ff9800;
@@ -307,7 +300,6 @@
     }
     .agree-box input { margin-right: 10px; transform: scale(1.2); }
 
-    /* ▼ 選択画面 */
     #selectScreen .intro {
       background: #fff;
       padding: 14px;
@@ -351,7 +343,6 @@
       font-weight: bold;
     }
 
-    /* ▼ 戻るボタン */
     .back-btn {
       background: none;
       border: none;
@@ -364,7 +355,6 @@
     }
     .back-btn:hover { text-decoration: underline; }
 
-    /* ▼ 紹介状あり画面 */
     .referral-box {
       background: #fff;
       padding: 20px;
@@ -385,11 +375,9 @@
       text-decoration: none;
     }
 
-    /* 症状詳細欄(条件表示) */
     .symptom-detail { margin-top: 8px; display: none; }
     .symptom-detail.show { display: block; }
 
-    /* インライン警告メッセージ */
     .inline-error {
       color: #c62828;
       font-size: 0.8rem;
@@ -398,7 +386,6 @@
     }
     .inline-error.show { display: block; }
 
-    /* 希望日セクションの注意書き */
     .section-notice {
       background: #fff8e1;
       border-left: 4px solid #ffa726;
@@ -411,7 +398,6 @@
     }
     .section-notice div + div { margin-top: 2px; }
 
-    /* ▼ 書類準備のご案内(他院専用) */
     .docs-notice {
       background: #fff8e1;
       border: 2px solid #ffa726;
@@ -436,10 +422,8 @@
 </head>
 <body>
 
-<!-- ▼ テストモードバナー(動的に表示) -->
 <div id="testBanner" class="test-banner" style="display:none;">🧪 テストモード(LINEログインなし)</div>
 
-<!-- ▼ 進捗ステップ -->
 <nav id="progressBar" class="progress" style="display:none;" aria-label="入力の進捗">
   <div class="step" data-step="1">
     <div class="step-circle">1</div>
@@ -462,13 +446,26 @@
   </div>
 </nav>
 
-<!-- ▼ 読み込み中 -->
 <div id="loading" class="loading">
   <div class="spinner"></div>
   <p>読み込み中...</p>
 </div>
 
-<!-- ▼ ステップ0: はじめに画面 -->
+<!-- ▼ 申込中画面 -->
+<div id="pendingScreen" style="display:none;">
+  <h1>二次検診予約フォーム</h1>
+  <div class="alert-box" role="alert">
+    <span class="icon">📩</span><strong>現在、お申し込みを受付中です。</strong><br>
+    内容を確認のうえ、LINEにてご返事いたします。<br>
+    今しばらくお待ちください。
+  </div>
+  <div class="terms">
+    <p style="margin:0;">
+      お急ぎの場合や内容の変更・キャンセルをご希望の場合は、LINEのトーク画面にメッセージをお送りいただくか、お電話にてご連絡ください。
+    </p>
+  </div>
+</div>
+
 <div id="introScreen" style="display:none;">
   <h1>二次検診予約フォーム</h1>
 
@@ -498,7 +495,6 @@
   <button type="button" class="submit" id="proceedBtn" disabled>次へ進む</button>
 </div>
 
-<!-- ▼ ステップ1: 選択画面 -->
 <div id="selectScreen" style="display:none;">
   <button type="button" class="back-btn" data-back="intro">← はじめに戻る</button>
   <h1>受診状況の選択</h1>
@@ -527,14 +523,12 @@
   </button>
 </div>
 
-<!-- ▼ ステップ2-A/B: フォーム画面 -->
 <div id="formScreen" style="display:none;">
   <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
   <h1>二次検診予約 <span class="badge" id="typeBadge"></span></h1>
 
   <form id="form" onsubmit="return false;" novalidate>
 
-    <!-- 他院専用:書類準備のご案内(フォーム冒頭) -->
     <div class="docs-notice other-only" style="display:none;">
       <div class="docs-title">健診結果票または精密検査依頼票のご準備について</div>
       <div class="docs-help">
@@ -542,7 +536,6 @@
       </div>
     </div>
 
-    <!-- ① ご本人について -->
     <h2>① ご本人について</h2>
 
     <div class="field">
@@ -558,7 +551,7 @@
 
     <div class="field">
       <label class="label" for="birthdayInput">生年月日<span class="required">必須</span></label>
-      <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" inputmode="numeric" placeholder="例:1980/01/15">
+      <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" placeholder="例:1980/01/15">
       <div class="inline-error" id="birthdayError" role="alert">生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)</div>
     </div>
 
@@ -569,10 +562,8 @@
       <div class="inline-error" id="phoneError" role="alert">電話番号の形式が正しくありません</div>
     </div>
 
-    <!-- ② 健康診断について -->
     <h2>② 健康診断について</h2>
 
-    <!-- 他院専用:医療機関名 -->
     <div class="field other-only" style="display:none;">
       <label class="label" for="clinicNameInput">健診実施機関名<span class="required">必須</span></label>
       <input type="text" id="clinicNameInput" name="clinicName" autocomplete="off" placeholder="例:〇〇病院や△△健診センターなど">
@@ -620,7 +611,6 @@
       </div>
     </div>
 
-    <!-- ③ ご希望の日程 -->
     <h2>③ ご希望の日程</h2>
 
     <div class="section-notice">
@@ -652,7 +642,6 @@
   <div id="result" role="status" aria-live="polite"></div>
 </div>
 
-<!-- ▼ ステップ2-C: 紹介状あり画面 -->
 <div id="referralScreen" style="display:none;">
   <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
   <h1>紹介状をお持ちの方へ</h1>
@@ -669,24 +658,18 @@
 
 <script>
 const LIFF_ID = '2010076084-TAppgjXG';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFF9eznXG1NTZbKUfcec3-hF_e2hIhP12n1s-R-MllAWvGGxIV0W_E6I49jq2m8BGE8w/exec';
 
-// ▼ フォーム-GAS間の共有秘密トークン(GAS側の APP_TOKEN と必ず同じ値にする)
-// 第三者が GAS URL に直接アクセスするのを防ぐためのもの。
-// 値を変えたい場合は、ここと GAS 側の両方を変更してデプロイし直す。
 const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
 
-// ▼ 医療機関情報(電話番号や診療時間が変わる場合はここだけ修正)
 const CLINIC_INFO = {
-  phoneDisplay: 'XXX-XXXX-XXXX',  // 画面表示用(ハイフン区切り)
-  phoneTel: 'XXXXXXXXXX',          // tel: リンク用(数字のみ)
+  phoneDisplay: 'XXX-XXXX-XXXX',
+  phoneTel: 'XXXXXXXXXX',
   hours: '平日 9:00〜17:00',
 };
 
-// ▼ テストモード判定(URLに ?test=1 が含まれていればtrue)
 const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
 
-// ▼ 日付ユーティリティ
 function formatDate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -694,8 +677,6 @@ function formatDate(d) {
   return `${y}-${m}-${day}`;
 }
 
-// ▼ 現在時刻基準で日付境界を計算(深夜跨ぎ対応のため毎回呼ぶ)
-// 戻り値: { TODAY, YESTERDAY, PREFERRED_MIN, PREFERRED_MAX, CHECKUP_MIN, BIRTHDAY_MIN } の YYYY-MM-DD 文字列
 function calcDateBoundaries() {
   const today = new Date();
   const yesterday = new Date(today);
@@ -716,7 +697,6 @@ function calcDateBoundaries() {
   };
 }
 
-// ▼ 日付境界を DOM(input の min/max 属性、希望日の注意書き)へ反映
 function applyDateBoundariesToDOM(b) {
   const checkupDateInput = document.querySelector('input[name="checkupDate"]');
   if (checkupDateInput) {
@@ -736,24 +716,41 @@ function applyDateBoundariesToDOM(b) {
   }
 }
 
-// ▼ カタカナ判定(ァ-ヶ、長音符ー、中黒・、半角/全角スペース)
-const KANA_REGEX = /^[ァ-ヶー・　 ]+$/;
+const KANA_REGEX = /^[ァ-ヶー・  ]+$/;
 
-// ▼ 現在のtypeを保持
 let currentType = null;
-
-// ▼ 送信状態の管理(二重送信防止用)
 let submissionState = { id: null, inFlight: false, completed: false };
-
-// ▼ フォームの未保存変更フラグ(離脱警告用)
 let formDirty = false;
 
-// ▼ 冪等性キーを生成(UUIDが使えない環境のフォールバックあり)
 function generateSubmissionId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
   return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+async function checkActiveReservation() {
+  if (TEST_MODE) return false;
+  try {
+    const payload = {
+      idToken: liff.getIDToken(),
+      appToken: APP_TOKEN,
+      action: 'check_status'
+    };
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(tid);
+    const data = JSON.parse(await res.text());
+    return !!(data.ok && data.hasActive);
+  } catch (e) {
+    console.error('[checkActiveReservation]', e);
+    return false;
+  }
 }
 
 (async () => {
@@ -774,7 +771,15 @@ function generateSubmissionId() {
       }
     });
 
+    const hasActive = await checkActiveReservation();
+
     document.getElementById('loading').style.display = 'none';
+
+    if (hasActive) {
+      document.getElementById('pendingScreen').style.display = '';
+      return;
+    }
+
     document.getElementById('introScreen').style.display = '';
     updateProgressBar(1);
 
@@ -1198,12 +1203,11 @@ function buildPayload(form, validated) {
   return formData;
 }
 
-// ▼ GASエンドポイントへ送信し、レスポンスJSONを返す(30秒タイムアウト付き)
 async function submitToServer(formData) {
   const payload = {
     idToken: TEST_MODE ? null : liff.getIDToken(),
     formData,
-    appToken: APP_TOKEN  // 共有秘密トークン:第三者の直接アクセスを防ぐためにGAS側でチェック
+    appToken: APP_TOKEN
   };
   if (TEST_MODE) payload.testMode = true;
 
@@ -1220,40 +1224,6 @@ async function submitToServer(formData) {
   } finally {
     clearTimeout(timeoutId);
   }
-}
-
-function formatDateForDisplay(yyyymmdd) {
-  if (!yyyymmdd || !/^\d{4}-\d{2}-\d{2}$/.test(yyyymmdd)) return yyyymmdd || '';
-  return yyyymmdd.replace(/-/g, '/');
-}
-
-async function sendBookingMessageToLine(formData) {
-  if (TEST_MODE) return;
-  if (typeof liff === 'undefined') return;
-  if (typeof liff.isInClient !== 'function' || !liff.isInClient()) return;
-  if (typeof liff.sendMessages !== 'function') return;
-
-  const ticketNumber = (formData.submissionId || '').substring(0, 8);
-  const typeLabel = formData.type === 'own' ? '当院で健診' : '他院等で健診';
-
-  const lines = [
-    '予約申込しました(申込番号: ' + ticketNumber + ')',
-    '',
-    '■ 氏名: ' + (formData.name || ''),
-    '■ 受診状況: ' + typeLabel,
-    '■ 第1希望日: ' + formatDateForDisplay(formData.preferredDate1),
-  ];
-  if (formData.preferredDate2) {
-    lines.push('■ 第2希望日: ' + formatDateForDisplay(formData.preferredDate2));
-  }
-  if (formData.preferredDate3) {
-    lines.push('■ 第3希望日: ' + formatDateForDisplay(formData.preferredDate3));
-  }
-
-  await liff.sendMessages([{
-    type: 'text',
-    text: lines.join('\n')
-  }]);
 }
 
 function showSubmitSuccess(result, form) {
@@ -1284,6 +1254,17 @@ function showSubmitSuccess(result, form) {
   const backBtn = document.querySelector('#formScreen .back-btn');
   if (backBtn) backBtn.style.display = 'none';
 
+  updateProgressBar(4);
+}
+
+function showAlreadySubmitted(result, form) {
+  result.className = 'ok';
+  result.style.display = '';
+  result.innerHTML = '📩 <strong>現在、お申し込みを受付中です。</strong><br>' +
+    '内容を確認のうえ、LINEにてご返事いたします。';
+  form.style.display = 'none';
+  const backBtn = document.querySelector('#formScreen .back-btn');
+  if (backBtn) backBtn.style.display = 'none';
   updateProgressBar(4);
 }
 
@@ -1345,9 +1326,11 @@ async function handleSubmit() {
       submissionState.inFlight = false;
       formDirty = false;
       showSubmitSuccess(result, form);
-      sendBookingMessageToLine(formData).catch(err => {
-        console.error('[sendMessages]', err);
-      });
+    } else if (data.error === 'already_submitted') {
+      submissionState.completed = true;
+      submissionState.inFlight = false;
+      formDirty = false;
+      showAlreadySubmitted(result, form);
     } else {
       submissionState.inFlight = false;
       showSubmitFailure(result, btn, data.error);
