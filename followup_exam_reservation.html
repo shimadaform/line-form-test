@@ -558,7 +558,7 @@
 
     <div class="field">
       <label class="label" for="birthdayInput">生年月日<span class="required">必須</span></label>
-      <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" placeholder="例:1980/01/15">
+      <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" inputmode="numeric" placeholder="例:1980/01/15">
       <div class="inline-error" id="birthdayError" role="alert">生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)</div>
     </div>
 
@@ -671,6 +671,11 @@
 const LIFF_ID = '2010076084-TAppgjXG';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
 
+// ▼ フォーム-GAS間の共有秘密トークン(GAS側の APP_TOKEN と必ず同じ値にする)
+// 第三者が GAS URL に直接アクセスするのを防ぐためのもの。
+// 値を変えたい場合は、ここと GAS 側の両方を変更してデプロイし直す。
+const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
+
 // ▼ 医療機関情報(電話番号や診療時間が変わる場合はここだけ修正)
 const CLINIC_INFO = {
   phoneDisplay: 'XXX-XXXX-XXXX',  // 画面表示用(ハイフン区切り)
@@ -738,9 +743,6 @@ const KANA_REGEX = /^[ァ-ヶー・　 ]+$/;
 let currentType = null;
 
 // ▼ 送信状態の管理(二重送信防止用)
-// id: 冪等性キー(GAS側で重複排除する場合の手掛かり)
-// inFlight: 送信中
-// completed: 送信成功済み(再送信不可)
 let submissionState = { id: null, inFlight: false, completed: false };
 
 // ▼ フォームの未保存変更フラグ(離脱警告用)
@@ -756,7 +758,6 @@ function generateSubmissionId() {
 
 (async () => {
   try {
-    // ▼ テストモードでなければLIFF初期化&ログイン
     if (!TEST_MODE) {
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -765,10 +766,7 @@ function generateSubmissionId() {
       console.log('[TEST MODE] LIFF login skipped');
     }
 
-    // 医療機関情報を全DOMへ反映(電話番号・診療時間)
     applyClinicInfo();
-
-    // 日付フィールドの min/max と希望日の注意書きを反映(深夜跨ぎ時はタブ復帰で再適用)
     applyDateBoundariesToDOM(calcDateBoundaries());
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
@@ -776,12 +774,10 @@ function generateSubmissionId() {
       }
     });
 
-    // 初期画面:はじめに画面を表示
     document.getElementById('loading').style.display = 'none';
     document.getElementById('introScreen').style.display = '';
     updateProgressBar(1);
 
-    // ▼ 同意チェック → 次へ進むボタン有効化
     const agreeCheck = document.getElementById('agreeCheck');
     const proceedBtn = document.getElementById('proceedBtn');
     agreeCheck.addEventListener('change', () => {
@@ -791,7 +787,6 @@ function generateSubmissionId() {
       showScreen('select');
     });
 
-    // ▼ 選択ボタン
     document.querySelectorAll('.select-btn').forEach(btn => {
       const type = btn.dataset.type;
       if (!type) return;
@@ -804,14 +799,12 @@ function generateSubmissionId() {
       });
     });
 
-    // ▼ 戻るボタン
     document.querySelectorAll('.back-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         showScreen(btn.dataset.back);
       });
     });
 
-    // ▼ 症状あり/なしで詳細欄を表示制御
     document.getElementById('hasSymptom').addEventListener('change', (e) => {
       const detail = document.getElementById('symptomDetail');
       const symptomDetailInput = document.getElementById('symptomDetailInput');
@@ -819,13 +812,11 @@ function generateSubmissionId() {
         detail.classList.add('show');
       } else {
         detail.classList.remove('show');
-        // 「なし」に戻したら詳細とエラーをリセット
         symptomDetailInput.value = '';
         clearInlineError(symptomDetailInput, 'symptomDetailError');
       }
     });
 
-    // ▼ 症状詳細の入力中はエラーをクリア
     const symptomDetailInput = document.getElementById('symptomDetailInput');
     symptomDetailInput.addEventListener('input', () => {
       if (symptomDetailInput.classList.contains('has-error')) {
@@ -833,7 +824,6 @@ function generateSubmissionId() {
       }
     });
 
-    // ▼ フリガナのカタカナ検証(blur時)
     const kanaInput = document.getElementById('kanaInput');
     kanaInput.addEventListener('blur', () => {
       const v = kanaInput.value.trim();
@@ -849,7 +839,6 @@ function generateSubmissionId() {
       }
     });
 
-    // ▼ 電話番号検証(blur時)
     const phoneInput = document.getElementById('phoneInput');
     phoneInput.addEventListener('blur', () => {
       const v = phoneInput.value.trim();
@@ -865,7 +854,6 @@ function generateSubmissionId() {
       }
     });
 
-    // ▼ 生年月日(テキスト)検証(blur時)
     const birthdayInput = document.getElementById('birthdayInput');
     birthdayInput.addEventListener('blur', () => {
       const v = birthdayInput.value.trim();
@@ -881,17 +869,13 @@ function generateSubmissionId() {
       }
     });
 
-    // ▼ 日付入力の範囲・形式チェック(手入力対策)
     document.querySelectorAll('input[type="date"]').forEach(input => {
       input.addEventListener('change', () => {
         const min = input.getAttribute('min');
         const max = input.getAttribute('max');
         const v = input.value;
         const errorId = input.name + 'Error';
-
-        // まずこのフィールドのエラーをクリア
         clearInlineError(input, errorId);
-
         if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
           showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
           return;
@@ -904,16 +888,12 @@ function generateSubmissionId() {
           showInlineError(input, errorId, `${max}以前の日付を入力してください`);
           return;
         }
-
-        // 希望日(第1〜第3)の重複チェック
-        // どれか1つ変わると他の希望日のエラー状態も変わりうるので、3つすべて再評価
         if (['preferredDate1', 'preferredDate2', 'preferredDate3'].includes(input.name)) {
           revalidateAllPreferredDates();
         }
       });
     });
 
-    // ▼ 「その他」チェック時のみテキスト欄を有効化し、入力もエラー連動
     const otherCheck = document.getElementById('findingsOtherCheck');
     const otherInput = document.getElementById('findingsOtherInput');
     otherCheck.addEventListener('change', () => {
@@ -923,14 +903,12 @@ function generateSubmissionId() {
         clearInlineError(otherInput, 'findingsOtherError');
       }
     });
-    // その他の入力中はエラーをクリア
     otherInput.addEventListener('input', () => {
       if (otherInput.classList.contains('has-error')) {
         clearInlineError(otherInput, 'findingsOtherError');
       }
     });
 
-    // ▼ 指摘項目のいずれかが変わったらエラーをクリア
     document.querySelectorAll('input[name="findings"]').forEach(cb => {
       cb.addEventListener('change', () => {
         const anyChecked = document.querySelector('input[name="findings"]:checked');
@@ -938,23 +916,18 @@ function generateSubmissionId() {
       });
     });
 
-    // ▼ 送信ボタン
     document.getElementById('submitBtn').addEventListener('click', handleSubmit);
 
-    // ▼ フォーム入力検知(離脱警告用の formDirty フラグ管理)
     const formEl = document.getElementById('form');
     const markFormDirty = () => { formDirty = true; };
     formEl.addEventListener('input', markFormDirty);
     formEl.addEventListener('change', markFormDirty);
 
-    // ▼ ページ離脱警告
-    // フォーム画面が表示中 かつ 入力あり かつ 未送信完了 のときだけ警告
     window.addEventListener('beforeunload', (e) => {
       const formScreen = document.getElementById('formScreen');
       const isFormVisible = formScreen && formScreen.style.display !== 'none';
       if (isFormVisible && formDirty && !submissionState.completed) {
         e.preventDefault();
-        // 現代のブラウザではこのメッセージは無視され、固定文言が表示される
         e.returnValue = '';
       }
     });
@@ -965,22 +938,17 @@ function generateSubmissionId() {
   }
 })();
 
-// ▼ 医療機関情報をDOMへ反映(tel:リンク・診療時間スパン)
 function applyClinicInfo() {
-  // 電話リンク(tel:プレフィックスのある全てのアンカー)
   document.querySelectorAll('a[href^="tel:"]').forEach(a => {
     a.href = 'tel:' + CLINIC_INFO.phoneTel;
-    // 既存テキストに「📞」アイコンがあれば保持しつつ番号部分のみ置換
     const hasIcon = /📞/.test(a.textContent);
     a.textContent = (hasIcon ? '📞 ' : '') + CLINIC_INFO.phoneDisplay;
   });
-  // 診療時間スパン
   document.querySelectorAll('[data-clinic-hours]').forEach(el => {
     el.textContent = CLINIC_INFO.hours;
   });
 }
 
-// ▼ 進捗バーを指定ステップに更新(0で非表示)
 function updateProgressBar(currentStep) {
   const progressBar = document.getElementById('progressBar');
   if (!progressBar) return;
@@ -1003,30 +971,24 @@ function updateProgressBar(currentStep) {
   });
 }
 
-// ▼ 画面切替
 function showScreen(name) {
   ['intro', 'select', 'form', 'referral'].forEach(s => {
     const el = document.getElementById(s + 'Screen');
     if (el) el.style.display = (s === name) ? '' : 'none';
   });
-  // 進捗ステップ更新(referral は別ルートだが「受診状況選択」の終端として step 2 をハイライト)
   const stepMap = { intro: 1, select: 2, form: 3, referral: 2 };
   updateProgressBar(stepMap[name] || 0);
   window.scrollTo(0, 0);
 }
 
-// ▼ フォーム画面への切替(当院/他院)
 function showForm(type) {
   currentType = type;
-
   document.getElementById('typeBadge').textContent =
     (type === 'own') ? '当院で健診' : '他院等で健診';
-
   const isOther = (type === 'other');
   document.querySelectorAll('.other-only').forEach(el => {
     el.style.display = isOther ? '' : 'none';
   });
-
   document.querySelectorAll('.other-only select, .other-only input').forEach(el => {
     if (isOther) {
       if (el.dataset.originallyRequired === 'true') {
@@ -1039,22 +1001,16 @@ function showForm(type) {
       }
     }
   });
-
-  // 新しいフォーム表示開始 → 送信状態と dirty フラグをリセット
   submissionState = { id: generateSubmissionId(), inFlight: false, completed: false };
   formDirty = false;
-
   showScreen('form');
 }
 
-// ▼ 電話番号バリデーション(0始まり10〜11桁、ハイフン/スペース/括弧許容)
 function isValidPhone(phone) {
   const digits = phone.replace(/[\s\-\(\)]/g, '');
   return /^0\d{9,10}$/.test(digits);
 }
 
-// ▼ 汎用インラインエラー表示・クリア
-// input: 赤枠にする対象(null可)、errorId: エラーメッセージ要素のID、msg: 表示メッセージ
 function showInlineError(input, errorId, msg) {
   if (input) input.classList.add('has-error');
   const errEl = document.getElementById(errorId);
@@ -1069,21 +1025,15 @@ function clearInlineError(input, errorId) {
   if (errEl) errEl.classList.remove('show');
 }
 
-// ▼ 希望日の重複チェック
-// changedInput と同じ値を持つ別の希望日があれば、changedInput を赤くしてエラー表示
-// (値はクリアせず残し、ユーザーが修正できるようにする)
 function checkPreferredDateConflict(changedInput) {
   clearInlineError(changedInput, changedInput.name + 'Error');
-
   const v = changedInput.value;
-  if (!v) return; // 空(任意フィールドの未入力)は許容
-
+  if (!v) return;
   const preferredFields = [
     { name: 'preferredDate1', label: '第1希望日' },
     { name: 'preferredDate2', label: '第2希望日' },
     { name: 'preferredDate3', label: '第3希望日' },
   ];
-
   for (const p of preferredFields) {
     const el = document.querySelector(`input[name="${p.name}"]`);
     if (!el || el === changedInput) continue;
@@ -1094,7 +1044,6 @@ function checkPreferredDateConflict(changedInput) {
   }
 }
 
-// ▼ 全希望日の重複状態を再評価(送信時や、別フィールドの変更による波及確認に使用)
 function revalidateAllPreferredDates() {
   ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
     const el = document.querySelector(`input[name="${name}"]`);
@@ -1102,7 +1051,6 @@ function revalidateAllPreferredDates() {
   });
 }
 
-// ▼ 生年月日のパース(YYYY/MM/DD、YYYY-MM-DD、YYYY.MM.DD、YYYY年MM月DD日 を許容)
 function parseBirthday(s) {
   const v = s.trim();
   let m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
@@ -1117,11 +1065,7 @@ function parseBirthday(s) {
   return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-// ▼ 送信処理
-// ▼ フォーム全体のバリデーション
-// 成功時に正規化済みデータ { birthday, findings } を返す。失敗時は null を返し、対象フィールドにエラー表示・フォーカス済み。
 function validateForm(form) {
-  // HTML5標準バリデーション
   if (!form.checkValidity()) {
     form.reportValidity();
     const firstInvalid = form.querySelector(':invalid');
@@ -1129,7 +1073,6 @@ function validateForm(form) {
     return null;
   }
 
-  // フリガナ検証
   const kanaInput = document.getElementById('kanaInput');
   if (!KANA_REGEX.test(kanaInput.value.trim())) {
     showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
@@ -1137,7 +1080,6 @@ function validateForm(form) {
     return null;
   }
 
-  // 電話番号検証
   const phoneInput = document.getElementById('phoneInput');
   if (!isValidPhone(phoneInput.value)) {
     showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません。0から始まる10〜11桁の番号を入力してください(ハイフンあり/なし可)。');
@@ -1145,7 +1087,6 @@ function validateForm(form) {
     return null;
   }
 
-  // 生年月日検証(テキスト入力 → YYYY-MM-DD に正規化)
   const birthdayInput = document.getElementById('birthdayInput');
   const birthday = parseBirthday(birthdayInput.value);
   if (!birthday) {
@@ -1154,7 +1095,6 @@ function validateForm(form) {
     return null;
   }
 
-  // 指摘項目(必須・複数)
   const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
     .map(el => el.value);
   if (findings.length === 0) {
@@ -1164,7 +1104,6 @@ function validateForm(form) {
     return null;
   }
 
-  // 「その他」チェック時の内容必須
   const otherCheckEl = document.getElementById('findingsOtherCheck');
   const otherInputEl = document.getElementById('findingsOtherInput');
   if (otherCheckEl.checked && !otherInputEl.value.trim()) {
@@ -1173,7 +1112,6 @@ function validateForm(form) {
     return null;
   }
 
-  // 「症状あり」時の内容必須
   const hasSymptomEl = document.getElementById('hasSymptom');
   const symptomDetailEl = document.getElementById('symptomDetailInput');
   if (hasSymptomEl.value === 'あり' && !symptomDetailEl.value.trim()) {
@@ -1182,13 +1120,11 @@ function validateForm(form) {
     return null;
   }
 
-  // 日付の追加チェック(min/max迂回対策)
   const checkupDate = form.querySelector('input[name="checkupDate"]').value;
   const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
   const preferredDate2 = form.querySelector('input[name="preferredDate2"]').value;
   const preferredDate3 = form.querySelector('input[name="preferredDate3"]').value;
 
-  // 4桁年チェック
   const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
   const dateChecks = [
     { label: '健診日', value: checkupDate, name: 'checkupDate' },
@@ -1205,8 +1141,6 @@ function validateForm(form) {
     }
   }
 
-  // 日付範囲チェック(送信時点の現在時刻を基準にする = 深夜跨ぎ対応)
-  // ついでに DOM の min/max 属性も最新化
   const b = calcDateBoundaries();
   applyDateBoundariesToDOM(b);
 
@@ -1240,7 +1174,6 @@ function validateForm(form) {
     return null;
   }
 
-  // 希望日の重複チェック(送信時の安全網)
   const preferredVals = [preferredDate1, preferredDate2, preferredDate3].filter(v => v);
   if (preferredVals.length !== new Set(preferredVals).size) {
     revalidateAllPreferredDates();
@@ -1252,17 +1185,16 @@ function validateForm(form) {
   return { birthday, findings };
 }
 
-// ▼ 送信用ペイロード(JSONに乗せるオブジェクト)を構築
 function buildPayload(form, validated) {
   const formData = {};
   new FormData(form).forEach((v, k) => {
-    if (k === 'findings') return; // 複数値は別途配列で入れる
+    if (k === 'findings') return;
     formData[k] = v;
   });
   formData.findings = validated.findings;
   formData.type = currentType;
   formData.birthday = validated.birthday;
-  formData.submissionId = submissionState.id; // 冪等性キー(GAS側で重複排除する場合の手掛かり)
+  formData.submissionId = submissionState.id;
   return formData;
 }
 
@@ -1270,7 +1202,8 @@ function buildPayload(form, validated) {
 async function submitToServer(formData) {
   const payload = {
     idToken: TEST_MODE ? null : liff.getIDToken(),
-    formData
+    formData,
+    appToken: APP_TOKEN  // 共有秘密トークン:第三者の直接アクセスを防ぐためにGAS側でチェック
   };
   if (TEST_MODE) payload.testMode = true;
 
@@ -1289,26 +1222,20 @@ async function submitToServer(formData) {
   }
 }
 
-// ▼ 日付を表示用に整形(YYYY-MM-DD → YYYY/MM/DD)
 function formatDateForDisplay(yyyymmdd) {
   if (!yyyymmdd || !/^\d{4}-\d{2}-\d{2}$/.test(yyyymmdd)) return yyyymmdd || '';
   return yyyymmdd.replace(/-/g, '/');
 }
 
-// ▼ 申込内容をLINEトークに投稿(ユーザー自身のメッセージとして)
-// LIFF内ブラウザ・LINE認証済みの場合のみ動作。失敗してもUIには影響させない。
 async function sendBookingMessageToLine(formData) {
-  // 動作可能環境の判定
   if (TEST_MODE) return;
   if (typeof liff === 'undefined') return;
   if (typeof liff.isInClient !== 'function' || !liff.isInClient()) return;
   if (typeof liff.sendMessages !== 'function') return;
 
-  // 申込番号(submissionId の先頭8文字)
   const ticketNumber = (formData.submissionId || '').substring(0, 8);
   const typeLabel = formData.type === 'own' ? '当院で健診' : '他院等で健診';
 
-  // メッセージ本文を構築(任意フィールドは値がある場合のみ表示)
   const lines = [
     '予約申込しました(申込番号: ' + ticketNumber + ')',
     '',
@@ -1329,7 +1256,6 @@ async function sendBookingMessageToLine(formData) {
   }]);
 }
 
-// ▼ 送信成功時の表示
 function showSubmitSuccess(result, form) {
   result.className = 'ok';
   result.style.display = '';
@@ -1337,7 +1263,6 @@ function showSubmitSuccess(result, form) {
   let html = '✅ <strong>予約申込を受け付けました。</strong><br>' +
     '内容を確認のうえ、LINEにてご返事いたします。';
 
-  // LIFF環境では「LINEに戻る」ボタンを表示
   const canCloseLiff = !TEST_MODE && typeof liff !== 'undefined' &&
     typeof liff.closeWindow === 'function';
   if (canCloseLiff) {
@@ -1346,7 +1271,6 @@ function showSubmitSuccess(result, form) {
 
   result.innerHTML = html;
 
-  // ボタンのイベントリスナーを設定
   if (canCloseLiff) {
     const closeBtn = result.querySelector('.close-line-btn');
     if (closeBtn) {
@@ -1360,11 +1284,9 @@ function showSubmitSuccess(result, form) {
   const backBtn = document.querySelector('#formScreen .back-btn');
   if (backBtn) backBtn.style.display = 'none';
 
-  // 進捗ステップを「完了」に
   updateProgressBar(4);
 }
 
-// ▼ サーバーから明示的エラーが返ったときの表示(詳細はconsoleへ)
 function showSubmitFailure(result, btn, errorDetail) {
   console.error('[Submit Error]', errorDetail);
   result.className = 'ng';
@@ -1375,7 +1297,6 @@ function showSubmitFailure(result, btn, errorDetail) {
   btn.textContent = '予約を申し込む';
 }
 
-// ▼ 通信エラー(ネットワーク・パース失敗・タイムアウト)の表示
 function showNetworkFailure(result, btn, err) {
   console.error('[Network Error]', err);
   result.className = 'ng';
@@ -1389,17 +1310,14 @@ function showNetworkFailure(result, btn, err) {
   btn.textContent = '予約を申し込む';
 }
 
-// ▼ 送信処理のオーケストレーション
 async function handleSubmit() {
-  // 二重送信ガード
-  if (submissionState.inFlight) return; // 送信中の連打を無視
-  if (submissionState.completed) return; // 完了済みの再送信を無視
+  if (submissionState.inFlight) return;
+  if (submissionState.completed) return;
 
   const form = document.getElementById('form');
   const btn = document.getElementById('submitBtn');
   const result = document.getElementById('result');
 
-  // 受診状況の確認(通常フローでは到達しない防御コード)
   if (!currentType) {
     result.className = 'ng';
     result.style.display = '';
@@ -1407,32 +1325,26 @@ async function handleSubmit() {
     return;
   }
 
-  // 送信を試みた印 → エラー枠表示を有効化
   form.classList.add('form-submitted');
 
-  // バリデーション
   const validated = validateForm(form);
   if (!validated) return;
 
-  // ペイロード構築
   const formData = buildPayload(form, validated);
 
-  // 送信中UI & 状態
   submissionState.inFlight = true;
   btn.disabled = true;
   btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>送信中...';
   result.className = '';
   result.style.display = '';
 
-  // サーバー送信 & 結果表示
   try {
     const data = await submitToServer(formData);
     if (data.ok) {
       submissionState.completed = true;
       submissionState.inFlight = false;
-      formDirty = false; // 送信完了 → 離脱警告を無効化
+      formDirty = false;
       showSubmitSuccess(result, form);
-      // LINEトークに申込内容を残す(失敗しても完了表示は変えない)
       sendBookingMessageToLine(formData).catch(err => {
         console.error('[sendMessages]', err);
       });
