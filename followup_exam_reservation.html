@@ -471,7 +471,7 @@
 
   <div class="alert-box" role="alert">
     <span class="icon">⚠️</span><strong>強い症状(血便、しこり、強い痛みなど)がある場合は、本フォームでの予約をお待ちにならず、お電話にてご連絡ください。</strong>
-    <a href="tel:XXXXXXXXXX" class="phone">📞 XXX-XXXX-XXXX</a>
+    <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
   </div>
 
   <div class="terms">
@@ -566,7 +566,8 @@
 
     <div class="field other-only" style="display:none;">
       <label class="label" for="clinicNameInput">健診実施機関名<span class="required">必須</span></label>
-      <input type="text" id="clinicNameInput" name="clinicName" autocomplete="off" placeholder="例:〇〇病院や△△健診センターなど">
+      <input type="text" id="clinicNameInput" name="clinicName" required autocomplete="off" placeholder="例:〇〇病院や△△健診センターなど">
+      <div class="inline-error" id="clinicNameError" role="alert"></div>
     </div>
 
     <div class="field">
@@ -649,7 +650,7 @@
   <div class="referral-box">
     <p>紹介状をお持ちの方、または紹介元医療機関から受診を案内された方は、<br>
     お手数ですが下記までお電話にてご連絡ください。</p>
-    <a href="tel:XXXXXXXXXX" class="phone-link">📞 XXX-XXXX-XXXX</a>
+    <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
     <p style="margin-top:16px; font-size:0.85rem; color:#888;">
       診療時間:<span data-clinic-hours></span>
     </p>
@@ -662,10 +663,14 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFF9eznXG1NTZbKUfcec3-
 
 const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
 
+// =============================================================
+// 院の連絡先設定 — 電話番号・診療時間はここだけ編集してください
+// HTML側に直接記入する必要はありません(applyClinicInfoが自動で反映します)
+// =============================================================
 const CLINIC_INFO = {
-  phoneDisplay: 'XXX-XXXX-XXXX',
-  phoneTel: 'XXXXXXXXXX',
-  hours: '平日 9:00〜17:00',
+  phoneDisplay: '0942-72-2375', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
+  phoneTel:     '0942722375',    // tel:リンク用(数字のみ、例: 0312345678)
+  hours:        '平日 9:00〜17:00',
 };
 
 const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
@@ -876,6 +881,13 @@ async function checkActiveReservation() {
 
     document.querySelectorAll('input[type="date"]').forEach(input => {
       input.addEventListener('change', () => {
+        const isPreferred = ['preferredDate1', 'preferredDate2', 'preferredDate3'].includes(input.name);
+        if (isPreferred) {
+          // 希望日は他の希望日との重複チェックも必要なため、全希望日を再検証
+          revalidateAllPreferredDates();
+          return;
+        }
+        // その他の日付フィールド(checkupDate)はフォーマット・範囲のみチェック
         const min = input.getAttribute('min');
         const max = input.getAttribute('max');
         const v = input.value;
@@ -892,9 +904,6 @@ async function checkActiveReservation() {
         if (v && max && v > max) {
           showInlineError(input, errorId, `${max}以前の日付を入力してください`);
           return;
-        }
-        if (['preferredDate1', 'preferredDate2', 'preferredDate3'].includes(input.name)) {
-          revalidateAllPreferredDates();
         }
       });
     });
@@ -944,11 +953,15 @@ async function checkActiveReservation() {
 })();
 
 function applyClinicInfo() {
-  document.querySelectorAll('a[href^="tel:"]').forEach(a => {
+  // tel:リンク用 href の設定
+  document.querySelectorAll('[data-clinic-phone-link]').forEach(a => {
     a.href = 'tel:' + CLINIC_INFO.phoneTel;
-    const hasIcon = /📞/.test(a.textContent);
-    a.textContent = (hasIcon ? '📞 ' : '') + CLINIC_INFO.phoneDisplay;
   });
+  // 表記電話番号の挿入
+  document.querySelectorAll('[data-clinic-phone-display]').forEach(el => {
+    el.textContent = CLINIC_INFO.phoneDisplay;
+  });
+  // 診療時間の挿入
   document.querySelectorAll('[data-clinic-hours]').forEach(el => {
     el.textContent = CLINIC_INFO.hours;
   });
@@ -1030,10 +1043,35 @@ function clearInlineError(input, errorId) {
   if (errEl) errEl.classList.remove('show');
 }
 
-function checkPreferredDateConflict(changedInput) {
-  clearInlineError(changedInput, changedInput.name + 'Error');
-  const v = changedInput.value;
-  if (!v) return;
+function validatePreferredDate(input) {
+  const errorId = input.name + 'Error';
+  const v = input.value;
+
+  // 値がなければエラークリアのみ(必須チェックは送信時のcheckValidityで)
+  if (!v) {
+    clearInlineError(input, errorId);
+    return;
+  }
+
+  // 1. フォーマットチェック
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
+    return;
+  }
+
+  // 2. 範囲チェック
+  const min = input.getAttribute('min');
+  const max = input.getAttribute('max');
+  if (min && v < min) {
+    showInlineError(input, errorId, `${min}以降の日付を入力してください`);
+    return;
+  }
+  if (max && v > max) {
+    showInlineError(input, errorId, `${max}以前の日付を入力してください`);
+    return;
+  }
+
+  // 3. 他の希望日との重複チェック
   const preferredFields = [
     { name: 'preferredDate1', label: '第1希望日' },
     { name: 'preferredDate2', label: '第2希望日' },
@@ -1041,18 +1079,21 @@ function checkPreferredDateConflict(changedInput) {
   ];
   for (const p of preferredFields) {
     const el = document.querySelector(`input[name="${p.name}"]`);
-    if (!el || el === changedInput) continue;
+    if (!el || el === input) continue;
     if (el.value === v) {
-      showInlineError(changedInput, changedInput.name + 'Error', `${p.label}と同じ日付は選択できません`);
+      showInlineError(input, errorId, `${p.label}と同じ日付は選択できません`);
       return;
     }
   }
+
+  // すべて通過
+  clearInlineError(input, errorId);
 }
 
 function revalidateAllPreferredDates() {
   ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
     const el = document.querySelector(`input[name="${name}"]`);
-    if (el) checkPreferredDateConflict(el);
+    if (el) validatePreferredDate(el);
   });
 }
 
