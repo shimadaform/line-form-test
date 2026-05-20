@@ -378,6 +378,10 @@
     .symptom-detail { margin-top: 8px; display: none; }
     .symptom-detail.show { display: block; }
 
+    /* ▼「その他」選択時のみ表示する入力欄 */
+    .other-detail { display: none; }
+    .other-detail.show { display: block; }
+
     .inline-error {
       color: #c62828;
       font-size: 0.8rem;
@@ -594,18 +598,19 @@
         <label><input type="checkbox" name="findings" value="子宮・婦人科">子宮・婦人科</label>
         <label><input type="checkbox" name="findings" value="その他" id="findingsOtherCheck">その他</label>
       </div>
-      <input type="text" name="findingsOther" id="findingsOtherInput" placeholder="その他の場合は内容をご記入ください" aria-label="指摘項目「その他」の内容" autocomplete="off" disabled style="margin-top:8px;">
-      <div class="inline-error" id="findingsOtherError" role="alert"></div>
+      <div class="other-detail" id="findingsOtherDetail">
+        <input type="text" name="findingsOther" id="findingsOtherInput" placeholder="その他の場合は内容をご記入ください" aria-label="指摘項目「その他」の内容" autocomplete="off" style="margin-top:8px;">
+        <div class="inline-error" id="findingsOtherError" role="alert"></div>
+      </div>
       <div class="inline-error" id="findingsError" role="alert"></div>
     </div>
 
     <div class="field">
-      <label class="label" for="hasSymptom">症状の有無<span class="required">必須</span></label>
-      <select name="hasSymptom" id="hasSymptom" required>
-        <option value="">選択してください</option>
-        <option value="なし">なし</option>
-        <option value="あり">あり(軽度)</option>
-      </select>
+      <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
+      <div class="checkboxes" role="radiogroup" aria-labelledby="hasSymptomLabel">
+        <label><input type="radio" name="hasSymptom" value="なし" required>なし</label>
+        <label><input type="radio" name="hasSymptom" value="あり" id="hasSymptomYes" required>あり(軽度)</label>
+      </div>
       <div class="symptom-detail" id="symptomDetail">
         <input type="text" name="symptomDetail" id="symptomDetailInput" placeholder="症状の内容をご記入ください" aria-label="症状の内容" autocomplete="off" style="margin-top:8px;">
         <div class="inline-error" id="symptomDetailError" role="alert"></div>
@@ -635,6 +640,22 @@
       <label class="label" for="preferredDate3Input">第3希望日<span class="optional">任意</span></label>
       <input type="date" id="preferredDate3Input" name="preferredDate3">
       <div class="inline-error" id="preferredDate3Error" role="alert"></div>
+    </div>
+
+    <h2>④ 申込者について</h2>
+
+    <div class="field">
+      <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
+      <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
+        <label><input type="radio" name="applicant" value="本人" required>上記、患者氏名と同一である</label>
+        <label><input type="radio" name="applicant" value="家族・キーパーソン" required>患者の家族もしくはキーパーソン</label>
+        <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
+      </div>
+      <div class="other-detail" id="applicantOtherDetail">
+        <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください" aria-label="申込者「その他」の内容" autocomplete="off" style="margin-top:8px;">
+        <div class="inline-error" id="applicantOtherError" role="alert"></div>
+      </div>
+      <div class="inline-error" id="applicantError" role="alert"></div>
     </div>
 
     <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
@@ -788,13 +809,40 @@ async function checkActiveReservation() {
     document.getElementById('introScreen').style.display = '';
     updateProgressBar(1);
 
+    // ▼ 初期画面の履歴を登録(戻る/進むボタン対応)
+    history.replaceState({ screen: 'intro' }, '');
+
+    // ▼ 戻る/進むボタンへの応答
+    window.addEventListener('popstate', (e) => {
+      // 送信完了後・送信中は戻れないようにする
+      if (submissionState.completed) {
+        history.pushState({ screen: 'complete' }, '');
+        return;
+      }
+      if (submissionState.inFlight) {
+        history.pushState({ screen: 'submitting' }, '');
+        return;
+      }
+
+      const screen = (e.state && e.state.screen) || 'intro';
+
+      // formに戻ろうとしたが type が未選択の場合は select 画面へ
+      if (screen === 'form' && !currentType) {
+        showScreen('select');
+        history.replaceState({ screen: 'select' }, '');
+        return;
+      }
+
+      showScreen(screen);
+    });
+
     const agreeCheck = document.getElementById('agreeCheck');
     const proceedBtn = document.getElementById('proceedBtn');
     agreeCheck.addEventListener('change', () => {
       proceedBtn.disabled = !agreeCheck.checked;
     });
     proceedBtn.addEventListener('click', () => {
-      showScreen('select');
+      navigateTo('select');
     });
 
     document.querySelectorAll('.select-btn').forEach(btn => {
@@ -802,29 +850,33 @@ async function checkActiveReservation() {
       if (!type) return;
       btn.addEventListener('click', () => {
         if (type === 'referral') {
-          showScreen('referral');
+          navigateTo('referral');
         } else {
           showForm(type);
         }
       });
     });
 
+    // 画面内「← 戻る」ボタンは history.back() に統一
+    // (ブラウザの戻るボタンと同じ動作になる)
     document.querySelectorAll('.back-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        showScreen(btn.dataset.back);
+        history.back();
       });
     });
 
-    document.getElementById('hasSymptom').addEventListener('change', (e) => {
-      const detail = document.getElementById('symptomDetail');
-      const symptomDetailInput = document.getElementById('symptomDetailInput');
-      if (e.target.value === 'あり') {
-        detail.classList.add('show');
-      } else {
-        detail.classList.remove('show');
-        symptomDetailInput.value = '';
-        clearInlineError(symptomDetailInput, 'symptomDetailError');
-      }
+    document.querySelectorAll('input[name="hasSymptom"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const detail = document.getElementById('symptomDetail');
+        const symptomDetailInput = document.getElementById('symptomDetailInput');
+        if (document.getElementById('hasSymptomYes').checked) {
+          detail.classList.add('show');
+        } else {
+          detail.classList.remove('show');
+          symptomDetailInput.value = '';
+          clearInlineError(symptomDetailInput, 'symptomDetailError');
+        }
+      });
     });
 
     const symptomDetailInput = document.getElementById('symptomDetailInput');
@@ -910,9 +962,12 @@ async function checkActiveReservation() {
 
     const otherCheck = document.getElementById('findingsOtherCheck');
     const otherInput = document.getElementById('findingsOtherInput');
+    const findingsOtherDetail = document.getElementById('findingsOtherDetail');
     otherCheck.addEventListener('change', () => {
-      otherInput.disabled = !otherCheck.checked;
-      if (!otherCheck.checked) {
+      if (otherCheck.checked) {
+        findingsOtherDetail.classList.add('show');
+      } else {
+        findingsOtherDetail.classList.remove('show');
         otherInput.value = '';
         clearInlineError(otherInput, 'findingsOtherError');
       }
@@ -928,6 +983,28 @@ async function checkActiveReservation() {
         const anyChecked = document.querySelector('input[name="findings"]:checked');
         if (anyChecked) clearInlineError(null, 'findingsError');
       });
+    });
+
+    const applicantOtherCheck = document.getElementById('applicantOtherCheck');
+    const applicantOtherInput = document.getElementById('applicantOtherInput');
+    const applicantOtherDetail = document.getElementById('applicantOtherDetail');
+    document.querySelectorAll('input[name="applicant"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isOther = applicantOtherCheck.checked;
+        if (isOther) {
+          applicantOtherDetail.classList.add('show');
+        } else {
+          applicantOtherDetail.classList.remove('show');
+          applicantOtherInput.value = '';
+          clearInlineError(applicantOtherInput, 'applicantOtherError');
+        }
+        clearInlineError(null, 'applicantError');
+      });
+    });
+    applicantOtherInput.addEventListener('input', () => {
+      if (applicantOtherInput.classList.contains('has-error')) {
+        clearInlineError(applicantOtherInput, 'applicantOtherError');
+      }
     });
 
     document.getElementById('submitBtn').addEventListener('click', handleSubmit);
@@ -989,6 +1066,7 @@ function updateProgressBar(currentStep) {
   });
 }
 
+// 画面表示のみ(履歴操作はしない)
 function showScreen(name) {
   ['intro', 'select', 'form', 'referral'].forEach(s => {
     const el = document.getElementById(s + 'Screen');
@@ -997,6 +1075,12 @@ function showScreen(name) {
   const stepMap = { intro: 1, select: 2, form: 3, referral: 2 };
   updateProgressBar(stepMap[name] || 0);
   window.scrollTo(0, 0);
+}
+
+// 画面遷移(履歴に追加してから画面表示)
+function navigateTo(name) {
+  history.pushState({ screen: name }, '');
+  showScreen(name);
 }
 
 function showForm(type) {
@@ -1021,7 +1105,7 @@ function showForm(type) {
   });
   submissionState = { id: generateSubmissionId(), inFlight: false, completed: false };
   formDirty = false;
-  showScreen('form');
+  navigateTo('form');
 }
 
 function isValidPhone(phone) {
@@ -1158,9 +1242,9 @@ function validateForm(form) {
     return null;
   }
 
-  const hasSymptomEl = document.getElementById('hasSymptom');
+  const symptomYesEl = document.getElementById('hasSymptomYes');
   const symptomDetailEl = document.getElementById('symptomDetailInput');
-  if (hasSymptomEl.value === 'あり' && !symptomDetailEl.value.trim()) {
+  if (symptomYesEl.checked && !symptomDetailEl.value.trim()) {
     showInlineError(symptomDetailEl, 'symptomDetailError', '症状の内容をご記入ください');
     symptomDetailEl.focus();
     return null;
@@ -1225,6 +1309,22 @@ function validateForm(form) {
     revalidateAllPreferredDates();
     const firstErr = form.querySelector('input[name^="preferredDate"].has-error');
     if (firstErr) firstErr.focus();
+    return null;
+  }
+
+  const applicantSelected = form.querySelector('input[name="applicant"]:checked');
+  if (!applicantSelected) {
+    showInlineError(null, 'applicantError', '申込者を選択してください');
+    const firstApplicantRadio = form.querySelector('input[name="applicant"]');
+    if (firstApplicantRadio) firstApplicantRadio.focus();
+    return null;
+  }
+
+  const applicantOtherCheckEl = document.getElementById('applicantOtherCheck');
+  const applicantOtherInputEl = document.getElementById('applicantOtherInput');
+  if (applicantOtherCheckEl.checked && !applicantOtherInputEl.value.trim()) {
+    showInlineError(applicantOtherInputEl, 'applicantOtherError', '「その他」の内容をご記入ください');
+    applicantOtherInputEl.focus();
     return null;
   }
 
@@ -1296,6 +1396,8 @@ function showSubmitSuccess(result, form) {
   if (backBtn) backBtn.style.display = 'none';
 
   updateProgressBar(4);
+  // 送信完了画面では戻れないようにする
+  history.replaceState({ screen: 'complete' }, '');
 }
 
 function showAlreadySubmitted(result, form) {
@@ -1307,6 +1409,8 @@ function showAlreadySubmitted(result, form) {
   const backBtn = document.querySelector('#formScreen .back-btn');
   if (backBtn) backBtn.style.display = 'none';
   updateProgressBar(4);
+  // 受付済み表示でも戻れないようにする
+  history.replaceState({ screen: 'complete' }, '');
 }
 
 function showSubmitFailure(result, btn, errorDetail) {
