@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +8,10 @@
   <title>二次検診予約フォーム</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
       max-width: 600px;
@@ -17,12 +21,14 @@
       color: #333;
       line-height: 1.5;
     }
+
     h1 {
       font-size: 1.3rem;
       margin: 8px 0 16px;
       padding-bottom: 8px;
       border-bottom: 2px solid #06c755;
     }
+
     h2 {
       font-size: 1rem;
       margin: 20px 0 10px;
@@ -30,6 +36,7 @@
       padding-left: 8px;
       border-left: 4px solid #06c755;
     }
+
     .badge {
       display: inline-block;
       background: #06c755;
@@ -40,6 +47,7 @@
       margin-left: 8px;
       vertical-align: middle;
     }
+
     .test-banner {
       background: #ff9800;
       color: #fff;
@@ -57,11 +65,13 @@
       margin-bottom: 16px;
       padding: 4px 2px 0;
     }
+
     .progress .step {
       flex: 0 0 auto;
       text-align: center;
       min-width: 50px;
     }
+
     .progress .step-circle {
       width: 28px;
       height: 28px;
@@ -76,6 +86,7 @@
       margin: 0 auto;
       transition: background 0.2s ease, color 0.2s ease;
     }
+
     .progress .step-label {
       font-size: 0.7rem;
       color: #888;
@@ -83,22 +94,27 @@
       white-space: nowrap;
       transition: color 0.2s ease, font-weight 0.2s ease;
     }
+
     .progress .step.active .step-circle {
       background: #06c755;
       color: #fff;
       box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.2);
     }
+
     .progress .step.active .step-label {
       color: #06c755;
       font-weight: bold;
     }
+
     .progress .step.completed .step-circle {
       background: #06c755;
       color: #fff;
     }
+
     .progress .step.completed .step-label {
       color: #555;
     }
+
     .progress .step-line {
       flex: 1;
       height: 2px;
@@ -106,37 +122,44 @@
       margin: 14px 4px 0;
       transition: background 0.2s ease;
     }
+
     .progress .step-line.completed {
       background: #06c755;
     }
+
     .field {
       background: #fff;
       padding: 12px;
       margin-bottom: 10px;
       border-radius: 8px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
+
     .label {
       display: block;
       font-weight: bold;
       margin-bottom: 6px;
       font-size: 0.95rem;
     }
+
     .required {
       color: #e74c3c;
       font-size: 0.75rem;
       margin-left: 6px;
     }
+
     .optional {
       color: #888;
       font-size: 0.75rem;
       margin-left: 6px;
     }
+
     .help {
       font-size: 0.8rem;
       color: #888;
       margin-top: 4px;
     }
+
     input[type="text"],
     input[type="tel"],
     input[type="date"],
@@ -149,7 +172,10 @@
       border-radius: 6px;
       background: #fff;
     }
-    input:focus, select:focus, textarea:focus {
+
+    input:focus,
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: #06c755;
     }
@@ -158,10 +184,12 @@
     select:user-invalid {
       border-color: #e74c3c;
     }
+
     form.form-submitted input:invalid,
     form.form-submitted select:invalid {
       border-color: #e74c3c;
     }
+
     input.has-error {
       border-color: #e74c3c !important;
     }
@@ -177,7 +205,11 @@
       padding: 6px 0;
       font-size: 0.95rem;
     }
-    .checkboxes input { margin-right: 8px; }
+
+    .checkboxes input {
+      margin-right: 8px;
+    }
+
     button.submit {
       width: 100%;
       padding: 14px;
@@ -190,6 +222,7 @@
       margin-top: 16px;
       cursor: pointer;
     }
+
     button.submit:disabled {
       background: #aaa;
       cursor: not-allowed;
@@ -214,27 +247,32 @@
       margin-left: auto;
       margin-right: auto;
     }
+
     #result {
       margin-top: 16px;
       padding: 12px;
       border-radius: 6px;
       display: none;
     }
+
     #result.ok {
       background: #e8f5e9;
       color: #2e7d32;
       display: block;
     }
+
     #result.ng {
       background: #ffebee;
       color: #c62828;
       display: block;
     }
+
     .loading {
       text-align: center;
       padding: 60px 20px;
       color: #888;
     }
+
     .spinner {
       display: inline-block;
       width: 32px;
@@ -245,7 +283,12 @@
       animation: spin 0.8s linear infinite;
       margin-bottom: 12px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     .alert-box {
       background: #fff3e0;
@@ -256,7 +299,12 @@
       font-size: 0.95rem;
       line-height: 1.7;
     }
-    .alert-box .icon { font-size: 1.2rem; margin-right: 4px; }
+
+    .alert-box .icon {
+      font-size: 1.2rem;
+      margin-right: 4px;
+    }
+
     .alert-box .phone {
       display: block;
       margin-top: 8px;
@@ -265,50 +313,66 @@
       color: #d84315;
       text-decoration: none;
     }
+
     .terms {
       background: #fff;
       padding: 14px;
       border-radius: 8px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       font-size: 0.88rem;
       line-height: 1.7;
     }
+
     .terms h3 {
       font-size: 1rem;
       margin: 0 0 10px;
       color: #06c755;
     }
+
     .terms ul {
       padding-left: 1.2em;
       margin: 0;
     }
-    .terms li { margin-bottom: 6px; }
-    .terms strong { color: #c62828; }
+
+    .terms li {
+      margin-bottom: 6px;
+    }
+
+    .terms strong {
+      color: #c62828;
+    }
+
     .agree-box {
       background: #fff;
       padding: 14px;
       border-radius: 8px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
+
     .agree-box label {
       display: flex;
       align-items: center;
       font-size: 0.95rem;
       cursor: pointer;
     }
-    .agree-box input { margin-right: 10px; transform: scale(1.2); }
+
+    .agree-box input {
+      margin-right: 10px;
+      transform: scale(1.2);
+    }
 
     #selectScreen .intro {
       background: #fff;
       padding: 14px;
       border-radius: 8px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       font-size: 0.95rem;
       line-height: 1.6;
     }
+
     .select-btn {
       display: block;
       width: 100%;
@@ -322,20 +386,25 @@
       transition: background 0.15s;
       font-family: inherit;
     }
-    .select-btn:hover, .select-btn:active {
+
+    .select-btn:hover,
+    .select-btn:active {
       background: #e8f5e9;
     }
+
     .select-btn .title {
       font-size: 1.05rem;
       font-weight: bold;
       color: #06c755;
       margin-bottom: 4px;
     }
+
     .select-btn .desc {
       font-size: 0.85rem;
       color: #666;
       line-height: 1.5;
     }
+
     .select-btn .arrow {
       float: right;
       color: #06c755;
@@ -353,16 +422,20 @@
       cursor: pointer;
       font-family: inherit;
     }
-    .back-btn:hover { text-decoration: underline; }
+
+    .back-btn:hover {
+      text-decoration: underline;
+    }
 
     .referral-box {
       background: #fff;
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       text-align: center;
       line-height: 1.7;
     }
+
     .referral-box .phone-link {
       display: block;
       margin-top: 16px;
@@ -375,12 +448,23 @@
       text-decoration: none;
     }
 
-    .symptom-detail { margin-top: 8px; display: none; }
-    .symptom-detail.show { display: block; }
+    .symptom-detail {
+      margin-top: 8px;
+      display: none;
+    }
+
+    .symptom-detail.show {
+      display: block;
+    }
 
     /* ▼「その他」選択時のみ表示する入力欄 */
-    .other-detail { display: none; }
-    .other-detail.show { display: block; }
+    .other-detail {
+      display: none;
+    }
+
+    .other-detail.show {
+      display: block;
+    }
 
     .inline-error {
       color: #c62828;
@@ -388,7 +472,10 @@
       margin-top: 4px;
       display: none;
     }
-    .inline-error.show { display: block; }
+
+    .inline-error.show {
+      display: block;
+    }
 
     .section-notice {
       background: #fff8e1;
@@ -400,7 +487,10 @@
       line-height: 1.7;
       color: #5d4037;
     }
-    .section-notice div + div { margin-top: 2px; }
+
+    .section-notice div+div {
+      margin-top: 2px;
+    }
 
     .docs-notice {
       background: #fff8e1;
@@ -409,6 +499,7 @@
       margin-bottom: 10px;
       border-radius: 8px;
     }
+
     .docs-notice .docs-title {
       font-weight: bold;
       font-size: 1rem;
@@ -417,6 +508,7 @@
       padding-bottom: 8px;
       border-bottom: 1px solid #ffcc80;
     }
+
     .docs-notice .docs-help {
       font-size: 0.9rem;
       color: #5d4037;
@@ -424,1068 +516,1082 @@
     }
   </style>
 </head>
+
 <body>
 
-<div id="testBanner" class="test-banner" style="display:none;">🧪 テストモード(LINEログインなし)</div>
+  <div id="testBanner" class="test-banner" style="display:none;">🧪 テストモード(LINEログインなし)</div>
 
-<nav id="progressBar" class="progress" style="display:none;" aria-label="入力の進捗">
-  <div class="step" data-step="1">
-    <div class="step-circle">1</div>
-    <div class="step-label">はじめに</div>
-  </div>
-  <div class="step-line"></div>
-  <div class="step" data-step="2">
-    <div class="step-circle">2</div>
-    <div class="step-label">受診状況</div>
-  </div>
-  <div class="step-line"></div>
-  <div class="step" data-step="3">
-    <div class="step-circle">3</div>
-    <div class="step-label">入力</div>
-  </div>
-  <div class="step-line"></div>
-  <div class="step" data-step="4">
-    <div class="step-circle">4</div>
-    <div class="step-label">完了</div>
-  </div>
-</nav>
+  <nav id="progressBar" class="progress" style="display:none;" aria-label="入力の進捗">
+    <div class="step" data-step="1">
+      <div class="step-circle">1</div>
+      <div class="step-label">はじめに</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="2">
+      <div class="step-circle">2</div>
+      <div class="step-label">受診状況</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="3">
+      <div class="step-circle">3</div>
+      <div class="step-label">入力</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="4">
+      <div class="step-circle">4</div>
+      <div class="step-label">完了</div>
+    </div>
+  </nav>
 
-<div id="loading" class="loading">
-  <div class="spinner"></div>
-  <p>読み込み中...</p>
-</div>
-
-<!-- ▼ 申込中画面 -->
-<div id="pendingScreen" style="display:none;">
-  <h1>二次検診予約フォーム</h1>
-  <div class="alert-box" role="alert">
-    <span class="icon">📩</span><strong>現在、お申し込みを受付中です。</strong><br>
-    内容を確認のうえ、LINEにてご返事いたします。<br>
-    今しばらくお待ちください。
-  </div>
-  <div class="terms">
-    <p style="margin:0;">
-      お急ぎの場合や内容の変更・キャンセルをご希望の場合は、LINEのトーク画面にメッセージをお送りいただくか、お電話にてご連絡ください。
-    </p>
-  </div>
-</div>
-
-<div id="introScreen" style="display:none;">
-  <h1>二次検診予約フォーム</h1>
-
-  <div class="alert-box" role="alert">
-    <span class="icon">⚠️</span><strong>強い症状(血便、しこり、強い痛みなど)がある場合は、本フォームでの予約をお待ちにならず、お電話にてご連絡ください。</strong>
-    <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>読み込み中...</p>
   </div>
 
-  <div class="terms">
-    <h3>ご利用にあたって</h3>
-    <ul>
-      <li><strong>本フォームは「予約申込」であり、「予約確定」ではありません。</strong>内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
-      <li><strong>個人情報の取扱い:</strong>ご記入いただいた情報は、二次検診のご予約・診療目的にのみ使用し、それ以外の目的には利用しません。</li>
-      <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更は<a href="https://docs.google.com/forms/d/e/1FAIpQLSedWjSU3L4nRL3X-XiYu2iKte4P5W2xd9y3MrSUHM13aCBz2A/viewform?usp=header" target="_blank" rel="noopener">こちら</a>からお申し込みください。</li>
-      <li><strong>来院時のお持ち物:</strong>マイナ保険証(マイナンバーカード)または資格確認書、健診結果票または精密検査依頼票をお持ちください。</li>
-      <li><strong>ご連絡について:</strong>受付後、診療時間内(<span data-clinic-hours></span>)にLINEにてご返事いたします。ご予約内容に不足や確認事項がある場合は、LINEにてお伺いしたうえでご予約を確定いたします。</li>
-    </ul>
+  <!-- ▼ 申込中画面 -->
+  <div id="pendingScreen" style="display:none;">
+    <h1>二次検診予約フォーム</h1>
+    <div class="alert-box" role="alert">
+      <span class="icon">📩</span><strong>現在、お申し込みを受付中です。</strong><br>
+      内容を確認のうえ、LINEにてご返事いたします。<br>
+      今しばらくお待ちください。
+    </div>
+    <div class="terms">
+      <p style="margin:0;">
+        お急ぎの場合や内容の変更・キャンセルをご希望の場合は、LINEのトーク画面にメッセージをお送りいただくか、お電話にてご連絡ください。
+      </p>
+    </div>
   </div>
 
-  <div class="agree-box">
-    <label>
-      <input type="checkbox" id="agreeCheck">
-      上記内容に同意します
-    </label>
+  <div id="introScreen" style="display:none;">
+    <h1>二次検診予約フォーム</h1>
+
+    <div class="alert-box" role="alert">
+      <span class="icon">⚠️</span><strong>強い症状(血便、しこり、強い痛みなど)がある場合は、本フォームでの予約をお待ちにならず、お電話にてご連絡ください。</strong>
+      <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+    </div>
+
+    <div class="terms">
+      <h3>ご利用にあたって</h3>
+      <ul>
+        <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
+        <li><strong>予約希望日について:</strong>ご希望に添えない場合があります。また、時間の指定や医師の指定はできません。</li>
+        <li><strong>個人情報の取扱い:</strong>ご記入いただいた情報は、二次検診のご予約・診療の目的にのみ使用し、それ以外の目的には利用しません。</li>
+        <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更は<a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSedWjSU3L4nRL3X-XiYu2iKte4P5W2xd9y3MrSUHM13aCBz2A/viewform?usp=header"
+            target="_blank" rel="noopener">こちら</a>からお申し込みください。</li>
+        <li><strong>来院時のお持ち物:</strong>マイナ保険証(マイナンバーカード)または資格確認書、健診結果票または精密検査依頼票をお持ちください。</li>
+        <li>
+          <strong>ご連絡について:</strong>お申し込み内容は、月〜土曜日(祝日を除く)の午後に確認し、LINEにて順次ご連絡いたします。ご予約内容に不足や確認事項がある場合は、LINEにてお伺いしたうえでご予約を確定いたします。
+        </li>
+      </ul>
+    </div>
+
+    <div class="agree-box">
+      <label>
+        <input type="checkbox" id="agreeCheck">
+        上記内容に同意します
+      </label>
+    </div>
+
+    <button type="button" class="submit" id="proceedBtn" disabled>次へ進む</button>
   </div>
 
-  <button type="button" class="submit" id="proceedBtn" disabled>次へ進む</button>
-</div>
+  <div id="selectScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="intro">← はじめに戻る</button>
+    <h1>受診状況の選択</h1>
 
-<div id="selectScreen" style="display:none;">
-  <button type="button" class="back-btn" data-back="intro">← はじめに戻る</button>
-  <h1>受診状況の選択</h1>
+    <div class="intro">
+      該当するものを選択してください。
+    </div>
 
-  <div class="intro">
-    該当するものを選択してください。
-  </div>
+    <button type="button" class="select-btn" data-type="own">
+      <span class="arrow">›</span>
+      <div class="title">当院で受けた健診の結果</div>
+      <div class="desc">当院の健診結果で再検査・精密検査等を指摘された方</div>
+    </button>
 
-  <button type="button" class="select-btn" data-type="own">
-    <span class="arrow">›</span>
-    <div class="title">当院で受けた健診の結果</div>
-    <div class="desc">当院の健診結果で再検査・精密検査等を指摘された方</div>
-  </button>
+    <button type="button" class="select-btn" data-type="other">
+      <span class="arrow">›</span>
+      <div class="title">他院・職場・人間ドック・自治体健診の結果</div>
+      <div class="desc">他の医療機関等の健診結果で再検査・精密検査等を指摘された方</div>
+    </button>
 
-  <button type="button" class="select-btn" data-type="other">
-    <span class="arrow">›</span>
-    <div class="title">他院・職場・人間ドック・自治体健診の結果</div>
-    <div class="desc">他の医療機関等の健診結果で再検査・精密検査等を指摘された方</div>
-  </button>
-
-  <button type="button" class="select-btn" data-type="referral">
-    <span class="arrow">›</span>
-    <div class="title">紹介状を持っている</div>
-    <div class="desc">他院から紹介状(診療情報提供書)を渡された方<br>
-    <span style="color:#c62828; font-size:0.8rem;">※健診結果票や精密検査依頼票は紹介状ではありません</span></div>
-  </button>
-</div>
-
-<div id="formScreen" style="display:none;">
-  <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
-  <h1>二次検診予約 <span class="badge" id="typeBadge"></span></h1>
-
-  <form id="form" onsubmit="return false;" novalidate>
-
-    <div class="docs-notice other-only" style="display:none;">
-      <div class="docs-title">健診結果票または精密検査依頼票のご準備について</div>
-      <div class="docs-help">
-        健診結果票または精密検査依頼票がお手元にない場合は、健康診断を受けた施設へお問い合わせのうえ、事前にお取り寄せください。
+    <button type="button" class="select-btn" data-type="referral">
+      <span class="arrow">›</span>
+      <div class="title">紹介状を持っている</div>
+      <div class="desc">他院から紹介状(診療情報提供書)を渡された方<br>
+        <span style="color:#c62828; font-size:0.8rem;">※健診結果票や精密検査依頼票は紹介状ではありません</span>
       </div>
-    </div>
-
-    <h2>① ご本人について</h2>
-
-    <div class="field">
-      <label class="label" for="nameInput">氏名<span class="required">必須</span></label>
-      <input type="text" id="nameInput" name="name" required autocomplete="name" placeholder="例:嶋田 太郎">
-    </div>
-
-    <div class="field">
-      <label class="label" for="kanaInput">フリガナ<span class="required">必須</span></label>
-      <input type="text" name="kana" id="kanaInput" required autocomplete="off" placeholder="例:シマダ タロウ">
-      <div class="inline-error" id="kanaError" role="alert">カタカナで入力してください</div>
-    </div>
-
-    <div class="field">
-      <label class="label" for="birthdayInput">生年月日<span class="required">必須</span></label>
-      <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" placeholder="例:1980/01/15">
-      <div class="inline-error" id="birthdayError" role="alert">生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)</div>
-    </div>
-
-    <div class="field">
-      <label class="label" for="phoneInput">電話番号<span class="required">必須</span></label>
-      <input type="tel" name="phone" id="phoneInput" required autocomplete="tel" placeholder="例:09012345678 または 03-1234-5678">
-      <div class="help">日中ご連絡可能な番号をご記入ください</div>
-      <div class="inline-error" id="phoneError" role="alert">電話番号の形式が正しくありません</div>
-    </div>
-
-    <h2>② 健康診断について</h2>
-
-    <div class="field other-only" style="display:none;">
-      <label class="label" for="clinicNameInput">健診実施機関名<span class="required">必須</span></label>
-      <input type="text" id="clinicNameInput" name="clinicName" required autocomplete="off" placeholder="例:〇〇病院や△△健診センターなど">
-      <div class="inline-error" id="clinicNameError" role="alert"></div>
-    </div>
-
-    <div class="field">
-      <label class="label" for="checkupDateInput">健診を受けた日<span class="required">必須</span></label>
-      <input type="date" id="checkupDateInput" name="checkupDate" required>
-      <div class="inline-error" id="checkupDateError" role="alert"></div>
-    </div>
-
-    <div class="field">
-      <div class="label" id="findingsLabel">指摘された項目<span class="required">必須・複数選択可</span></div>
-      <div class="checkboxes" role="group" aria-labelledby="findingsLabel">
-        <label><input type="checkbox" name="findings" value="血圧">血圧</label>
-        <label><input type="checkbox" name="findings" value="血糖・HbA1c">血糖・HbA1c</label>
-        <label><input type="checkbox" name="findings" value="脂質・コレステロール・中性脂肪">脂質・コレステロール・中性脂肪</label>
-        <label><input type="checkbox" name="findings" value="肝機能">肝機能</label>
-        <label><input type="checkbox" name="findings" value="腎機能・尿検査">腎機能・尿検査</label>
-        <label><input type="checkbox" name="findings" value="貧血">貧血</label>
-        <label><input type="checkbox" name="findings" value="心電図">心電図</label>
-        <label><input type="checkbox" name="findings" value="胸部X線・肺">胸部X線・肺</label>
-        <label><input type="checkbox" name="findings" value="胃">胃</label>
-        <label><input type="checkbox" name="findings" value="大腸・便潜血">大腸・便潜血</label>
-        <label><input type="checkbox" name="findings" value="腹部エコー">腹部エコー</label>
-        <label><input type="checkbox" name="findings" value="乳房">乳房</label>
-        <label><input type="checkbox" name="findings" value="子宮・婦人科">子宮・婦人科</label>
-        <label><input type="checkbox" name="findings" value="その他" id="findingsOtherCheck">その他</label>
-      </div>
-      <div class="other-detail" id="findingsOtherDetail">
-        <input type="text" name="findingsOther" id="findingsOtherInput" placeholder="その他の場合は内容をご記入ください" aria-label="指摘項目「その他」の内容" autocomplete="off" style="margin-top:8px;">
-        <div class="inline-error" id="findingsOtherError" role="alert"></div>
-      </div>
-      <div class="inline-error" id="findingsError" role="alert"></div>
-    </div>
-
-    <div class="field">
-      <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
-      <div class="checkboxes" role="radiogroup" aria-labelledby="hasSymptomLabel">
-        <label><input type="radio" name="hasSymptom" value="なし" required>なし</label>
-        <label><input type="radio" name="hasSymptom" value="あり" id="hasSymptomYes" required>あり(軽度)</label>
-      </div>
-      <div class="symptom-detail" id="symptomDetail">
-        <input type="text" name="symptomDetail" id="symptomDetailInput" placeholder="症状の内容をご記入ください" aria-label="症状の内容" autocomplete="off" style="margin-top:8px;">
-        <div class="inline-error" id="symptomDetailError" role="alert"></div>
-      </div>
-    </div>
-
-    <h2>③ ご希望の日程</h2>
-
-    <div class="section-notice">
-      <div id="preferredDateNotice"></div>
-      <div>※ 時間は指定できません</div>
-    </div>
-
-    <div class="field">
-      <label class="label" for="preferredDate1Input">第1希望日<span class="required">必須</span></label>
-      <input type="date" id="preferredDate1Input" name="preferredDate1" required>
-      <div class="inline-error" id="preferredDate1Error" role="alert"></div>
-    </div>
-
-    <div class="field">
-      <label class="label" for="preferredDate2Input">第2希望日<span class="optional">任意</span></label>
-      <input type="date" id="preferredDate2Input" name="preferredDate2">
-      <div class="inline-error" id="preferredDate2Error" role="alert"></div>
-    </div>
-
-    <div class="field">
-      <label class="label" for="preferredDate3Input">第3希望日<span class="optional">任意</span></label>
-      <input type="date" id="preferredDate3Input" name="preferredDate3">
-      <div class="inline-error" id="preferredDate3Error" role="alert"></div>
-    </div>
-
-    <h2>④ 申込者について</h2>
-
-    <div class="field">
-      <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
-      <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
-        <label><input type="radio" name="applicant" value="本人" required>上記、患者氏名と同一である</label>
-        <label><input type="radio" name="applicant" value="家族・キーパーソン" required>患者の家族もしくはキーパーソン</label>
-        <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
-      </div>
-      <div class="other-detail" id="applicantOtherDetail">
-        <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください" aria-label="申込者「その他」の内容" autocomplete="off" style="margin-top:8px;">
-        <div class="inline-error" id="applicantOtherError" role="alert"></div>
-      </div>
-      <div class="inline-error" id="applicantError" role="alert"></div>
-    </div>
-
-    <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
-  </form>
-
-  <div id="result" role="status" aria-live="polite"></div>
-</div>
-
-<div id="referralScreen" style="display:none;">
-  <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
-  <h1>紹介状をお持ちの方へ</h1>
-
-  <div class="referral-box">
-    <p>紹介状をお持ちの方、または紹介元医療機関から受診を案内された方は、<br>
-    お手数ですが下記までお電話にてご連絡ください。</p>
-    <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
-    <p style="margin-top:16px; font-size:0.85rem; color:#888;">
-      診療時間:<span data-clinic-hours></span>
-    </p>
+    </button>
   </div>
-</div>
 
-<script>
-const LIFF_ID = '2010076084-TAppgjXG';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFF9eznXG1NTZbKUfcec3-hF_e2hIhP12n1s-R-MllAWvGGxIV0W_E6I49jq2m8BGE8w/exec';
+  <div id="formScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
+    <h1>二次検診予約 <span class="badge" id="typeBadge"></span></h1>
 
-const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
+    <form id="form" onsubmit="return false;" novalidate>
 
-// =============================================================
-// 院の連絡先設定 — 電話番号・診療時間はここだけ編集してください
-// HTML側に直接記入する必要はありません(applyClinicInfoが自動で反映します)
-// =============================================================
-const CLINIC_INFO = {
-  phoneDisplay: '0942-72-2375', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
-  phoneTel:     '0942722375',    // tel:リンク用(数字のみ、例: 0312345678)
-  hours:        '平日 9:00〜17:00',
-};
+      <div class="docs-notice other-only" style="display:none;">
+        <div class="docs-title">健診結果票または精密検査依頼票のご準備について</div>
+        <div class="docs-help">
+          健診結果票または精密検査依頼票がお手元にない場合は、健康診断を受けた施設へお問い合わせのうえ、事前にお取り寄せください。
+        </div>
+      </div>
 
-const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+      <h2>① ご本人について</h2>
 
-function formatDate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+      <div class="field">
+        <label class="label" for="nameInput">氏名<span class="required">必須</span></label>
+        <input type="text" id="nameInput" name="name" required autocomplete="name" placeholder="例:嶋田 太郎">
+      </div>
 
-function calcDateBoundaries() {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const threeDaysLater = new Date(today);
-  threeDaysLater.setDate(today.getDate() + 3);
-  const oneYearLater = new Date(today);
-  oneYearLater.setFullYear(today.getFullYear() + 1);
-  const fiveYearsAgo = new Date(today);
-  fiveYearsAgo.setFullYear(today.getFullYear() - 5);
-  return {
-    TODAY: formatDate(today),
-    YESTERDAY: formatDate(yesterday),
-    PREFERRED_MIN: formatDate(threeDaysLater),
-    PREFERRED_MAX: formatDate(oneYearLater),
-    CHECKUP_MIN: formatDate(fiveYearsAgo),
-    BIRTHDAY_MIN: '1899-01-01',
-  };
-}
+      <div class="field">
+        <label class="label" for="kanaInput">フリガナ<span class="required">必須</span></label>
+        <input type="text" name="kana" id="kanaInput" required autocomplete="off" placeholder="例:シマダ タロウ">
+        <div class="inline-error" id="kanaError" role="alert">カタカナで入力してください</div>
+      </div>
 
-function applyDateBoundariesToDOM(b) {
-  const checkupDateInput = document.querySelector('input[name="checkupDate"]');
-  if (checkupDateInput) {
-    checkupDateInput.setAttribute('min', b.CHECKUP_MIN);
-    checkupDateInput.setAttribute('max', b.YESTERDAY);
-  }
-  ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
-    const el = document.querySelector(`input[name="${name}"]`);
-    if (el) {
-      el.setAttribute('min', b.PREFERRED_MIN);
-      el.setAttribute('max', b.PREFERRED_MAX);
-    }
-  });
-  const notice = document.getElementById('preferredDateNotice');
-  if (notice) {
-    notice.textContent = `${b.PREFERRED_MIN}以降の日付を選択してください`;
-  }
-}
+      <div class="field">
+        <label class="label" for="birthdayInput">生年月日<span class="required">必須</span></label>
+        <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" placeholder="例:1980/01/15">
+        <div class="inline-error" id="birthdayError" role="alert">生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)
+        </div>
+      </div>
 
-const KANA_REGEX = /^[ァ-ヶー・  ]+$/;
+      <div class="field">
+        <label class="label" for="phoneInput">電話番号<span class="required">必須</span></label>
+        <input type="tel" name="phone" id="phoneInput" required autocomplete="tel"
+          placeholder="例:09012345678 または 03-1234-5678">
+        <div class="help">日中ご連絡可能な番号をご記入ください</div>
+        <div class="inline-error" id="phoneError" role="alert">電話番号の形式が正しくありません</div>
+      </div>
 
-let currentType = null;
-let submissionState = { id: null, inFlight: false, completed: false };
-let formDirty = false;
+      <h2>② 健康診断について</h2>
 
-function generateSubmissionId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-}
+      <div class="field other-only" style="display:none;">
+        <label class="label" for="clinicNameInput">健診実施機関名<span class="required">必須</span></label>
+        <input type="text" id="clinicNameInput" name="clinicName" required autocomplete="off"
+          placeholder="例:〇〇病院や△△健診センターなど">
+        <div class="inline-error" id="clinicNameError" role="alert"></div>
+      </div>
 
-async function checkActiveReservation() {
-  if (TEST_MODE) return false;
-  try {
-    const payload = {
-      idToken: liff.getIDToken(),
-      appToken: APP_TOKEN,
-      action: 'check_status'
+      <div class="field">
+        <label class="label" for="checkupDateInput">健診を受けた日<span class="required">必須</span></label>
+        <input type="date" id="checkupDateInput" name="checkupDate" required>
+        <div class="inline-error" id="checkupDateError" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="findingsLabel">指摘された項目<span class="required">必須・複数選択可</span></div>
+        <div class="checkboxes" role="group" aria-labelledby="findingsLabel">
+          <label><input type="checkbox" name="findings" value="血圧">血圧</label>
+          <label><input type="checkbox" name="findings" value="血糖・HbA1c">血糖・HbA1c</label>
+          <label><input type="checkbox" name="findings" value="脂質・コレステロール・中性脂肪">脂質・コレステロール・中性脂肪</label>
+          <label><input type="checkbox" name="findings" value="肝機能">肝機能</label>
+          <label><input type="checkbox" name="findings" value="腎機能・尿検査">腎機能・尿検査</label>
+          <label><input type="checkbox" name="findings" value="貧血">貧血</label>
+          <label><input type="checkbox" name="findings" value="心電図">心電図</label>
+          <label><input type="checkbox" name="findings" value="胸部X線・肺">胸部X線・肺</label>
+          <label><input type="checkbox" name="findings" value="胃">胃</label>
+          <label><input type="checkbox" name="findings" value="大腸・便潜血">大腸・便潜血</label>
+          <label><input type="checkbox" name="findings" value="腹部エコー">腹部エコー</label>
+          <label><input type="checkbox" name="findings" value="乳房">乳房</label>
+          <label><input type="checkbox" name="findings" value="子宮・婦人科">子宮・婦人科</label>
+          <label><input type="checkbox" name="findings" value="その他" id="findingsOtherCheck">その他</label>
+        </div>
+        <div class="other-detail" id="findingsOtherDetail">
+          <input type="text" name="findingsOther" id="findingsOtherInput" placeholder="その他の場合は内容をご記入ください"
+            aria-label="指摘項目「その他」の内容" autocomplete="off" style="margin-top:8px;">
+          <div class="inline-error" id="findingsOtherError" role="alert"></div>
+        </div>
+        <div class="inline-error" id="findingsError" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
+        <div class="checkboxes" role="radiogroup" aria-labelledby="hasSymptomLabel">
+          <label><input type="radio" name="hasSymptom" value="なし" required>なし</label>
+          <label><input type="radio" name="hasSymptom" value="あり" id="hasSymptomYes" required>あり(軽度)</label>
+        </div>
+        <div class="symptom-detail" id="symptomDetail">
+          <input type="text" name="symptomDetail" id="symptomDetailInput" placeholder="症状の内容をご記入ください" aria-label="症状の内容"
+            autocomplete="off" style="margin-top:8px;">
+          <div class="inline-error" id="symptomDetailError" role="alert"></div>
+        </div>
+      </div>
+
+      <h2>③ ご希望の日程</h2>
+
+      <div class="section-notice">
+        <div id="preferredDateNotice"></div>
+        <div>※ 時間は指定できません</div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate1Input">第1希望日<span class="required">必須</span></label>
+        <input type="date" id="preferredDate1Input" name="preferredDate1" required>
+        <div class="inline-error" id="preferredDate1Error" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate2Input">第2希望日<span class="optional">任意</span></label>
+        <input type="date" id="preferredDate2Input" name="preferredDate2">
+        <div class="inline-error" id="preferredDate2Error" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate3Input">第3希望日<span class="optional">任意</span></label>
+        <input type="date" id="preferredDate3Input" name="preferredDate3">
+        <div class="inline-error" id="preferredDate3Error" role="alert"></div>
+      </div>
+
+      <h2>④ 申込者について</h2>
+
+      <div class="field">
+        <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
+        <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
+          <label><input type="radio" name="applicant" value="本人" required>上記、患者氏名と同一である</label>
+          <label><input type="radio" name="applicant" value="家族・キーパーソン" required>患者の家族もしくはキーパーソン</label>
+          <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
+        </div>
+        <div class="other-detail" id="applicantOtherDetail">
+          <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください"
+            aria-label="申込者「その他」の内容" autocomplete="off" style="margin-top:8px;">
+          <div class="inline-error" id="applicantOtherError" role="alert"></div>
+        </div>
+        <div class="inline-error" id="applicantError" role="alert"></div>
+      </div>
+
+      <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
+    </form>
+
+    <div id="result" role="status" aria-live="polite"></div>
+  </div>
+
+  <div id="referralScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
+    <h1>紹介状をお持ちの方へ</h1>
+
+    <div class="referral-box">
+      <p>紹介状をお持ちの方、または紹介元医療機関から受診を案内された方は、<br>
+        お手数ですが下記までお電話にてご連絡ください。</p>
+      <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+      <p style="margin-top:16px; font-size:0.85rem; color:#888;">
+        診療時間:<span data-clinic-hours></span>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const LIFF_ID = '2010076084-TAppgjXG';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzFF9eznXG1NTZbKUfcec3-hF_e2hIhP12n1s-R-MllAWvGGxIV0W_E6I49jq2m8BGE8w/exec';
+
+    const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
+
+    // =============================================================
+    // 院の連絡先設定 — 電話番号・診療時間はここだけ編集してください
+    // HTML側に直接記入する必要はありません(applyClinicInfoが自動で反映します)
+    // =============================================================
+    const CLINIC_INFO = {
+      phoneDisplay: '0942-72-2375', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
+      phoneTel: '0942722375',    // tel:リンク用(数字のみ、例: 0312345678)
+      hours: '平日 9:00〜17:00',
     };
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-    clearTimeout(tid);
-    const data = JSON.parse(await res.text());
-    return !!(data.ok && data.hasActive);
-  } catch (e) {
-    console.error('[checkActiveReservation]', e);
-    return false;
-  }
-}
 
-(async () => {
-  try {
-    if (!TEST_MODE) {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-    } else {
-      document.getElementById('testBanner').style.display = '';
-      console.log('[TEST MODE] LIFF login skipped');
+    const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
     }
 
-    applyClinicInfo();
-    applyDateBoundariesToDOM(calcDateBoundaries());
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
+    function calcDateBoundaries() {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const threeDaysLater = new Date(today);
+      threeDaysLater.setDate(today.getDate() + 3);
+      const oneYearLater = new Date(today);
+      oneYearLater.setFullYear(today.getFullYear() + 1);
+      const fiveYearsAgo = new Date(today);
+      fiveYearsAgo.setFullYear(today.getFullYear() - 5);
+      return {
+        TODAY: formatDate(today),
+        YESTERDAY: formatDate(yesterday),
+        PREFERRED_MIN: formatDate(threeDaysLater),
+        PREFERRED_MAX: formatDate(oneYearLater),
+        CHECKUP_MIN: formatDate(fiveYearsAgo),
+        BIRTHDAY_MIN: '1899-01-01',
+      };
+    }
+
+    function applyDateBoundariesToDOM(b) {
+      const checkupDateInput = document.querySelector('input[name="checkupDate"]');
+      if (checkupDateInput) {
+        checkupDateInput.setAttribute('min', b.CHECKUP_MIN);
+        checkupDateInput.setAttribute('max', b.YESTERDAY);
+      }
+      ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
+        const el = document.querySelector(`input[name="${name}"]`);
+        if (el) {
+          el.setAttribute('min', b.PREFERRED_MIN);
+          el.setAttribute('max', b.PREFERRED_MAX);
+        }
+      });
+      const notice = document.getElementById('preferredDateNotice');
+      if (notice) {
+        notice.textContent = `${b.PREFERRED_MIN}以降の日付を選択してください`;
+      }
+    }
+
+    const KANA_REGEX = /^[ァ-ヶー・  ]+$/;
+
+    let currentType = null;
+    let submissionState = { id: null, inFlight: false, completed: false };
+    let formDirty = false;
+
+    function generateSubmissionId() {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    async function checkActiveReservation() {
+      if (TEST_MODE) return false;
+      try {
+        const payload = {
+          idToken: liff.getIDToken(),
+          appToken: APP_TOKEN,
+          action: 'check_status'
+        };
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        clearTimeout(tid);
+        const data = JSON.parse(await res.text());
+        return !!(data.ok && data.hasActive);
+      } catch (e) {
+        console.error('[checkActiveReservation]', e);
+        return false;
+      }
+    }
+
+    (async () => {
+      try {
+        if (!TEST_MODE) {
+          await liff.init({ liffId: LIFF_ID });
+          if (!liff.isLoggedIn()) { liff.login(); return; }
+        } else {
+          document.getElementById('testBanner').style.display = '';
+          console.log('[TEST MODE] LIFF login skipped');
+        }
+
+        applyClinicInfo();
         applyDateBoundariesToDOM(calcDateBoundaries());
-      }
-    });
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            applyDateBoundariesToDOM(calcDateBoundaries());
+          }
+        });
 
-    const hasActive = await checkActiveReservation();
+        const hasActive = await checkActiveReservation();
 
-    document.getElementById('loading').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
 
-    if (hasActive) {
-      document.getElementById('pendingScreen').style.display = '';
-      return;
-    }
-
-    document.getElementById('introScreen').style.display = '';
-    updateProgressBar(1);
-
-    // ▼ 初期画面の履歴を登録(戻る/進むボタン対応)
-    history.replaceState({ screen: 'intro' }, '');
-
-    // ▼ 戻る/進むボタンへの応答
-    window.addEventListener('popstate', (e) => {
-      // 送信完了後・送信中は戻れないようにする
-      if (submissionState.completed) {
-        history.pushState({ screen: 'complete' }, '');
-        return;
-      }
-      if (submissionState.inFlight) {
-        history.pushState({ screen: 'submitting' }, '');
-        return;
-      }
-
-      const screen = (e.state && e.state.screen) || 'intro';
-
-      // formに戻ろうとしたが type が未選択の場合は select 画面へ
-      if (screen === 'form' && !currentType) {
-        showScreen('select');
-        history.replaceState({ screen: 'select' }, '');
-        return;
-      }
-
-      showScreen(screen);
-    });
-
-    const agreeCheck = document.getElementById('agreeCheck');
-    const proceedBtn = document.getElementById('proceedBtn');
-    agreeCheck.addEventListener('change', () => {
-      proceedBtn.disabled = !agreeCheck.checked;
-    });
-    proceedBtn.addEventListener('click', () => {
-      navigateTo('select');
-    });
-
-    document.querySelectorAll('.select-btn').forEach(btn => {
-      const type = btn.dataset.type;
-      if (!type) return;
-      btn.addEventListener('click', () => {
-        if (type === 'referral') {
-          navigateTo('referral');
-        } else {
-          showForm(type);
+        if (hasActive) {
+          document.getElementById('pendingScreen').style.display = '';
+          return;
         }
-      });
-    });
 
-    // 画面内「← 戻る」ボタンは history.back() に統一
-    // (ブラウザの戻るボタンと同じ動作になる)
-    document.querySelectorAll('.back-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        history.back();
-      });
-    });
+        document.getElementById('introScreen').style.display = '';
+        updateProgressBar(1);
 
-    document.querySelectorAll('input[name="hasSymptom"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        const detail = document.getElementById('symptomDetail');
+        // ▼ 初期画面の履歴を登録(戻る/進むボタン対応)
+        history.replaceState({ screen: 'intro' }, '');
+
+        // ▼ 戻る/進むボタンへの応答
+        window.addEventListener('popstate', (e) => {
+          // 送信完了後・送信中は戻れないようにする
+          if (submissionState.completed) {
+            history.pushState({ screen: 'complete' }, '');
+            return;
+          }
+          if (submissionState.inFlight) {
+            history.pushState({ screen: 'submitting' }, '');
+            return;
+          }
+
+          const screen = (e.state && e.state.screen) || 'intro';
+
+          // formに戻ろうとしたが type が未選択の場合は select 画面へ
+          if (screen === 'form' && !currentType) {
+            showScreen('select');
+            history.replaceState({ screen: 'select' }, '');
+            return;
+          }
+
+          showScreen(screen);
+        });
+
+        const agreeCheck = document.getElementById('agreeCheck');
+        const proceedBtn = document.getElementById('proceedBtn');
+        agreeCheck.addEventListener('change', () => {
+          proceedBtn.disabled = !agreeCheck.checked;
+        });
+        proceedBtn.addEventListener('click', () => {
+          navigateTo('select');
+        });
+
+        document.querySelectorAll('.select-btn').forEach(btn => {
+          const type = btn.dataset.type;
+          if (!type) return;
+          btn.addEventListener('click', () => {
+            if (type === 'referral') {
+              navigateTo('referral');
+            } else {
+              showForm(type);
+            }
+          });
+        });
+
+        // 画面内「← 戻る」ボタンは history.back() に統一
+        // (ブラウザの戻るボタンと同じ動作になる)
+        document.querySelectorAll('.back-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            history.back();
+          });
+        });
+
+        document.querySelectorAll('input[name="hasSymptom"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            const detail = document.getElementById('symptomDetail');
+            const symptomDetailInput = document.getElementById('symptomDetailInput');
+            if (document.getElementById('hasSymptomYes').checked) {
+              detail.classList.add('show');
+            } else {
+              detail.classList.remove('show');
+              symptomDetailInput.value = '';
+              clearInlineError(symptomDetailInput, 'symptomDetailError');
+            }
+          });
+        });
+
         const symptomDetailInput = document.getElementById('symptomDetailInput');
-        if (document.getElementById('hasSymptomYes').checked) {
-          detail.classList.add('show');
-        } else {
-          detail.classList.remove('show');
-          symptomDetailInput.value = '';
-          clearInlineError(symptomDetailInput, 'symptomDetailError');
-        }
+        symptomDetailInput.addEventListener('input', () => {
+          if (symptomDetailInput.classList.contains('has-error')) {
+            clearInlineError(symptomDetailInput, 'symptomDetailError');
+          }
+        });
+
+        const kanaInput = document.getElementById('kanaInput');
+        kanaInput.addEventListener('blur', () => {
+          const v = kanaInput.value.trim();
+          if (v && !KANA_REGEX.test(v)) {
+            showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
+          } else {
+            clearInlineError(kanaInput, 'kanaError');
+          }
+        });
+        kanaInput.addEventListener('input', () => {
+          if (kanaInput.classList.contains('has-error')) {
+            clearInlineError(kanaInput, 'kanaError');
+          }
+        });
+
+        const phoneInput = document.getElementById('phoneInput');
+        phoneInput.addEventListener('blur', () => {
+          const v = phoneInput.value.trim();
+          if (v && !isValidPhone(v)) {
+            showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません');
+          } else {
+            clearInlineError(phoneInput, 'phoneError');
+          }
+        });
+        phoneInput.addEventListener('input', () => {
+          if (phoneInput.classList.contains('has-error')) {
+            clearInlineError(phoneInput, 'phoneError');
+          }
+        });
+
+        const birthdayInput = document.getElementById('birthdayInput');
+        birthdayInput.addEventListener('blur', () => {
+          const v = birthdayInput.value.trim();
+          if (v && !parseBirthday(v)) {
+            showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
+          } else {
+            clearInlineError(birthdayInput, 'birthdayError');
+          }
+        });
+        birthdayInput.addEventListener('input', () => {
+          if (birthdayInput.classList.contains('has-error')) {
+            clearInlineError(birthdayInput, 'birthdayError');
+          }
+        });
+
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+          input.addEventListener('change', () => {
+            const isPreferred = ['preferredDate1', 'preferredDate2', 'preferredDate3'].includes(input.name);
+            if (isPreferred) {
+              // 希望日は他の希望日との重複チェックも必要なため、全希望日を再検証
+              revalidateAllPreferredDates();
+              return;
+            }
+            // その他の日付フィールド(checkupDate)はフォーマット・範囲のみチェック
+            const min = input.getAttribute('min');
+            const max = input.getAttribute('max');
+            const v = input.value;
+            const errorId = input.name + 'Error';
+            clearInlineError(input, errorId);
+            if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+              showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
+              return;
+            }
+            if (v && min && v < min) {
+              showInlineError(input, errorId, `${min}以降の日付を入力してください`);
+              return;
+            }
+            if (v && max && v > max) {
+              showInlineError(input, errorId, `${max}以前の日付を入力してください`);
+              return;
+            }
+          });
+        });
+
+        const otherCheck = document.getElementById('findingsOtherCheck');
+        const otherInput = document.getElementById('findingsOtherInput');
+        const findingsOtherDetail = document.getElementById('findingsOtherDetail');
+        otherCheck.addEventListener('change', () => {
+          if (otherCheck.checked) {
+            findingsOtherDetail.classList.add('show');
+          } else {
+            findingsOtherDetail.classList.remove('show');
+            otherInput.value = '';
+            clearInlineError(otherInput, 'findingsOtherError');
+          }
+        });
+        otherInput.addEventListener('input', () => {
+          if (otherInput.classList.contains('has-error')) {
+            clearInlineError(otherInput, 'findingsOtherError');
+          }
+        });
+
+        document.querySelectorAll('input[name="findings"]').forEach(cb => {
+          cb.addEventListener('change', () => {
+            const anyChecked = document.querySelector('input[name="findings"]:checked');
+            if (anyChecked) clearInlineError(null, 'findingsError');
+          });
+        });
+
+        const applicantOtherCheck = document.getElementById('applicantOtherCheck');
+        const applicantOtherInput = document.getElementById('applicantOtherInput');
+        const applicantOtherDetail = document.getElementById('applicantOtherDetail');
+        document.querySelectorAll('input[name="applicant"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            const isOther = applicantOtherCheck.checked;
+            if (isOther) {
+              applicantOtherDetail.classList.add('show');
+            } else {
+              applicantOtherDetail.classList.remove('show');
+              applicantOtherInput.value = '';
+              clearInlineError(applicantOtherInput, 'applicantOtherError');
+            }
+            clearInlineError(null, 'applicantError');
+          });
+        });
+        applicantOtherInput.addEventListener('input', () => {
+          if (applicantOtherInput.classList.contains('has-error')) {
+            clearInlineError(applicantOtherInput, 'applicantOtherError');
+          }
+        });
+
+        document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+
+        const formEl = document.getElementById('form');
+        const markFormDirty = () => { formDirty = true; };
+        formEl.addEventListener('input', markFormDirty);
+        formEl.addEventListener('change', markFormDirty);
+
+        window.addEventListener('beforeunload', (e) => {
+          const formScreen = document.getElementById('formScreen');
+          const isFormVisible = formScreen && formScreen.style.display !== 'none';
+          if (isFormVisible && formDirty && !submissionState.completed) {
+            e.preventDefault();
+            e.returnValue = '';
+          }
+        });
+
+      } catch (err) {
+        console.error('[Init Error]', err);
+        document.getElementById('loading').textContent = 'エラーが発生しました。LINEアプリから開き直してください。';
+      }
+    })();
+
+    function applyClinicInfo() {
+      // tel:リンク用 href の設定
+      document.querySelectorAll('[data-clinic-phone-link]').forEach(a => {
+        a.href = 'tel:' + CLINIC_INFO.phoneTel;
       });
-    });
-
-    const symptomDetailInput = document.getElementById('symptomDetailInput');
-    symptomDetailInput.addEventListener('input', () => {
-      if (symptomDetailInput.classList.contains('has-error')) {
-        clearInlineError(symptomDetailInput, 'symptomDetailError');
-      }
-    });
-
-    const kanaInput = document.getElementById('kanaInput');
-    kanaInput.addEventListener('blur', () => {
-      const v = kanaInput.value.trim();
-      if (v && !KANA_REGEX.test(v)) {
-        showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
-      } else {
-        clearInlineError(kanaInput, 'kanaError');
-      }
-    });
-    kanaInput.addEventListener('input', () => {
-      if (kanaInput.classList.contains('has-error')) {
-        clearInlineError(kanaInput, 'kanaError');
-      }
-    });
-
-    const phoneInput = document.getElementById('phoneInput');
-    phoneInput.addEventListener('blur', () => {
-      const v = phoneInput.value.trim();
-      if (v && !isValidPhone(v)) {
-        showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません');
-      } else {
-        clearInlineError(phoneInput, 'phoneError');
-      }
-    });
-    phoneInput.addEventListener('input', () => {
-      if (phoneInput.classList.contains('has-error')) {
-        clearInlineError(phoneInput, 'phoneError');
-      }
-    });
-
-    const birthdayInput = document.getElementById('birthdayInput');
-    birthdayInput.addEventListener('blur', () => {
-      const v = birthdayInput.value.trim();
-      if (v && !parseBirthday(v)) {
-        showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
-      } else {
-        clearInlineError(birthdayInput, 'birthdayError');
-      }
-    });
-    birthdayInput.addEventListener('input', () => {
-      if (birthdayInput.classList.contains('has-error')) {
-        clearInlineError(birthdayInput, 'birthdayError');
-      }
-    });
-
-    document.querySelectorAll('input[type="date"]').forEach(input => {
-      input.addEventListener('change', () => {
-        const isPreferred = ['preferredDate1', 'preferredDate2', 'preferredDate3'].includes(input.name);
-        if (isPreferred) {
-          // 希望日は他の希望日との重複チェックも必要なため、全希望日を再検証
-          revalidateAllPreferredDates();
-          return;
-        }
-        // その他の日付フィールド(checkupDate)はフォーマット・範囲のみチェック
-        const min = input.getAttribute('min');
-        const max = input.getAttribute('max');
-        const v = input.value;
-        const errorId = input.name + 'Error';
-        clearInlineError(input, errorId);
-        if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-          showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
-          return;
-        }
-        if (v && min && v < min) {
-          showInlineError(input, errorId, `${min}以降の日付を入力してください`);
-          return;
-        }
-        if (v && max && v > max) {
-          showInlineError(input, errorId, `${max}以前の日付を入力してください`);
-          return;
-        }
+      // 表記電話番号の挿入
+      document.querySelectorAll('[data-clinic-phone-display]').forEach(el => {
+        el.textContent = CLINIC_INFO.phoneDisplay;
       });
-    });
-
-    const otherCheck = document.getElementById('findingsOtherCheck');
-    const otherInput = document.getElementById('findingsOtherInput');
-    const findingsOtherDetail = document.getElementById('findingsOtherDetail');
-    otherCheck.addEventListener('change', () => {
-      if (otherCheck.checked) {
-        findingsOtherDetail.classList.add('show');
-      } else {
-        findingsOtherDetail.classList.remove('show');
-        otherInput.value = '';
-        clearInlineError(otherInput, 'findingsOtherError');
-      }
-    });
-    otherInput.addEventListener('input', () => {
-      if (otherInput.classList.contains('has-error')) {
-        clearInlineError(otherInput, 'findingsOtherError');
-      }
-    });
-
-    document.querySelectorAll('input[name="findings"]').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const anyChecked = document.querySelector('input[name="findings"]:checked');
-        if (anyChecked) clearInlineError(null, 'findingsError');
+      // 診療時間の挿入
+      document.querySelectorAll('[data-clinic-hours]').forEach(el => {
+        el.textContent = CLINIC_INFO.hours;
       });
-    });
+    }
 
-    const applicantOtherCheck = document.getElementById('applicantOtherCheck');
-    const applicantOtherInput = document.getElementById('applicantOtherInput');
-    const applicantOtherDetail = document.getElementById('applicantOtherDetail');
-    document.querySelectorAll('input[name="applicant"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        const isOther = applicantOtherCheck.checked;
+    function updateProgressBar(currentStep) {
+      const progressBar = document.getElementById('progressBar');
+      if (!progressBar) return;
+      if (!currentStep) {
+        progressBar.style.display = 'none';
+        return;
+      }
+      progressBar.style.display = '';
+      const steps = progressBar.querySelectorAll('.step');
+      const lines = progressBar.querySelectorAll('.step-line');
+      steps.forEach((step, index) => {
+        const stepNum = index + 1;
+        step.classList.remove('active', 'completed');
+        if (stepNum < currentStep) step.classList.add('completed');
+        else if (stepNum === currentStep) step.classList.add('active');
+      });
+      lines.forEach((line, index) => {
+        if (index + 1 < currentStep) line.classList.add('completed');
+        else line.classList.remove('completed');
+      });
+    }
+
+    // 画面表示のみ(履歴操作はしない)
+    function showScreen(name) {
+      ['intro', 'select', 'form', 'referral'].forEach(s => {
+        const el = document.getElementById(s + 'Screen');
+        if (el) el.style.display = (s === name) ? '' : 'none';
+      });
+      const stepMap = { intro: 1, select: 2, form: 3, referral: 2 };
+      updateProgressBar(stepMap[name] || 0);
+      window.scrollTo(0, 0);
+    }
+
+    // 画面遷移(履歴に追加してから画面表示)
+    function navigateTo(name) {
+      history.pushState({ screen: name }, '');
+      showScreen(name);
+    }
+
+    function showForm(type) {
+      currentType = type;
+      document.getElementById('typeBadge').textContent =
+        (type === 'own') ? '当院で健診' : '他院等で健診';
+      const isOther = (type === 'other');
+      document.querySelectorAll('.other-only').forEach(el => {
+        el.style.display = isOther ? '' : 'none';
+      });
+      document.querySelectorAll('.other-only select, .other-only input').forEach(el => {
         if (isOther) {
-          applicantOtherDetail.classList.add('show');
+          if (el.dataset.originallyRequired === 'true') {
+            el.setAttribute('required', '');
+          }
         } else {
-          applicantOtherDetail.classList.remove('show');
-          applicantOtherInput.value = '';
-          clearInlineError(applicantOtherInput, 'applicantOtherError');
+          if (el.hasAttribute('required')) {
+            el.dataset.originallyRequired = 'true';
+            el.removeAttribute('required');
+          }
         }
-        clearInlineError(null, 'applicantError');
       });
-    });
-    applicantOtherInput.addEventListener('input', () => {
-      if (applicantOtherInput.classList.contains('has-error')) {
-        clearInlineError(applicantOtherInput, 'applicantOtherError');
-      }
-    });
+      submissionState = { id: generateSubmissionId(), inFlight: false, completed: false };
+      formDirty = false;
+      navigateTo('form');
+    }
 
-    document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+    function isValidPhone(phone) {
+      const digits = phone.replace(/[\s\-\(\)]/g, '');
+      return /^0\d{9,10}$/.test(digits);
+    }
 
-    const formEl = document.getElementById('form');
-    const markFormDirty = () => { formDirty = true; };
-    formEl.addEventListener('input', markFormDirty);
-    formEl.addEventListener('change', markFormDirty);
-
-    window.addEventListener('beforeunload', (e) => {
-      const formScreen = document.getElementById('formScreen');
-      const isFormVisible = formScreen && formScreen.style.display !== 'none';
-      if (isFormVisible && formDirty && !submissionState.completed) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
-
-  } catch (err) {
-    console.error('[Init Error]', err);
-    document.getElementById('loading').textContent = 'エラーが発生しました。LINEアプリから開き直してください。';
-  }
-})();
-
-function applyClinicInfo() {
-  // tel:リンク用 href の設定
-  document.querySelectorAll('[data-clinic-phone-link]').forEach(a => {
-    a.href = 'tel:' + CLINIC_INFO.phoneTel;
-  });
-  // 表記電話番号の挿入
-  document.querySelectorAll('[data-clinic-phone-display]').forEach(el => {
-    el.textContent = CLINIC_INFO.phoneDisplay;
-  });
-  // 診療時間の挿入
-  document.querySelectorAll('[data-clinic-hours]').forEach(el => {
-    el.textContent = CLINIC_INFO.hours;
-  });
-}
-
-function updateProgressBar(currentStep) {
-  const progressBar = document.getElementById('progressBar');
-  if (!progressBar) return;
-  if (!currentStep) {
-    progressBar.style.display = 'none';
-    return;
-  }
-  progressBar.style.display = '';
-  const steps = progressBar.querySelectorAll('.step');
-  const lines = progressBar.querySelectorAll('.step-line');
-  steps.forEach((step, index) => {
-    const stepNum = index + 1;
-    step.classList.remove('active', 'completed');
-    if (stepNum < currentStep) step.classList.add('completed');
-    else if (stepNum === currentStep) step.classList.add('active');
-  });
-  lines.forEach((line, index) => {
-    if (index + 1 < currentStep) line.classList.add('completed');
-    else line.classList.remove('completed');
-  });
-}
-
-// 画面表示のみ(履歴操作はしない)
-function showScreen(name) {
-  ['intro', 'select', 'form', 'referral'].forEach(s => {
-    const el = document.getElementById(s + 'Screen');
-    if (el) el.style.display = (s === name) ? '' : 'none';
-  });
-  const stepMap = { intro: 1, select: 2, form: 3, referral: 2 };
-  updateProgressBar(stepMap[name] || 0);
-  window.scrollTo(0, 0);
-}
-
-// 画面遷移(履歴に追加してから画面表示)
-function navigateTo(name) {
-  history.pushState({ screen: name }, '');
-  showScreen(name);
-}
-
-function showForm(type) {
-  currentType = type;
-  document.getElementById('typeBadge').textContent =
-    (type === 'own') ? '当院で健診' : '他院等で健診';
-  const isOther = (type === 'other');
-  document.querySelectorAll('.other-only').forEach(el => {
-    el.style.display = isOther ? '' : 'none';
-  });
-  document.querySelectorAll('.other-only select, .other-only input').forEach(el => {
-    if (isOther) {
-      if (el.dataset.originallyRequired === 'true') {
-        el.setAttribute('required', '');
-      }
-    } else {
-      if (el.hasAttribute('required')) {
-        el.dataset.originallyRequired = 'true';
-        el.removeAttribute('required');
+    function showInlineError(input, errorId, msg) {
+      if (input) input.classList.add('has-error');
+      const errEl = document.getElementById(errorId);
+      if (errEl) {
+        if (msg !== undefined) errEl.textContent = msg;
+        errEl.classList.add('show');
       }
     }
-  });
-  submissionState = { id: generateSubmissionId(), inFlight: false, completed: false };
-  formDirty = false;
-  navigateTo('form');
-}
-
-function isValidPhone(phone) {
-  const digits = phone.replace(/[\s\-\(\)]/g, '');
-  return /^0\d{9,10}$/.test(digits);
-}
-
-function showInlineError(input, errorId, msg) {
-  if (input) input.classList.add('has-error');
-  const errEl = document.getElementById(errorId);
-  if (errEl) {
-    if (msg !== undefined) errEl.textContent = msg;
-    errEl.classList.add('show');
-  }
-}
-function clearInlineError(input, errorId) {
-  if (input) input.classList.remove('has-error');
-  const errEl = document.getElementById(errorId);
-  if (errEl) errEl.classList.remove('show');
-}
-
-function validatePreferredDate(input) {
-  const errorId = input.name + 'Error';
-  const v = input.value;
-
-  // 値がなければエラークリアのみ(必須チェックは送信時のcheckValidityで)
-  if (!v) {
-    clearInlineError(input, errorId);
-    return;
-  }
-
-  // 1. フォーマットチェック
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-    showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
-    return;
-  }
-
-  // 2. 範囲チェック
-  const min = input.getAttribute('min');
-  const max = input.getAttribute('max');
-  if (min && v < min) {
-    showInlineError(input, errorId, `${min}以降の日付を入力してください`);
-    return;
-  }
-  if (max && v > max) {
-    showInlineError(input, errorId, `${max}以前の日付を入力してください`);
-    return;
-  }
-
-  // 3. 他の希望日との重複チェック
-  const preferredFields = [
-    { name: 'preferredDate1', label: '第1希望日' },
-    { name: 'preferredDate2', label: '第2希望日' },
-    { name: 'preferredDate3', label: '第3希望日' },
-  ];
-  for (const p of preferredFields) {
-    const el = document.querySelector(`input[name="${p.name}"]`);
-    if (!el || el === input) continue;
-    if (el.value === v) {
-      showInlineError(input, errorId, `${p.label}と同じ日付は選択できません`);
-      return;
+    function clearInlineError(input, errorId) {
+      if (input) input.classList.remove('has-error');
+      const errEl = document.getElementById(errorId);
+      if (errEl) errEl.classList.remove('show');
     }
-  }
 
-  // すべて通過
-  clearInlineError(input, errorId);
-}
+    function validatePreferredDate(input) {
+      const errorId = input.name + 'Error';
+      const v = input.value;
 
-function revalidateAllPreferredDates() {
-  ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
-    const el = document.querySelector(`input[name="${name}"]`);
-    if (el) validatePreferredDate(el);
-  });
-}
+      // 値がなければエラークリアのみ(必須チェックは送信時のcheckValidityで)
+      if (!v) {
+        clearInlineError(input, errorId);
+        return;
+      }
 
-function parseBirthday(s) {
-  const v = s.trim();
-  let m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
-  if (!m) m = v.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日?$/);
-  if (!m) return null;
-  const y = parseInt(m[1], 10);
-  const mo = parseInt(m[2], 10);
-  const d = parseInt(m[3], 10);
-  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-  const date = new Date(y, mo - 1, d);
-  if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
-  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
+      // 1. フォーマットチェック
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
+        return;
+      }
 
-function validateForm(form) {
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    const firstInvalid = form.querySelector(':invalid');
-    if (firstInvalid) firstInvalid.focus();
-    return null;
-  }
+      // 2. 範囲チェック
+      const min = input.getAttribute('min');
+      const max = input.getAttribute('max');
+      if (min && v < min) {
+        showInlineError(input, errorId, `${min}以降の日付を入力してください`);
+        return;
+      }
+      if (max && v > max) {
+        showInlineError(input, errorId, `${max}以前の日付を入力してください`);
+        return;
+      }
 
-  const kanaInput = document.getElementById('kanaInput');
-  if (!KANA_REGEX.test(kanaInput.value.trim())) {
-    showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
-    kanaInput.focus();
-    return null;
-  }
+      // 3. 他の希望日との重複チェック
+      const preferredFields = [
+        { name: 'preferredDate1', label: '第1希望日' },
+        { name: 'preferredDate2', label: '第2希望日' },
+        { name: 'preferredDate3', label: '第3希望日' },
+      ];
+      for (const p of preferredFields) {
+        const el = document.querySelector(`input[name="${p.name}"]`);
+        if (!el || el === input) continue;
+        if (el.value === v) {
+          showInlineError(input, errorId, `${p.label}と同じ日付は選択できません`);
+          return;
+        }
+      }
 
-  const phoneInput = document.getElementById('phoneInput');
-  if (!isValidPhone(phoneInput.value)) {
-    showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません。0から始まる10〜11桁の番号を入力してください(ハイフンあり/なし可)。');
-    phoneInput.focus();
-    return null;
-  }
-
-  const birthdayInput = document.getElementById('birthdayInput');
-  const birthday = parseBirthday(birthdayInput.value);
-  if (!birthday) {
-    showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
-    birthdayInput.focus();
-    return null;
-  }
-
-  const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
-    .map(el => el.value);
-  if (findings.length === 0) {
-    showInlineError(null, 'findingsError', '指摘された項目を1つ以上選択してください');
-    const firstCheckbox = form.querySelector('input[name="findings"]');
-    if (firstCheckbox) firstCheckbox.focus();
-    return null;
-  }
-
-  const otherCheckEl = document.getElementById('findingsOtherCheck');
-  const otherInputEl = document.getElementById('findingsOtherInput');
-  if (otherCheckEl.checked && !otherInputEl.value.trim()) {
-    showInlineError(otherInputEl, 'findingsOtherError', '「その他」の内容をご記入ください');
-    otherInputEl.focus();
-    return null;
-  }
-
-  const symptomYesEl = document.getElementById('hasSymptomYes');
-  const symptomDetailEl = document.getElementById('symptomDetailInput');
-  if (symptomYesEl.checked && !symptomDetailEl.value.trim()) {
-    showInlineError(symptomDetailEl, 'symptomDetailError', '症状の内容をご記入ください');
-    symptomDetailEl.focus();
-    return null;
-  }
-
-  const checkupDate = form.querySelector('input[name="checkupDate"]').value;
-  const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
-  const preferredDate2 = form.querySelector('input[name="preferredDate2"]').value;
-  const preferredDate3 = form.querySelector('input[name="preferredDate3"]').value;
-
-  const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
-  const dateChecks = [
-    { label: '健診日', value: checkupDate, name: 'checkupDate' },
-    { label: '第1希望日', value: preferredDate1, name: 'preferredDate1' },
-    { label: '第2希望日', value: preferredDate2, name: 'preferredDate2' },
-    { label: '第3希望日', value: preferredDate3, name: 'preferredDate3' },
-  ];
-  for (const { label, value, name } of dateChecks) {
-    if (value && !dateFormatRe.test(value)) {
-      const inp = form.querySelector(`input[name="${name}"]`);
-      showInlineError(inp, name + 'Error', `${label}の年は4桁で入力してください(例:2026)`);
-      if (inp) inp.focus();
-      return null;
+      // すべて通過
+      clearInlineError(input, errorId);
     }
-  }
 
-  const b = calcDateBoundaries();
-  applyDateBoundariesToDOM(b);
-
-  if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
-    showInlineError(birthdayInput, 'birthdayError', `生年月日は ${b.BIRTHDAY_MIN} 〜 ${b.TODAY} の範囲で入力してください`);
-    birthdayInput.focus();
-    return null;
-  }
-  if (checkupDate < b.CHECKUP_MIN || checkupDate > b.YESTERDAY) {
-    const inp = form.querySelector('input[name="checkupDate"]');
-    showInlineError(inp, 'checkupDateError', `健診日は ${b.CHECKUP_MIN} 〜 ${b.YESTERDAY} の範囲で入力してください`);
-    if (inp) inp.focus();
-    return null;
-  }
-  if (preferredDate1 < b.PREFERRED_MIN || preferredDate1 > b.PREFERRED_MAX) {
-    const inp = form.querySelector('input[name="preferredDate1"]');
-    showInlineError(inp, 'preferredDate1Error', `第1希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
-    if (inp) inp.focus();
-    return null;
-  }
-  if (preferredDate2 && (preferredDate2 < b.PREFERRED_MIN || preferredDate2 > b.PREFERRED_MAX)) {
-    const inp = form.querySelector('input[name="preferredDate2"]');
-    showInlineError(inp, 'preferredDate2Error', `第2希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
-    if (inp) inp.focus();
-    return null;
-  }
-  if (preferredDate3 && (preferredDate3 < b.PREFERRED_MIN || preferredDate3 > b.PREFERRED_MAX)) {
-    const inp = form.querySelector('input[name="preferredDate3"]');
-    showInlineError(inp, 'preferredDate3Error', `第3希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
-    if (inp) inp.focus();
-    return null;
-  }
-
-  const preferredVals = [preferredDate1, preferredDate2, preferredDate3].filter(v => v);
-  if (preferredVals.length !== new Set(preferredVals).size) {
-    revalidateAllPreferredDates();
-    const firstErr = form.querySelector('input[name^="preferredDate"].has-error');
-    if (firstErr) firstErr.focus();
-    return null;
-  }
-
-  const applicantSelected = form.querySelector('input[name="applicant"]:checked');
-  if (!applicantSelected) {
-    showInlineError(null, 'applicantError', '申込者を選択してください');
-    const firstApplicantRadio = form.querySelector('input[name="applicant"]');
-    if (firstApplicantRadio) firstApplicantRadio.focus();
-    return null;
-  }
-
-  const applicantOtherCheckEl = document.getElementById('applicantOtherCheck');
-  const applicantOtherInputEl = document.getElementById('applicantOtherInput');
-  if (applicantOtherCheckEl.checked && !applicantOtherInputEl.value.trim()) {
-    showInlineError(applicantOtherInputEl, 'applicantOtherError', '「その他」の内容をご記入ください');
-    applicantOtherInputEl.focus();
-    return null;
-  }
-
-  return { birthday, findings };
-}
-
-function buildPayload(form, validated) {
-  const formData = {};
-  new FormData(form).forEach((v, k) => {
-    if (k === 'findings') return;
-    formData[k] = v;
-  });
-  formData.findings = validated.findings;
-  formData.type = currentType;
-  formData.birthday = validated.birthday;
-  formData.submissionId = submissionState.id;
-  return formData;
-}
-
-async function submitToServer(formData) {
-  const payload = {
-    idToken: TEST_MODE ? null : liff.getIDToken(),
-    formData,
-    appToken: APP_TOKEN
-  };
-  if (TEST_MODE) payload.testMode = true;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-    return JSON.parse(await res.text());
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-function showSubmitSuccess(result, form) {
-  result.className = 'ok';
-  result.style.display = '';
-
-  let html = '✅ <strong>予約申込を受け付けました。</strong><br>' +
-    '内容を確認のうえ、LINEにてご返事いたします。';
-
-  const canCloseLiff = !TEST_MODE && typeof liff !== 'undefined' &&
-    typeof liff.closeWindow === 'function';
-  if (canCloseLiff) {
-    html += '<button type="button" class="submit close-line-btn">LINEに戻る</button>';
-  }
-
-  result.innerHTML = html;
-
-  if (canCloseLiff) {
-    const closeBtn = result.querySelector('.close-line-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        try { liff.closeWindow(); } catch (e) { console.error('[closeWindow]', e); }
+    function revalidateAllPreferredDates() {
+      ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
+        const el = document.querySelector(`input[name="${name}"]`);
+        if (el) validatePreferredDate(el);
       });
     }
-  }
 
-  form.style.display = 'none';
-  const backBtn = document.querySelector('#formScreen .back-btn');
-  if (backBtn) backBtn.style.display = 'none';
-
-  updateProgressBar(4);
-  // 送信完了画面では戻れないようにする
-  history.replaceState({ screen: 'complete' }, '');
-}
-
-function showAlreadySubmitted(result, form) {
-  result.className = 'ok';
-  result.style.display = '';
-  result.innerHTML = '📩 <strong>現在、お申し込みを受付中です。</strong><br>' +
-    '内容を確認のうえ、LINEにてご返事いたします。';
-  form.style.display = 'none';
-  const backBtn = document.querySelector('#formScreen .back-btn');
-  if (backBtn) backBtn.style.display = 'none';
-  updateProgressBar(4);
-  // 受付済み表示でも戻れないようにする
-  history.replaceState({ screen: 'complete' }, '');
-}
-
-function showSubmitFailure(result, btn, errorDetail) {
-  console.error('[Submit Error]', errorDetail);
-  result.className = 'ng';
-  result.style.display = '';
-  result.innerHTML = '送信に失敗しました。<br>お手数ですが、もう一度お試しいただくか、お電話(' +
-    CLINIC_INFO.phoneDisplay + ')でご連絡ください。';
-  btn.disabled = false;
-  btn.textContent = '予約を申し込む';
-}
-
-function showNetworkFailure(result, btn, err) {
-  console.error('[Network Error]', err);
-  result.className = 'ng';
-  result.style.display = '';
-  if (err && err.name === 'AbortError') {
-    result.textContent = '通信がタイムアウトしました。電波の良い場所で、もう一度お試しください。';
-  } else {
-    result.textContent = '通信エラーが発生しました。ネットワークの状態をご確認のうえ、もう一度お試しください。';
-  }
-  btn.disabled = false;
-  btn.textContent = '予約を申し込む';
-}
-
-async function handleSubmit() {
-  if (submissionState.inFlight) return;
-  if (submissionState.completed) return;
-
-  const form = document.getElementById('form');
-  const btn = document.getElementById('submitBtn');
-  const result = document.getElementById('result');
-
-  if (!currentType) {
-    result.className = 'ng';
-    result.style.display = '';
-    result.textContent = '受診状況が選択されていません。最初からやり直してください。';
-    return;
-  }
-
-  form.classList.add('form-submitted');
-
-  const validated = validateForm(form);
-  if (!validated) return;
-
-  const formData = buildPayload(form, validated);
-
-  submissionState.inFlight = true;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>送信中...';
-  result.className = '';
-  result.style.display = '';
-
-  try {
-    const data = await submitToServer(formData);
-    if (data.ok) {
-      submissionState.completed = true;
-      submissionState.inFlight = false;
-      formDirty = false;
-      showSubmitSuccess(result, form);
-    } else if (data.error === 'already_submitted') {
-      submissionState.completed = true;
-      submissionState.inFlight = false;
-      formDirty = false;
-      showAlreadySubmitted(result, form);
-    } else {
-      submissionState.inFlight = false;
-      showSubmitFailure(result, btn, data.error);
+    function parseBirthday(s) {
+      const v = s.trim();
+      let m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+      if (!m) m = v.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日?$/);
+      if (!m) return null;
+      const y = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      const d = parseInt(m[3], 10);
+      if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+      const date = new Date(y, mo - 1, d);
+      if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+      return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     }
-  } catch (err) {
-    submissionState.inFlight = false;
-    showNetworkFailure(result, btn, err);
-  }
-}
-</script>
+
+    function validateForm(form) {
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) firstInvalid.focus();
+        return null;
+      }
+
+      const kanaInput = document.getElementById('kanaInput');
+      if (!KANA_REGEX.test(kanaInput.value.trim())) {
+        showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
+        kanaInput.focus();
+        return null;
+      }
+
+      const phoneInput = document.getElementById('phoneInput');
+      if (!isValidPhone(phoneInput.value)) {
+        showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません。0から始まる10〜11桁の番号を入力してください(ハイフンあり/なし可)。');
+        phoneInput.focus();
+        return null;
+      }
+
+      const birthdayInput = document.getElementById('birthdayInput');
+      const birthday = parseBirthday(birthdayInput.value);
+      if (!birthday) {
+        showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
+        birthdayInput.focus();
+        return null;
+      }
+
+      const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
+        .map(el => el.value);
+      if (findings.length === 0) {
+        showInlineError(null, 'findingsError', '指摘された項目を1つ以上選択してください');
+        const firstCheckbox = form.querySelector('input[name="findings"]');
+        if (firstCheckbox) firstCheckbox.focus();
+        return null;
+      }
+
+      const otherCheckEl = document.getElementById('findingsOtherCheck');
+      const otherInputEl = document.getElementById('findingsOtherInput');
+      if (otherCheckEl.checked && !otherInputEl.value.trim()) {
+        showInlineError(otherInputEl, 'findingsOtherError', '「その他」の内容をご記入ください');
+        otherInputEl.focus();
+        return null;
+      }
+
+      const symptomYesEl = document.getElementById('hasSymptomYes');
+      const symptomDetailEl = document.getElementById('symptomDetailInput');
+      if (symptomYesEl.checked && !symptomDetailEl.value.trim()) {
+        showInlineError(symptomDetailEl, 'symptomDetailError', '症状の内容をご記入ください');
+        symptomDetailEl.focus();
+        return null;
+      }
+
+      const checkupDate = form.querySelector('input[name="checkupDate"]').value;
+      const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
+      const preferredDate2 = form.querySelector('input[name="preferredDate2"]').value;
+      const preferredDate3 = form.querySelector('input[name="preferredDate3"]').value;
+
+      const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
+      const dateChecks = [
+        { label: '健診日', value: checkupDate, name: 'checkupDate' },
+        { label: '第1希望日', value: preferredDate1, name: 'preferredDate1' },
+        { label: '第2希望日', value: preferredDate2, name: 'preferredDate2' },
+        { label: '第3希望日', value: preferredDate3, name: 'preferredDate3' },
+      ];
+      for (const { label, value, name } of dateChecks) {
+        if (value && !dateFormatRe.test(value)) {
+          const inp = form.querySelector(`input[name="${name}"]`);
+          showInlineError(inp, name + 'Error', `${label}の年は4桁で入力してください(例:2026)`);
+          if (inp) inp.focus();
+          return null;
+        }
+      }
+
+      const b = calcDateBoundaries();
+      applyDateBoundariesToDOM(b);
+
+      if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
+        showInlineError(birthdayInput, 'birthdayError', `生年月日は ${b.BIRTHDAY_MIN} 〜 ${b.TODAY} の範囲で入力してください`);
+        birthdayInput.focus();
+        return null;
+      }
+      if (checkupDate < b.CHECKUP_MIN || checkupDate > b.YESTERDAY) {
+        const inp = form.querySelector('input[name="checkupDate"]');
+        showInlineError(inp, 'checkupDateError', `健診日は ${b.CHECKUP_MIN} 〜 ${b.YESTERDAY} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+      if (preferredDate1 < b.PREFERRED_MIN || preferredDate1 > b.PREFERRED_MAX) {
+        const inp = form.querySelector('input[name="preferredDate1"]');
+        showInlineError(inp, 'preferredDate1Error', `第1希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+      if (preferredDate2 && (preferredDate2 < b.PREFERRED_MIN || preferredDate2 > b.PREFERRED_MAX)) {
+        const inp = form.querySelector('input[name="preferredDate2"]');
+        showInlineError(inp, 'preferredDate2Error', `第2希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+      if (preferredDate3 && (preferredDate3 < b.PREFERRED_MIN || preferredDate3 > b.PREFERRED_MAX)) {
+        const inp = form.querySelector('input[name="preferredDate3"]');
+        showInlineError(inp, 'preferredDate3Error', `第3希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+
+      const preferredVals = [preferredDate1, preferredDate2, preferredDate3].filter(v => v);
+      if (preferredVals.length !== new Set(preferredVals).size) {
+        revalidateAllPreferredDates();
+        const firstErr = form.querySelector('input[name^="preferredDate"].has-error');
+        if (firstErr) firstErr.focus();
+        return null;
+      }
+
+      const applicantSelected = form.querySelector('input[name="applicant"]:checked');
+      if (!applicantSelected) {
+        showInlineError(null, 'applicantError', '申込者を選択してください');
+        const firstApplicantRadio = form.querySelector('input[name="applicant"]');
+        if (firstApplicantRadio) firstApplicantRadio.focus();
+        return null;
+      }
+
+      const applicantOtherCheckEl = document.getElementById('applicantOtherCheck');
+      const applicantOtherInputEl = document.getElementById('applicantOtherInput');
+      if (applicantOtherCheckEl.checked && !applicantOtherInputEl.value.trim()) {
+        showInlineError(applicantOtherInputEl, 'applicantOtherError', '「その他」の内容をご記入ください');
+        applicantOtherInputEl.focus();
+        return null;
+      }
+
+      return { birthday, findings };
+    }
+
+    function buildPayload(form, validated) {
+      const formData = {};
+      new FormData(form).forEach((v, k) => {
+        if (k === 'findings') return;
+        formData[k] = v;
+      });
+      formData.findings = validated.findings;
+      formData.type = currentType;
+      formData.birthday = validated.birthday;
+      formData.submissionId = submissionState.id;
+      return formData;
+    }
+
+    async function submitToServer(formData) {
+      const payload = {
+        idToken: TEST_MODE ? null : liff.getIDToken(),
+        formData,
+        appToken: APP_TOKEN
+      };
+      if (TEST_MODE) payload.testMode = true;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        return JSON.parse(await res.text());
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function showSubmitSuccess(result, form) {
+      result.className = 'ok';
+      result.style.display = '';
+
+      let html = '✅ <strong>予約申込を受け付けました。</strong><br>' +
+        '内容を確認のうえ、LINEにてご返事いたします。';
+
+      const canCloseLiff = !TEST_MODE && typeof liff !== 'undefined' &&
+        typeof liff.closeWindow === 'function';
+      if (canCloseLiff) {
+        html += '<button type="button" class="submit close-line-btn">LINEに戻る</button>';
+      }
+
+      result.innerHTML = html;
+
+      if (canCloseLiff) {
+        const closeBtn = result.querySelector('.close-line-btn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            try { liff.closeWindow(); } catch (e) { console.error('[closeWindow]', e); }
+          });
+        }
+      }
+
+      form.style.display = 'none';
+      const backBtn = document.querySelector('#formScreen .back-btn');
+      if (backBtn) backBtn.style.display = 'none';
+
+      updateProgressBar(4);
+      // 送信完了画面では戻れないようにする
+      history.replaceState({ screen: 'complete' }, '');
+    }
+
+    function showAlreadySubmitted(result, form) {
+      result.className = 'ok';
+      result.style.display = '';
+      result.innerHTML = '📩 <strong>現在、お申し込みを受付中です。</strong><br>' +
+        '内容を確認のうえ、LINEにてご返事いたします。';
+      form.style.display = 'none';
+      const backBtn = document.querySelector('#formScreen .back-btn');
+      if (backBtn) backBtn.style.display = 'none';
+      updateProgressBar(4);
+      // 受付済み表示でも戻れないようにする
+      history.replaceState({ screen: 'complete' }, '');
+    }
+
+    function showSubmitFailure(result, btn, errorDetail) {
+      console.error('[Submit Error]', errorDetail);
+      result.className = 'ng';
+      result.style.display = '';
+      result.innerHTML = '送信に失敗しました。<br>お手数ですが、もう一度お試しいただくか、お電話(' +
+        CLINIC_INFO.phoneDisplay + ')でご連絡ください。';
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    function showNetworkFailure(result, btn, err) {
+      console.error('[Network Error]', err);
+      result.className = 'ng';
+      result.style.display = '';
+      if (err && err.name === 'AbortError') {
+        result.textContent = '通信がタイムアウトしました。電波の良い場所で、もう一度お試しください。';
+      } else {
+        result.textContent = '通信エラーが発生しました。ネットワークの状態をご確認のうえ、もう一度お試しください。';
+      }
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    async function handleSubmit() {
+      if (submissionState.inFlight) return;
+      if (submissionState.completed) return;
+
+      const form = document.getElementById('form');
+      const btn = document.getElementById('submitBtn');
+      const result = document.getElementById('result');
+
+      if (!currentType) {
+        result.className = 'ng';
+        result.style.display = '';
+        result.textContent = '受診状況が選択されていません。最初からやり直してください。';
+        return;
+      }
+
+      form.classList.add('form-submitted');
+
+      const validated = validateForm(form);
+      if (!validated) return;
+
+      const formData = buildPayload(form, validated);
+
+      submissionState.inFlight = true;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>送信中...';
+      result.className = '';
+      result.style.display = '';
+
+      try {
+        const data = await submitToServer(formData);
+        if (data.ok) {
+          submissionState.completed = true;
+          submissionState.inFlight = false;
+          formDirty = false;
+          showSubmitSuccess(result, form);
+        } else if (data.error === 'already_submitted') {
+          submissionState.completed = true;
+          submissionState.inFlight = false;
+          formDirty = false;
+          showAlreadySubmitted(result, form);
+        } else {
+          submissionState.inFlight = false;
+          showSubmitFailure(result, btn, data.error);
+        }
+      } catch (err) {
+        submissionState.inFlight = false;
+        showNetworkFailure(result, btn, err);
+      }
+    }
+  </script>
 
 </body>
+
 </html>
