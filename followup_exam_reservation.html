@@ -210,6 +210,18 @@
       margin-right: 8px;
     }
 
+    /* ▼ 2択ラジオの横並び(性別・症状の有無) */
+    .checkboxes.inline {
+      display: flex;
+      gap: 24px;
+    }
+
+    .checkboxes.inline label {
+      display: flex;
+      align-items: center;
+      padding: 10px 4px;
+    }
+
     button.submit {
       width: 100%;
       padding: 14px;
@@ -567,7 +579,7 @@
     <h1>二次検診予約フォーム</h1>
 
     <div class="alert-box" role="alert">
-      <span class="icon">⚠️</span><strong>強い症状(血便、しこり、強い痛みなど)がある場合は、本フォームでの予約をお待ちにならず、お電話にてご連絡ください。</strong>
+      <span class="icon">⚠️</span><strong>緊急と思われる症状(強い痛み・血便・血尿など)がある場合は、必ずお電話でご連絡ください。</strong>
       <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
     </div>
 
@@ -576,13 +588,12 @@
       <ul>
         <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
         <li><strong>予約希望日について:</strong>ご希望に添えない場合があります。また、時間の指定や医師の指定はできません。</li>
-        <li><strong>個人情報の取扱い:</strong>ご記入いただいた情報は、二次検診のご予約・診療の目的にのみ使用し、それ以外の目的には利用しません。</li>
         <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更は<a
             href="https://docs.google.com/forms/d/e/1FAIpQLSedWjSU3L4nRL3X-XiYu2iKte4P5W2xd9y3MrSUHM13aCBz2A/viewform?usp=header"
             target="_blank" rel="noopener">こちら</a>からお申し込みください。</li>
         <li><strong>来院時のお持ち物:</strong>マイナ保険証(マイナンバーカード)または資格確認書、健診結果票または精密検査依頼票をお持ちください。</li>
         <li>
-          <strong>ご連絡について:</strong>お申し込み内容は、月〜土曜日(祝日を除く)の午後に確認し、LINEにて順次ご連絡いたします。ご予約内容に不足や確認事項がある場合は、LINEにてお伺いしたうえでご予約を確定いたします。
+          <strong>ご連絡について:</strong>お申し込み頂いた内容は、月〜土曜日(祝日を除く)の午後に確認し、順次ご連絡いたします。
         </li>
       </ul>
     </div>
@@ -659,11 +670,20 @@
         </div>
       </div>
 
+      <!-- ▼ 性別(他院等で健診を受けた方のみ表示) -->
+      <div class="field other-only" style="display:none;">
+        <div class="label" id="genderLabel">性別<span class="required">必須</span></div>
+        <div class="checkboxes inline" role="radiogroup" aria-labelledby="genderLabel">
+          <label><input type="radio" name="gender" value="男性" required>男性</label>
+          <label><input type="radio" name="gender" value="女性" required>女性</label>
+        </div>
+        <div class="inline-error" id="genderError" role="alert"></div>
+      </div>
+
       <div class="field">
         <label class="label" for="phoneInput">電話番号<span class="required">必須</span></label>
         <input type="tel" name="phone" id="phoneInput" required autocomplete="tel"
           placeholder="例:09012345678 または 03-1234-5678">
-        <div class="help">日中ご連絡可能な番号をご記入ください</div>
         <div class="inline-error" id="phoneError" role="alert">電話番号の形式が正しくありません</div>
       </div>
 
@@ -710,7 +730,7 @@
 
       <div class="field">
         <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
-        <div class="checkboxes" role="radiogroup" aria-labelledby="hasSymptomLabel">
+        <div class="checkboxes inline" role="radiogroup" aria-labelledby="hasSymptomLabel">
           <label><input type="radio" name="hasSymptom" value="なし" required>なし</label>
           <label><input type="radio" name="hasSymptom" value="あり" id="hasSymptomYes" required>あり(軽度)</label>
         </div>
@@ -794,8 +814,8 @@
     // HTML側に直接記入する必要はありません(applyClinicInfoが自動で反映します)
     // =============================================================
     const CLINIC_INFO = {
-      phoneDisplay: '0942-72-2375', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
-      phoneTel: '0942722375',    // tel:リンク用(数字のみ、例: 0312345678)
+      phoneDisplay: '0942-72-2236', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
+      phoneTel: '0942722236',    // tel:リンク用(数字のみ、例: 0312345678)
       hours: '平日 9:00〜17:00',
     };
 
@@ -1034,6 +1054,13 @@
           if (birthdayInput.classList.contains('has-error')) {
             clearInlineError(birthdayInput, 'birthdayError');
           }
+        });
+
+        // ▼ 性別ラジオ:選択時にエラーをクリア
+        document.querySelectorAll('input[name="gender"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            clearInlineError(null, 'genderError');
+          });
         });
 
         document.querySelectorAll('input[type="date"]').forEach(input => {
@@ -1328,6 +1355,17 @@
         showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
         birthdayInput.focus();
         return null;
+      }
+
+      // ▼ 性別(他院等で健診を受けた方のみ必須)
+      if (currentType === 'other') {
+        const genderSelected = form.querySelector('input[name="gender"]:checked');
+        if (!genderSelected) {
+          showInlineError(null, 'genderError', '性別を選択してください');
+          const firstGenderRadio = form.querySelector('input[name="gender"]');
+          if (firstGenderRadio) firstGenderRadio.focus();
+          return null;
+        }
       }
 
       const findings = Array.from(form.querySelectorAll('input[name="findings"]:checked'))
