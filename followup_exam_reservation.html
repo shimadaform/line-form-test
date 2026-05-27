@@ -190,8 +190,32 @@
       border-color: #e74c3c;
     }
 
-    input.has-error {
+    input.has-error,
+    select.has-error {
       border-color: #e74c3c !important;
+    }
+
+    /* ▼ 生年月日(年/月/日)の横並び */
+    .birthday-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .birthday-group select {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 10px 6px;
+    }
+
+    .birthday-group select.year {
+      flex: 1.5 1 0;
+    }
+
+    .birthday-unit {
+      flex: 0 0 auto;
+      font-size: 0.9rem;
+      color: #555;
     }
 
     input:disabled {
@@ -664,10 +688,23 @@
       </div>
 
       <div class="field">
-        <label class="label" for="birthdayInput">生年月日<span class="required">必須</span></label>
-        <input type="text" name="birthday" id="birthdayInput" required autocomplete="bday" placeholder="例:1980/01/15">
-        <div class="inline-error" id="birthdayError" role="alert">生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)
+        <div class="label" id="birthdayLabel">生年月日<span class="required">必須</span></div>
+        <div class="birthday-group">
+          <select class="year" name="birthdayYear" id="birthdayYear" required autocomplete="bday-year"
+            aria-label="生年(西暦)">
+            <option value="">----</option>
+          </select>
+          <span class="birthday-unit">年</span>
+          <select name="birthdayMonth" id="birthdayMonth" required autocomplete="bday-month" aria-label="月">
+            <option value="">--</option>
+          </select>
+          <span class="birthday-unit">月</span>
+          <select name="birthdayDay" id="birthdayDay" required autocomplete="bday-day" aria-label="日">
+            <option value="">--</option>
+          </select>
+          <span class="birthday-unit">日</span>
         </div>
+        <div class="inline-error" id="birthdayError" role="alert"></div>
       </div>
 
       <!-- ▼ 性別(他院等で健診を受けた方のみ表示) -->
@@ -708,16 +745,24 @@
           <label><input type="checkbox" name="findings" value="血圧">血圧</label>
           <label><input type="checkbox" name="findings" value="血糖・HbA1c">血糖・HbA1c</label>
           <label><input type="checkbox" name="findings" value="脂質・コレステロール・中性脂肪">脂質・コレステロール・中性脂肪</label>
+
           <label><input type="checkbox" name="findings" value="肝機能">肝機能</label>
-          <label><input type="checkbox" name="findings" value="腎機能・尿検査">腎機能・尿検査</label>
           <label><input type="checkbox" name="findings" value="貧血">貧血</label>
+
           <label><input type="checkbox" name="findings" value="心電図">心電図</label>
-          <label><input type="checkbox" name="findings" value="胸部X線・肺">胸部X線・肺</label>
+          <label><input type="checkbox" name="findings" value="心臓CT">心臓CT</label>
+          <label><input type="checkbox" name="findings" value="動脈硬化（頚動脈エコー・ABI）">動脈硬化（頚動脈エコー・ABI）</label>
+
+          <label><input type="checkbox" name="findings" value="胸部X線（レントゲン）">胸部X線（レントゲン）</label>
+          <label><input type="checkbox" name="findings" value="胸部CT">胸部CT</label>
+
           <label><input type="checkbox" name="findings" value="胃">胃</label>
-          <label><input type="checkbox" name="findings" value="大腸・便潜血">大腸・便潜血</label>
+          <label><input type="checkbox" name="findings" value="便潜血">便潜血</label>
           <label><input type="checkbox" name="findings" value="腹部エコー">腹部エコー</label>
+
           <label><input type="checkbox" name="findings" value="乳房">乳房</label>
-          <label><input type="checkbox" name="findings" value="子宮・婦人科">子宮・婦人科</label>
+          <label><input type="checkbox" name="findings" value="骨密度検査">骨密度検査</label>
+
           <label><input type="checkbox" name="findings" value="その他" id="findingsOtherCheck">その他</label>
         </div>
         <div class="other-detail" id="findingsOtherDetail">
@@ -732,7 +777,7 @@
         <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
         <div class="checkboxes inline" role="radiogroup" aria-labelledby="hasSymptomLabel">
           <label><input type="radio" name="hasSymptom" value="なし" required>なし</label>
-          <label><input type="radio" name="hasSymptom" value="あり" id="hasSymptomYes" required>あり(軽度)</label>
+          <label><input type="radio" name="hasSymptom" value="あり" id="hasSymptomYes" required>あり</label>
         </div>
         <div class="symptom-detail" id="symptomDetail">
           <input type="text" name="symptomDetail" id="symptomDetailInput" placeholder="症状の内容をご記入ください" aria-label="症状の内容"
@@ -1050,20 +1095,15 @@
           }
         });
 
-        const birthdayInput = document.getElementById('birthdayInput');
-        birthdayInput.addEventListener('blur', () => {
-          const v = birthdayInput.value.trim();
-          if (v && !parseBirthday(v)) {
-            showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
-          } else {
-            clearInlineError(birthdayInput, 'birthdayError');
-          }
+        // ▼ 生年月日(年/月/日セレクト)の初期化とイベント
+        populateBirthdaySelects();
+        ['birthdayYear', 'birthdayMonth'].forEach(id => {
+          document.getElementById(id).addEventListener('change', () => {
+            updateBirthdayDayOptions();
+            clearBirthdayError();
+          });
         });
-        birthdayInput.addEventListener('input', () => {
-          if (birthdayInput.classList.contains('has-error')) {
-            clearInlineError(birthdayInput, 'birthdayError');
-          }
-        });
+        document.getElementById('birthdayDay').addEventListener('change', clearBirthdayError);
 
         // ▼ 性別ラジオ:選択時にエラーをクリア
         document.querySelectorAll('input[name="gender"]').forEach(radio => {
@@ -1322,18 +1362,86 @@
       });
     }
 
-    function parseBirthday(s) {
-      const v = s.trim();
-      let m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
-      if (!m) m = v.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日?$/);
-      if (!m) return null;
-      const y = parseInt(m[1], 10);
-      const mo = parseInt(m[2], 10);
-      const d = parseInt(m[3], 10);
-      if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-      const date = new Date(y, mo - 1, d);
-      if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
-      return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    // ▼ 生年月日(年/月/日セレクト)関連 ----------------------------
+
+    // 年プルダウンを 今年→1899 の降順で生成、月・日も初期生成
+    function populateBirthdaySelects() {
+      const yearSel = document.getElementById('birthdayYear');
+      const monthSel = document.getElementById('birthdayMonth');
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 1899; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = y + '年';
+        yearSel.appendChild(opt);
+      }
+      for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = String(m);
+        opt.textContent = m + '月';
+        monthSel.appendChild(opt);
+      }
+      updateBirthdayDayOptions();
+    }
+
+    // 指定した年・月の日数(year未指定時はうるう年扱いで2月=29日まで許容)
+    function daysInMonth(year, month) {
+      if (!month) return 31;
+      const y = year || 2000; // うるう年で最大日数をフォールバック
+      return new Date(y, month, 0).getDate();
+    }
+
+    // 年・月の選択に応じて日プルダウンを再生成(既存の選択は可能なら維持)
+    function updateBirthdayDayOptions() {
+      const yearSel = document.getElementById('birthdayYear');
+      const monthSel = document.getElementById('birthdayMonth');
+      const daySel = document.getElementById('birthdayDay');
+      const y = parseInt(yearSel.value, 10) || null;
+      const mo = parseInt(monthSel.value, 10) || null;
+      const maxDay = daysInMonth(y, mo);
+      const prev = daySel.value;
+
+      daySel.innerHTML = '<option value="">--</option>';
+      for (let d = 1; d <= maxDay; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d);
+        opt.textContent = d + '日';
+        daySel.appendChild(opt);
+      }
+      // 以前の選択が新しい範囲内なら維持(範囲外なら未選択に戻す)
+      if (prev && parseInt(prev, 10) <= maxDay) daySel.value = prev;
+    }
+
+    // 3つのセレクトから YYYY-MM-DD を生成。未選択・不正日付なら null
+    function getBirthdayFromSelects() {
+      const y = document.getElementById('birthdayYear').value;
+      const mo = document.getElementById('birthdayMonth').value;
+      const d = document.getElementById('birthdayDay').value;
+      if (!y || !mo || !d) return null;
+      const yi = parseInt(y, 10), moi = parseInt(mo, 10), di = parseInt(d, 10);
+      const date = new Date(yi, moi - 1, di);
+      if (date.getFullYear() !== yi || date.getMonth() !== moi - 1 || date.getDate() !== di) return null;
+      return `${yi}-${String(moi).padStart(2, '0')}-${String(di).padStart(2, '0')}`;
+    }
+
+    function setBirthdayError(msg) {
+      ['birthdayYear', 'birthdayMonth', 'birthdayDay'].forEach(id => {
+        document.getElementById(id).classList.add('has-error');
+      });
+      const errEl = document.getElementById('birthdayError');
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.classList.add('show');
+      }
+    }
+
+    function clearBirthdayError() {
+      ['birthdayYear', 'birthdayMonth', 'birthdayDay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('has-error');
+      });
+      const errEl = document.getElementById('birthdayError');
+      if (errEl) errEl.classList.remove('show');
     }
 
     function validateForm(form) {
@@ -1358,11 +1466,10 @@
         return null;
       }
 
-      const birthdayInput = document.getElementById('birthdayInput');
-      const birthday = parseBirthday(birthdayInput.value);
+      const birthday = getBirthdayFromSelects();
       if (!birthday) {
-        showInlineError(birthdayInput, 'birthdayError', '生年月日の形式が正しくありません(例:1980/01/15、1980-01-15、1980年01月15日)');
-        birthdayInput.focus();
+        setBirthdayError('生年月日を正しく選択してください');
+        document.getElementById('birthdayYear').focus();
         return null;
       }
 
@@ -1383,14 +1490,6 @@
         showInlineError(null, 'findingsError', '指摘された項目を1つ以上選択してください');
         const firstCheckbox = form.querySelector('input[name="findings"]');
         if (firstCheckbox) firstCheckbox.focus();
-        return null;
-      }
-
-      const otherCheckEl = document.getElementById('findingsOtherCheck');
-      const otherInputEl = document.getElementById('findingsOtherInput');
-      if (otherCheckEl.checked && !otherInputEl.value.trim()) {
-        showInlineError(otherInputEl, 'findingsOtherError', '「その他」の内容をご記入ください');
-        otherInputEl.focus();
         return null;
       }
 
@@ -1427,8 +1526,8 @@
       applyDateBoundariesToDOM(b);
 
       if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
-        showInlineError(birthdayInput, 'birthdayError', `生年月日は ${b.BIRTHDAY_MIN} 〜 ${b.TODAY} の範囲で入力してください`);
-        birthdayInput.focus();
+        setBirthdayError(`生年月日は ${b.BIRTHDAY_MIN} 〜 ${b.TODAY} の範囲で入力してください`);
+        document.getElementById('birthdayYear').focus();
         return null;
       }
       if (checkupDate < b.CHECKUP_MIN || checkupDate > b.YESTERDAY) {
@@ -1472,14 +1571,6 @@
         return null;
       }
 
-      const applicantOtherCheckEl = document.getElementById('applicantOtherCheck');
-      const applicantOtherInputEl = document.getElementById('applicantOtherInput');
-      if (applicantOtherCheckEl.checked && !applicantOtherInputEl.value.trim()) {
-        showInlineError(applicantOtherInputEl, 'applicantOtherError', '「その他」の内容をご記入ください');
-        applicantOtherInputEl.focus();
-        return null;
-      }
-
       return { birthday, findings };
     }
 
@@ -1487,6 +1578,8 @@
       const formData = {};
       new FormData(form).forEach((v, k) => {
         if (k === 'findings') return;
+        // 年/月/日の生のセレクト値は送らない(birthday に統合済み)
+        if (k === 'birthdayYear' || k === 'birthdayMonth' || k === 'birthdayDay') return;
         formData[k] = v;
       });
       formData.findings = validated.findings;
