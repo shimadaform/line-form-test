@@ -882,6 +882,20 @@
       return `${y}-${m}-${day}`;
     }
 
+    // 表示用: 'YYYY-MM-DD' を 'YYYY年M月D日' に変換(ゼロなし。内部比較・送信値はそのまま)
+    function toJpDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return iso;
+      return `${m[1]}年${Number(m[2])}月${Number(m[3])}日`;
+    }
+
+    // 表示用: 'YYYY-MM-DD' を 'YYYY/MM/DD' に変換(ゼロ付き。内部比較・送信値はそのまま)
+    function toSlashDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return iso;
+      return `${m[1]}/${m[2]}/${m[3]}`;
+    }
+
     function calcDateBoundaries() {
       const today = new Date();
       const yesterday = new Date(today);
@@ -917,7 +931,7 @@
       });
       const notice = document.getElementById('preferredDateNotice');
       if (notice) {
-        notice.textContent = `${b.PREFERRED_MIN}以降の日付を選択してください`;
+        notice.textContent = `${toJpDate(b.PREFERRED_MIN)}以降の日付を選択してください`;
       }
     }
 
@@ -1131,11 +1145,11 @@
               return;
             }
             if (v && min && v < min) {
-              showInlineError(input, errorId, `${min}以降の日付を入力してください`);
+              showInlineError(input, errorId, `${toSlashDate(min)}以降の日付を入力してください`);
               return;
             }
             if (v && max && v > max) {
-              showInlineError(input, errorId, `${max}以前の日付を入力してください`);
+              showInlineError(input, errorId, `${toSlashDate(max)}以前の日付を入力してください`);
               return;
             }
           });
@@ -1328,11 +1342,11 @@
       const min = input.getAttribute('min');
       const max = input.getAttribute('max');
       if (min && v < min) {
-        showInlineError(input, errorId, `${min}以降の日付を入力してください`);
+        showInlineError(input, errorId, `${toSlashDate(min)}以降の日付を入力してください`);
         return;
       }
       if (max && v > max) {
-        showInlineError(input, errorId, `${max}以前の日付を入力してください`);
+        showInlineError(input, errorId, `${toSlashDate(max)}以前の日付を入力してください`);
         return;
       }
 
@@ -1372,13 +1386,13 @@
       for (let y = currentYear; y >= 1899; y--) {
         const opt = document.createElement('option');
         opt.value = String(y);
-        opt.textContent = y + '年';
+        opt.textContent = String(y);
         yearSel.appendChild(opt);
       }
       for (let m = 1; m <= 12; m++) {
         const opt = document.createElement('option');
         opt.value = String(m);
-        opt.textContent = m + '月';
+        opt.textContent = String(m);
         monthSel.appendChild(opt);
       }
       updateBirthdayDayOptions();
@@ -1405,7 +1419,7 @@
       for (let d = 1; d <= maxDay; d++) {
         const opt = document.createElement('option');
         opt.value = String(d);
-        opt.textContent = d + '日';
+        opt.textContent = String(d);
         daySel.appendChild(opt);
       }
       // 以前の選択が新しい範囲内なら維持(範囲外なら未選択に戻す)
@@ -1526,31 +1540,31 @@
       applyDateBoundariesToDOM(b);
 
       if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
-        setBirthdayError(`生年月日は ${b.BIRTHDAY_MIN} 〜 ${b.TODAY} の範囲で入力してください`);
+        setBirthdayError(`生年月日は ${toJpDate(b.BIRTHDAY_MIN)} 〜 ${toJpDate(b.TODAY)} の範囲で入力してください`);
         document.getElementById('birthdayYear').focus();
         return null;
       }
       if (checkupDate < b.CHECKUP_MIN || checkupDate > b.YESTERDAY) {
         const inp = form.querySelector('input[name="checkupDate"]');
-        showInlineError(inp, 'checkupDateError', `健診日は ${b.CHECKUP_MIN} 〜 ${b.YESTERDAY} の範囲で入力してください`);
+        showInlineError(inp, 'checkupDateError', `健診日は ${toJpDate(b.CHECKUP_MIN)} 〜 ${toJpDate(b.YESTERDAY)} の範囲で入力してください`);
         if (inp) inp.focus();
         return null;
       }
       if (preferredDate1 < b.PREFERRED_MIN || preferredDate1 > b.PREFERRED_MAX) {
         const inp = form.querySelector('input[name="preferredDate1"]');
-        showInlineError(inp, 'preferredDate1Error', `第1希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
+        showInlineError(inp, 'preferredDate1Error', `第1希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
         if (inp) inp.focus();
         return null;
       }
       if (preferredDate2 && (preferredDate2 < b.PREFERRED_MIN || preferredDate2 > b.PREFERRED_MAX)) {
         const inp = form.querySelector('input[name="preferredDate2"]');
-        showInlineError(inp, 'preferredDate2Error', `第2希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
+        showInlineError(inp, 'preferredDate2Error', `第2希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
         if (inp) inp.focus();
         return null;
       }
       if (preferredDate3 && (preferredDate3 < b.PREFERRED_MIN || preferredDate3 > b.PREFERRED_MAX)) {
         const inp = form.querySelector('input[name="preferredDate3"]');
-        showInlineError(inp, 'preferredDate3Error', `第3希望日は ${b.PREFERRED_MIN} 〜 ${b.PREFERRED_MAX} の範囲で入力してください`);
+        showInlineError(inp, 'preferredDate3Error', `第3希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
         if (inp) inp.focus();
         return null;
       }
