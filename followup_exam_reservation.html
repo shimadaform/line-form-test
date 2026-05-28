@@ -625,7 +625,7 @@
     <div class="terms">
       <h3>ご利用にあたって</h3>
       <ul>
-        <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
+        <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、嶋田病院よりご連絡し予約を確定します。</li>
         <li><strong>予約希望日について:</strong>ご希望に添えない場合があります。また、時間の指定や医師の指定はできません。</li>
 <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更はお電話にてご連絡ください。</li>
         <li>
@@ -673,8 +673,8 @@
 
     <button type="button" class="select-btn" data-type="own">
       <span class="arrow">›</span>
-      <div class="title">当院で受けた健診の結果</div>
-      <div class="desc">当院の健診結果で再検査・精密検査等を指摘された方</div>
+      <div class="title">嶋田病院で受けた健診の結果</div>
+      <div class="desc">嶋田病院の健診結果で再検査・精密検査等を指摘された方</div>
     </button>
 
     <button type="button" class="select-btn" data-type="other">
@@ -1360,7 +1360,7 @@
     function showForm(type) {
       currentType = type;
       document.getElementById('typeBadge').textContent =
-        (type === 'own') ? '当院で健診' : '他院等で健診';
+        (type === 'own') ? '嶋田病院で健診' : '他院等で健診';
       const isOther = (type === 'other');
       document.querySelectorAll('.other-only').forEach(el => {
         el.style.display = isOther ? '' : 'none';
