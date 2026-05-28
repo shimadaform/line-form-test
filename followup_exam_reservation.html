@@ -715,12 +715,12 @@
 
       <div class="field">
         <label class="label" for="nameInput">氏名<span class="required">必須</span></label>
-        <input type="text" id="nameInput" name="name" required autocomplete="name" placeholder="例:嶋田 太郎">
+        <input type="text" id="nameInput" name="name" required autocomplete="name" maxlength="100" placeholder="例:嶋田 太郎">
       </div>
 
       <div class="field">
         <label class="label" for="kanaInput">フリガナ<span class="required">必須</span></label>
-        <input type="text" name="kana" id="kanaInput" required autocomplete="off" placeholder="例:シマダ タロウ">
+        <input type="text" name="kana" id="kanaInput" required autocomplete="off" maxlength="100" placeholder="例:シマダ タロウ">
         <div class="inline-error" id="kanaError" role="alert">カタカナで入力してください</div>
       </div>
 
@@ -756,7 +756,7 @@
 
       <div class="field">
         <label class="label" for="phoneInput">電話番号<span class="required">必須</span></label>
-        <input type="tel" name="phone" id="phoneInput" required autocomplete="tel"
+        <input type="tel" name="phone" id="phoneInput" required autocomplete="tel" maxlength="30"
           placeholder="例:09012345678 / 03-1234-5678">
         <div class="inline-error" id="phoneError" role="alert">電話番号の形式が正しくありません</div>
       </div>
@@ -765,7 +765,7 @@
 
       <div class="field other-only" style="display:none;">
         <label class="label" for="clinicNameInput">健診実施機関名<span class="required">必須</span></label>
-        <input type="text" id="clinicNameInput" name="clinicName" required autocomplete="off"
+        <input type="text" id="clinicNameInput" name="clinicName" required autocomplete="off" maxlength="200"
           placeholder="例:〇〇病院や△△健診センターなど">
         <div class="inline-error" id="clinicNameError" role="alert"></div>
       </div>
@@ -804,7 +804,7 @@
         </div>
         <div class="other-detail" id="findingsOtherDetail">
           <input type="text" name="findingsOther" id="findingsOtherInput" placeholder="その他の場合は内容をご記入ください"
-            aria-label="指摘項目「その他」の内容" autocomplete="off" style="margin-top:8px;">
+            aria-label="指摘項目「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
           <div class="inline-error" id="findingsOtherError" role="alert"></div>
         </div>
         <div class="inline-error" id="findingsError" role="alert"></div>
@@ -818,7 +818,7 @@
         </div>
         <div class="symptom-detail" id="symptomDetail">
           <input type="text" name="symptomDetail" id="symptomDetailInput" placeholder="症状の内容をご記入ください" aria-label="症状の内容"
-            autocomplete="off" style="margin-top:8px;">
+            autocomplete="off" maxlength="500" style="margin-top:8px;">
           <div class="inline-error" id="symptomDetailError" role="alert"></div>
         </div>
       </div>
@@ -859,7 +859,7 @@
         </div>
         <div class="other-detail" id="applicantOtherDetail">
           <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください"
-            aria-label="申込者「その他」の内容" autocomplete="off" style="margin-top:8px;">
+            aria-label="申込者「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
           <div class="inline-error" id="applicantOtherError" role="alert"></div>
         </div>
         <div class="inline-error" id="applicantError" role="alert"></div>
@@ -869,7 +869,7 @@
 
       <div class="field">
         <label class="label" for="consultInput">事前に相談したいことがありますか<span class="optional">任意</span></label>
-        <textarea id="consultInput" name="consult" rows="4" autocomplete="off"
+        <textarea id="consultInput" name="consult" rows="4" autocomplete="off" maxlength="2000"
           placeholder="ご相談・ご質問などがあれば、ご記入ください（任意）"></textarea>
         <div class="help">※ いただいたご相談には、LINEにてご返答いたします。</div>
       </div>
