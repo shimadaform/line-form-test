@@ -37,7 +37,7 @@
       border-left: 4px solid #06c755;
     }
 
-    .badge {
+.badge {
       display: inline-block;
       background: #06c755;
       color: #fff;
@@ -46,6 +46,23 @@
       font-size: 0.8rem;
       margin-left: 8px;
       vertical-align: middle;
+    }
+
+/* ▼ 持ち物リストの必須/任意ラベル(文字のみ・太字) */
+    .badge-required {
+      background: none;
+      color: #e74c3c;
+      font-weight: bold;
+      padding: 0;
+      margin-right: 6px;
+    }
+
+    .badge-optional {
+      background: none;
+      color: #888;
+      font-weight: bold;
+      padding: 0;
+      margin-right: 6px;
     }
 
     .test-banner {
@@ -376,7 +393,7 @@
     }
 
     .terms strong {
-      color: #c62828;
+      color: #049f43;
     }
 
     .agree-box {
@@ -589,13 +606,11 @@
     <h1>二次検診予約フォーム</h1>
     <div class="alert-box" role="alert">
       <span class="icon">📩</span><strong>現在、お申し込みを受付中です。</strong><br>
-      内容を確認のうえ、LINEにてご返事いたします。<br>
+      <span data-message="CONTACT_NOTICE"></span><br>
       今しばらくお待ちください。
     </div>
     <div class="terms">
-      <p style="margin:0;">
-        お急ぎの場合や内容の変更・キャンセルをご希望の場合は、LINEのトーク画面にメッセージをお送りいただくか、お電話にてご連絡ください。
-      </p>
+      <p style="margin:0;" data-message="URGENT_PHONE_NOTICE"></p>
     </div>
   </div>
 
@@ -612,13 +627,29 @@
       <ul>
         <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
         <li><strong>予約希望日について:</strong>ご希望に添えない場合があります。また、時間の指定や医師の指定はできません。</li>
-        <li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更は<a
-            href="https://docs.google.com/forms/d/e/1FAIpQLSedWjSU3L4nRL3X-XiYu2iKte4P5W2xd9y3MrSUHM13aCBz2A/viewform?usp=header"
-            target="_blank" rel="noopener">こちら</a>からお申し込みください。</li>
-        <li><strong>来院時のお持ち物:</strong>マイナ保険証(マイナンバーカード)または資格確認書、健診結果票または精密検査依頼票をお持ちください。</li>
+<li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更はお電話にてご連絡ください。</li>
         <li>
-          <strong>ご連絡について:</strong>お申し込み頂いた内容は、月〜土曜日(祝日を除く)の午後に確認し、順次ご連絡いたします。
+          <strong>来院時のお持ち物</strong>
+          <ul class="items">
+            <li>
+              <span class="badge badge-required">必須</span>
+              マイナ保険証（マイナンバーカード）または資格確認書
+            </li>
+            <li>
+              <span class="badge badge-required">必須</span>
+              健康診断書<br>
+              <span class="note">※スマートフォンのアプリ・Web画面で結果が確認できる場合はそちらでも可</span>
+            </li>
+            <li>
+              <span class="badge badge-optional">任意</span>
+              精密検査依頼票<span class="note">（お持ちの方のみ）</span>
+            </li>
+          </ul>
         </li>
+        <li>
+          <strong>ご連絡について:</strong><span data-message="CONTACT_NOTICE"></span>
+        </li>
+
       </ul>
     </div>
 
@@ -654,9 +685,14 @@
 
     <button type="button" class="select-btn" data-type="referral">
       <span class="arrow">›</span>
-      <div class="title">紹介状を持っている</div>
-      <div class="desc">他院から紹介状(診療情報提供書)を渡された方<br>
-        <span style="color:#c62828; font-size:0.8rem;">※健診結果票や精密検査依頼票は紹介状ではありません</span>
+      <div class="title">紹介状（診療情報提供書）を持っている</div>
+      <div class="desc">
+        他院の医師が作成した書類をお持ちの方
+        <div class="desc-note ng">
+          <span style="color:#c62828; font-size:0.8rem;">
+            ※健診結果票・二次健診票・精密検査依頼票は、「紹介状」と書かれていても含みません
+          </span>
+        </div>
       </div>
     </button>
   </div>
@@ -668,10 +704,12 @@
     <form id="form" onsubmit="return false;" novalidate>
 
       <div class="docs-notice other-only" style="display:none;">
-        <div class="docs-title">健診結果票または精密検査依頼票のご準備について</div>
-        <div class="docs-help">
-          健診結果票または精密検査依頼票がお手元にない場合は、健康診断を受けた施設へお問い合わせのうえ、事前にお取り寄せください。
-        </div>
+        <div class="docs-title">健診結果票のご準備について</div>
+        <ul class="docs-help">
+          <li>健診結果票、またはスマホ等で結果を確認できるものをご用意ください。</li>
+          <li>お手元にない場合は、健診を受けた施設へお取り寄せください。</li>
+          <li>精密検査依頼票がある場合はあわせてご用意ください。</li>
+        </ul>
       </div>
 
       <h2>① ご本人について</h2>
@@ -751,9 +789,9 @@
 
           <label><input type="checkbox" name="findings" value="心電図">心電図</label>
           <label><input type="checkbox" name="findings" value="心臓CT">心臓CT</label>
-          <label><input type="checkbox" name="findings" value="動脈硬化（頚動脈エコー・ABI）">動脈硬化（頚動脈エコー・ABI）</label>
+          <label><input type="checkbox" name="findings" value="動脈硬化(頚動脈エコー・ABI)">動脈硬化（頚動脈エコー・ABI）</label>
 
-          <label><input type="checkbox" name="findings" value="胸部X線（レントゲン）">胸部X線（レントゲン）</label>
+          <label><input type="checkbox" name="findings" value="胸部X線(レントゲン)">胸部X線（レントゲン）</label>
           <label><input type="checkbox" name="findings" value="胸部CT">胸部CT</label>
 
           <label><input type="checkbox" name="findings" value="胃">胃</label>
@@ -870,7 +908,19 @@
     const CLINIC_INFO = {
       phoneDisplay: '0942-72-2236', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
       phoneTel: '0942722236',    // tel:リンク用(数字のみ、例: 0312345678)
-      hours: '平日 9:00〜17:00',
+      hours: '平日 9:00〜17:00（祝日の場合は除く）',
+    };
+
+    // =============================================================
+    // メッセージ定数 — 共通の文言はここだけ編集してください
+    // HTML側は data-message 属性で applyMessages が自動反映します
+    // {phone} は CLINIC_INFO の電話番号+telリンクに自動置換されます
+    // =============================================================
+    const MESSAGES = {
+      // 申込内容の確認とLINEでの連絡について(4箇所で使用)
+      CONTACT_NOTICE: '内容を確認のうえ、月〜土曜日（祝日を除く）の午後にLINEにて順次ご連絡いたします。',
+      // お急ぎ・変更・キャンセルの電話案内(4箇所で使用)
+      URGENT_PHONE_NOTICE: 'お急ぎの場合や内容の変更・キャンセルをご希望の場合は、お電話（{phone}）にてご連絡ください。',
     };
 
     const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
@@ -983,6 +1033,7 @@
         }
 
         applyClinicInfo();
+        applyMessages();
         applyDateBoundariesToDOM(calcDateBoundaries());
         document.addEventListener('visibilitychange', () => {
           if (!document.hidden) {
@@ -1237,6 +1288,34 @@
       document.querySelectorAll('[data-clinic-hours]').forEach(el => {
         el.textContent = CLINIC_INFO.hours;
       });
+    }
+
+    // {phone} を tel:リンク付きの電話番号 HTML に置換するヘルパー
+    function getPhoneHtml() {
+      return `<a href="tel:${CLINIC_INFO.phoneTel}">${CLINIC_INFO.phoneDisplay}</a>`;
+    }
+
+    // MESSAGES の文言を data-message 属性付き要素に反映
+    // {phone} を含む場合は innerHTML、含まない場合は textContent で挿入
+    function applyMessages() {
+      const phoneHtml = getPhoneHtml();
+      document.querySelectorAll('[data-message]').forEach(el => {
+        const key = el.dataset.message;
+        const tmpl = MESSAGES[key];
+        if (!tmpl) return;
+        if (tmpl.includes('{phone}')) {
+          el.innerHTML = tmpl.replace('{phone}', phoneHtml);
+        } else {
+          el.textContent = tmpl;
+        }
+      });
+    }
+
+    // MESSAGES の文言を取得(JS側でinnerHTMLに使う用)
+    function getMessage(key) {
+      const tmpl = MESSAGES[key];
+      if (!tmpl) return '';
+      return tmpl.replace('{phone}', getPhoneHtml());
     }
 
     function updateProgressBar(currentStep) {
@@ -1631,7 +1710,8 @@
       result.style.display = '';
 
       let html = '✅ <strong>予約申込を受け付けました。</strong><br>' +
-        '内容を確認のうえ、LINEにてご返事いたします。';
+        getMessage('CONTACT_NOTICE') +
+        '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
 
       const canCloseLiff = !TEST_MODE && typeof liff !== 'undefined' &&
         typeof liff.closeWindow === 'function';
@@ -1663,7 +1743,8 @@
       result.className = 'ok';
       result.style.display = '';
       result.innerHTML = '📩 <strong>現在、お申し込みを受付中です。</strong><br>' +
-        '内容を確認のうえ、LINEにてご返事いたします。';
+        getMessage('CONTACT_NOTICE') +
+        '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
       form.style.display = 'none';
       const backBtn = document.querySelector('#formScreen .back-btn');
       if (backBtn) backBtn.style.display = 'none';
@@ -1677,7 +1758,7 @@
       result.className = 'ng';
       result.style.display = '';
       result.innerHTML = '送信に失敗しました。<br>お手数ですが、もう一度お試しいただくか、お電話(' +
-        CLINIC_INFO.phoneDisplay + ')でご連絡ください。';
+        getPhoneHtml() + ')でご連絡ください。';
       btn.disabled = false;
       btn.textContent = '予約を申し込む';
     }
