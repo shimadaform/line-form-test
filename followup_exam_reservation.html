@@ -1585,14 +1585,6 @@
         return null;
       }
 
-      const symptomYesEl = document.getElementById('hasSymptomYes');
-      const symptomDetailEl = document.getElementById('symptomDetailInput');
-      if (symptomYesEl.checked && !symptomDetailEl.value.trim()) {
-        showInlineError(symptomDetailEl, 'symptomDetailError', '症状の内容をご記入ください');
-        symptomDetailEl.focus();
-        return null;
-      }
-
       const checkupDate = form.querySelector('input[name="checkupDate"]').value;
       const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
       const preferredDate2 = form.querySelector('input[name="preferredDate2"]').value;
