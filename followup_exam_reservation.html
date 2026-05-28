@@ -37,7 +37,7 @@
       border-left: 4px solid #06c755;
     }
 
-.badge {
+    .badge {
       display: inline-block;
       background: #06c755;
       color: #fff;
@@ -48,7 +48,7 @@
       vertical-align: middle;
     }
 
-/* ▼ 持ち物リストの必須/任意ラベル(文字のみ・太字) */
+    /* ▼ 持ち物リストの必須/任意ラベル(文字のみ・太字) */
     .badge-required {
       background: none;
       color: #e74c3c;
@@ -626,10 +626,13 @@
       <h3>ご利用にあたって</h3>
       <ul>
         <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、嶋田病院よりご連絡し予約を確定します。</li>
-        <li><strong>予約希望日について:</strong>ご希望に添えない場合があります。また、時間の指定や医師の指定はできません。</li>
-<li><strong>キャンセル・変更:</strong>ご予約のキャンセル・変更はお電話にてご連絡ください。</li>
         <li>
-          <strong>来院時のお持ち物</strong>
+          <strong>ご連絡について:</strong><span data-message="CONTACT_NOTICE"></span>
+        </li>
+        <li><strong>予約希望日について:</strong>ご希望に添えない場合があります。また、時間の指定や医師の指定はできません。</li>
+        <li><strong>キャンセル・変更について:</strong>ご予約のキャンセル・変更はお電話にてご連絡ください。</li>
+        <li>
+          <strong>来院時のお持ち物について:</strong>
           <ul class="items">
             <li>
               <span class="badge badge-required">必須</span>
@@ -646,10 +649,6 @@
             </li>
           </ul>
         </li>
-        <li>
-          <strong>ご連絡について:</strong><span data-message="CONTACT_NOTICE"></span>
-        </li>
-
       </ul>
     </div>
 
