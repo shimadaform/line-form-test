@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#06c755">
+  <title>ワクチン接種予約フォーム</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      margin: 8px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #06c755;
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin: 20px 0 10px;
+      color: #06c755;
+      padding-left: 8px;
+      border-left: 4px solid #06c755;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #06c755;
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .badge-required {
+      background: none;
+      color: #e74c3c;
+      font-weight: bold;
+      padding: 0;
+      margin-right: 6px;
+    }
+
+    .badge-optional {
+      background: none;
+      color: #888;
+      font-weight: bold;
+      padding: 0;
+      margin-right: 6px;
+    }
+
+    .test-banner {
+      background: #ff9800;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    /* ▼ 進捗ステップ */
+    .progress {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding: 4px 2px 0;
+    }
+
+    .progress .step {
+      flex: 0 0 auto;
+      text-align: center;
+      min-width: 50px;
+    }
+
+    .progress .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ddd;
+      color: #888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin: 0 auto;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .progress .step-label {
+      font-size: 0.7rem;
+      color: #888;
+      margin-top: 4px;
+      white-space: nowrap;
+      transition: color 0.2s ease, font-weight 0.2s ease;
+    }
+
+    .progress .step.active .step-circle {
+      background: #06c755;
+      color: #fff;
+      box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.2);
+    }
+
+    .progress .step.active .step-label {
+      color: #06c755;
+      font-weight: bold;
+    }
+
+    .progress .step.completed .step-circle {
+      background: #06c755;
+      color: #fff;
+    }
+
+    .progress .step.completed .step-label {
+      color: #555;
+    }
+
+    .progress .step-line {
+      flex: 1;
+      height: 2px;
+      background: #ddd;
+      margin: 14px 4px 0;
+      transition: background 0.2s ease;
+    }
+
+    .progress .step-line.completed {
+      background: #06c755;
+    }
+
+    .field {
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+
+    .required {
+      color: #e74c3c;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+
+    .optional {
+      color: #888;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+
+    .help {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #06c755;
+    }
+
+    input:user-invalid,
+    select:user-invalid {
+      border-color: #e74c3c;
+    }
+
+    form.form-submitted input:invalid,
+    form.form-submitted select:invalid {
+      border-color: #e74c3c;
+    }
+
+    input.has-error,
+    select.has-error {
+      border-color: #e74c3c !important;
+    }
+
+    /* ▼ 生年月日(年/月/日)の横並び */
+    .birthday-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .birthday-group select {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 10px 6px;
+    }
+
+    .birthday-group select.year {
+      flex: 1.5 1 0;
+    }
+
+    .birthday-unit {
+      flex: 0 0 auto;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    input:disabled {
+      background: #f0f0f0;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .checkboxes label {
+      display: block;
+      padding: 6px 0;
+      font-size: 0.95rem;
+    }
+
+    .checkboxes input {
+      margin-right: 8px;
+    }
+
+    /* ▼ 2択ラジオの横並び(性別) */
+    .checkboxes.inline {
+      display: flex;
+      gap: 24px;
+    }
+
+    .checkboxes.inline label {
+      display: flex;
+      align-items: center;
+      padding: 10px 4px;
+    }
+
+    /* ===== ワクチン選択UI ===== */
+    label.opt,
+    label.name {
+      display: block;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    label.opt.sel,
+    label.name.sel {
+      border-color: #06c755;
+      background: #e8f5e9;
+    }
+
+    .opt input,
+    .name input {
+      margin-right: 8px;
+      accent-color: #06c755;
+      vertical-align: top;
+    }
+
+    .opt-body {
+      display: inline-block;
+      width: calc(100% - 28px);
+      vertical-align: top;
+    }
+
+    .opt-kubun {
+      display: inline-block;
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #fff;
+      background: #607d8b;
+      border-radius: 6px;
+      padding: 4px 14px;
+      margin-bottom: 6px;
+      letter-spacing: .03em;
+    }
+
+    .opt-kubun.teiki {
+      background: #1565c0;
+    }
+
+    .opt-kubun.nini {
+      background: #00897b;
+    }
+
+    .opt-prod {
+      display: block;
+      font-weight: bold;
+      font-size: 1.02rem;
+    }
+
+    .opt-sub {
+      display: block;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .opt-price {
+      display: block;
+      font-size: 0.9rem;
+      color: #d84315;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+
+    .opt-note {
+      display: block;
+      font-size: 0.82rem;
+      color: #555;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #e0e0e0;
+    }
+
+    .common-note {
+      font-size: 0.82rem;
+      color: #777;
+      margin-bottom: 10px;
+    }
+
+    .qblock {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #ddd;
+    }
+
+    .qblock p {
+      margin: 0 0 6px;
+      font-weight: bold;
+      font-size: 0.92rem;
+    }
+
+    .qrow label {
+      display: inline-block;
+      margin-right: 18px;
+      cursor: pointer;
+    }
+
+    .qrow input {
+      margin-right: 5px;
+      accent-color: #06c755;
+      width: auto;
+    }
+
+    .sub {
+      margin-top: 8px;
+    }
+
+    .sub label {
+      display: block;
+      font-size: 0.9rem;
+    }
+
+    .sub select,
+    .sub input[type="date"] {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .warn {
+      color: #c62828;
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+
+    .vax-loading {
+      color: #888;
+      font-size: 0.9rem;
+      padding: 8px 0;
+    }
+
+    .spinner-sm {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ddd;
+      border-top-color: #06c755;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      vertical-align: -3px;
+      margin-right: 6px;
+    }
+
+    button.submit {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+      background: #06c755;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-top: 16px;
+      cursor: pointer;
+    }
+
+    button.submit:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    .btn-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: -2px;
+    }
+
+    .close-line-btn {
+      margin-top: 14px;
+      max-width: 260px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #result {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    #result.ok {
+      background: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+    }
+
+    #result.ng {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #ddd;
+      border-top-color: #06c755;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .alert-box {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .alert-box .icon {
+      font-size: 1.2rem;
+      margin-right: 4px;
+    }
+
+    .alert-box .phone {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #d84315;
+      text-decoration: none;
+    }
+
+    .terms {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    .terms h3 {
+      font-size: 1rem;
+      margin: 0 0 10px;
+      color: #06c755;
+    }
+
+    .terms ul {
+      padding-left: 1.2em;
+      margin: 0;
+    }
+
+    .terms li {
+      margin-bottom: 6px;
+    }
+
+    .terms strong {
+      color: #049f43;
+    }
+
+    .agree-box {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .agree-box label {
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .agree-box input {
+      margin-right: 10px;
+      transform: scale(1.2);
+    }
+
+    #selectScreen .intro {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .select-btn {
+      display: block;
+      width: 100%;
+      background: #fff;
+      border: 2px solid #06c755;
+      border-radius: 12px;
+      padding: 18px 16px;
+      margin-bottom: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .select-btn:hover,
+    .select-btn:active {
+      background: #e8f5e9;
+    }
+
+    .select-btn .title {
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: #06c755;
+      margin-bottom: 4px;
+    }
+
+    .select-btn .desc {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .select-btn .arrow {
+      float: right;
+      color: #06c755;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: #06c755;
+      font-size: 0.95rem;
+      padding: 4px 0;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+
+    .referral-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .referral-box .phone-link {
+      display: block;
+      margin-top: 16px;
+      padding: 14px;
+      background: #06c755;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    /* ▼「その他」選択時のみ表示する入力欄 */
+    .other-detail {
+      display: none;
+    }
+
+    .other-detail.show {
+      display: block;
+    }
+
+    .inline-error {
+      color: #c62828;
+      font-size: 0.8rem;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .inline-error.show {
+      display: block;
+    }
+
+    .section-notice {
+      background: #fff8e1;
+      border-left: 4px solid #ffa726;
+      padding: 10px 12px;
+      margin: 0 0 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #5d4037;
+    }
+
+    .section-notice div+div {
+      margin-top: 2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="testBanner" class="test-banner" style="display:none;">🧪 テストモード(LINEログインなし)</div>
+
+  <nav id="progressBar" class="progress" style="display:none;" aria-label="入力の進捗">
+    <div class="step" data-step="1">
+      <div class="step-circle">1</div>
+      <div class="step-label">はじめに</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="2">
+      <div class="step-circle">2</div>
+      <div class="step-label">選択</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="3">
+      <div class="step-circle">3</div>
+      <div class="step-label">入力</div>
+    </div>
+    <div class="step-line"></div>
+    <div class="step" data-step="4">
+      <div class="step-circle">4</div>
+      <div class="step-label">完了</div>
+    </div>
+  </nav>
+
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>読み込み中...</p>
+  </div>
+
+  <!-- ▼ 申込中画面 -->
+  <div id="pendingScreen" style="display:none;">
+    <h1>ワクチン接種予約フォーム</h1>
+    <div class="alert-box" role="alert">
+      <span class="icon">📩</span><strong>現在、お申し込みを受付中です。</strong><br>
+      <span data-message="CONTACT_NOTICE"></span><br>
+      今しばらくお待ちください。
+    </div>
+    <div class="terms">
+      <p style="margin:0;" data-message="URGENT_PHONE_NOTICE"></p>
+    </div>
+  </div>
+
+  <!-- ▼ はじめに -->
+  <div id="introScreen" style="display:none;">
+    <h1>ワクチン接種予約フォーム</h1>
+
+    <div class="alert-box" role="alert">
+      <span class="icon">⚠️</span><strong>発熱や体調不良があるときは、当日接種できない場合があります。重いアレルギーの既往がある方は、事前にお電話でご相談ください。</strong>
+      <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+    </div>
+
+    <div class="terms">
+      <h3>ご利用にあたって</h3>
+      <ul>
+        <li>
+          <strong>予約申込について:</strong>
+          本フォームは「予約申込」であり、この時点では予約は確定していません。当院からのご連絡をもって予約確定となります。
+        </li>
+        <li>
+          <strong>ご連絡について:</strong>
+          <span data-message="CONTACT_NOTICE"></span>
+        </li>
+        <li>
+          <strong>予約希望日について:</strong>
+          ワクチンの在庫状況や接種枠により、ご希望の日に添えない場合があります。また、時間や医師のご指定はできません。
+        </li>
+        <li>
+          <strong>キャンセル・変更について:</strong>
+          ワクチンの準備・在庫管理の都合がありますので、キャンセル・変更をご希望の場合は、できるだけ早めにお電話でご連絡ください。
+        </li>
+        <li>
+          <strong>料金について:</strong>
+          表示している料金は、主に<span data-city></span>にお住まいの方向けの内容です。他の市町村にお住まいの方は、料金が異なる場合があります。
+        </li>
+        <li>
+          <strong>公費接種について:</strong>
+          定期接種・公費助成の対象となるかは、年齢・お住まい・接種歴・接種券などにより確認します。対象とならない場合は、自費での接種となることがあります。
+        </li>
+        <li>
+          <strong>接種可否・体調不良時について:</strong>
+          予約が確定していても、当日の体温・体調・接種歴・予診の内容や医師の判断により、接種を見合わせる場合があります。発熱や急な体調不良があるときは、来院前にお電話でご相談ください。
+        </li>
+        <li>
+          <strong>未成年者について:</strong>
+          未成年の方は、保護者の同意または同伴が必要となる場合があります。年齢や接種するワクチンの種類により確認させていただきます。
+        </li>
+        <li>
+          <strong>来院時のお持ち物について:</strong>
+          <ul class="items">
+            <li>
+              <span class="badge badge-required">必須</span>
+              マイナ保険証（マイナンバーカード）または資格確認書などの本人確認書類
+            </li>
+            <li>
+              <span class="badge badge-optional">任意</span><span class="note">（お持ちの方のみ）</span>
+              <ul>
+                <li>接種券・助成券・案内はがき</li>
+                <li>母子手帳・接種済証</li>
+                <li>お薬手帳</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="agree-box">
+      <label>
+        <input type="checkbox" id="agreeCheck">
+        上記内容に同意します
+      </label>
+    </div>
+
+    <button type="button" class="submit" id="proceedBtn" disabled>次へ進む</button>
+  </div>
+
+  <!-- ▼ 選択 -->
+  <div id="selectScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="intro">← はじめに戻る</button>
+    <h1>ご希望の選択</h1>
+
+    <div class="intro">
+      該当するものを選択してください。
+    </div>
+
+    <button type="button" class="select-btn" data-type="single">
+      <span class="arrow">›</span>
+      <div class="title">接種したいワクチンが1種類のみの方</div>
+      <div class="desc">1種類のワクチンの接種を希望される場合</div>
+    </button>
+
+    <button type="button" class="select-btn" data-type="multi">
+      <span class="arrow">›</span>
+      <div class="title">複数のワクチンを接種したい方</div>
+      <div class="desc">2種類以上の接種をご希望の場合（接種間隔の確認が必要なため、お電話でのご予約となります）</div>
+    </button>
+  </div>
+
+  <!-- ▼ 入力フォーム -->
+  <div id="formScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
+    <h1>ワクチン接種予約</h1>
+
+    <form id="form" onsubmit="return false;" novalidate>
+
+      <h2>① ご本人について</h2>
+
+      <div class="field">
+        <label class="label" for="nameInput">氏名<span class="required">必須</span></label>
+        <input type="text" id="nameInput" name="name" required autocomplete="name" maxlength="100"
+          placeholder="例:嶋田 太郎">
+      </div>
+
+      <div class="field">
+        <label class="label" for="kanaInput">フリガナ<span class="required">必須</span></label>
+        <input type="text" name="kana" id="kanaInput" required autocomplete="off" maxlength="100"
+          placeholder="例:シマダ タロウ">
+        <div class="inline-error" id="kanaError" role="alert">カタカナで入力してください</div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="birthdayLabel">生年月日<span class="required">必須</span></div>
+        <div class="birthday-group">
+          <select class="year" name="birthdayYear" id="birthdayYear" required autocomplete="bday-year"
+            aria-label="生年(西暦)">
+            <option value="">----</option>
+          </select>
+          <span class="birthday-unit">年</span>
+          <select name="birthdayMonth" id="birthdayMonth" required autocomplete="bday-month" aria-label="月">
+            <option value="">--</option>
+          </select>
+          <span class="birthday-unit">月</span>
+          <select name="birthdayDay" id="birthdayDay" required autocomplete="bday-day" aria-label="日">
+            <option value="">--</option>
+          </select>
+          <span class="birthday-unit">日</span>
+        </div>
+        <div class="inline-error" id="birthdayError" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="genderLabel">性別<span class="required">必須</span></div>
+        <div class="checkboxes inline" role="radiogroup" aria-labelledby="genderLabel">
+          <label><input type="radio" name="gender" value="男性" required>男性</label>
+          <label><input type="radio" name="gender" value="女性" required>女性</label>
+        </div>
+        <div class="inline-error" id="genderError" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="phoneInput">電話番号<span class="required">必須</span></label>
+        <input type="tel" name="phone" id="phoneInput" required autocomplete="tel" maxlength="30"
+          placeholder="例:09012345678 / 03-1234-5678">
+        <div class="inline-error" id="phoneError" role="alert">電話番号の形式が正しくありません</div>
+      </div>
+
+      <h2>② 接種するワクチン</h2>
+
+      <div class="field">
+        <div class="label">接種するワクチンを選択<span class="required">必須</span></div>
+        <div id="vaxLoading" class="vax-loading"><span class="spinner-sm"></span>ワクチン一覧を読み込み中...</div>
+        <div class="inline-error" id="vaxLoadError" role="alert"></div>
+        <div id="nameList" role="radiogroup" aria-label="ワクチン名"></div>
+        <div class="inline-error" id="vaxNameError" role="alert"></div>
+      </div>
+
+      <div class="field" id="detailField" style="display:none;">
+        <div class="section-notice" id="priceNotice">
+          <div>表示している料金は、主に<span data-city></span>にお住まいの方向けの目安です。</div>
+          <div>他の市町村にお住まいの方は、料金が異なる場合があります。</div>
+        </div>
+        <div class="label">内容を選択<span class="required">必須</span></div>
+        <div id="commonNote" class="common-note"></div>
+        <div id="optionList" role="radiogroup" aria-label="接種区分"></div>
+        <div class="inline-error" id="vaxOptionError" role="alert"></div>
+
+        <div id="doseBlock" class="qblock" hidden>
+          <p>今回は何回目の接種ですか？</p>
+          <div class="sub">
+            <label>回数
+              <select id="doseSelect">
+                <option value="">選択してください</option>
+              </select>
+            </label>
+          </div>
+          <div class="inline-error" id="vaxDoseError" role="alert"></div>
+          <div id="doseDateSub" class="sub" hidden>
+            <label>前回の接種日<input type="date" id="doseDate"></label>
+            <div class="inline-error" id="doseDateError" role="alert"></div>
+          </div>
+        </div>
+
+        <div id="historyBlock" class="qblock" hidden>
+          <p id="historyQ">過去に接種したことがありますか？</p>
+          <div class="qrow">
+            <label><input type="radio" name="hist" value="yes">はい</label>
+            <label><input type="radio" name="hist" value="no">いいえ</label>
+            <label id="histUnknownWrap"><input type="radio" name="hist" value="unknown">わからない</label>
+          </div>
+          <div class="inline-error" id="histAnsError" role="alert"></div>
+          <div id="histSub" class="sub" hidden>
+            <label>接種日<input type="date" id="histDate"></label>
+            <div class="inline-error" id="histDateError" role="alert"></div>
+          </div>
+          <div id="histPeriodSub" class="sub" hidden>
+            <label>前回はいつ頃ですか？
+              <select id="histPeriod">
+                <option value="">選択してください</option>
+                <option value="1年以内">1年以内</option>
+                <option value="1〜5年前">1〜5年前（5年未満）</option>
+                <option value="5年以上前">5年以上前</option>
+                <option value="わからない">わからない</option>
+              </select>
+            </label>
+            <div class="inline-error" id="histPeriodError" role="alert"></div>
+          </div>
+        </div>
+
+        <div id="liveInjBlock" class="qblock" hidden>
+          <p>1か月以内に、別のワクチンを接種しましたか？</p>
+          <div class="qrow">
+            <label><input type="radio" name="liveInj" value="yes">はい</label>
+            <label><input type="radio" name="liveInj" value="no">いいえ</label>
+            <label><input type="radio" name="liveInj" value="unknown">わからない</label>
+          </div>
+          <div class="inline-error" id="liveInjAnsError" role="alert"></div>
+          <div id="liveInjSub" class="sub" hidden>
+            <label>接種したワクチン
+              <select id="liveInjName">
+                <option value="">選択してください</option>
+                <option>麻しん・風しん（MR）</option>
+                <option>麻しん（単独）</option>
+                <option>風しん（単独）</option>
+                <option>おたふくかぜ</option>
+                <option>水痘（みずぼうそう）</option>
+                <option>BCG</option>
+                <option>黄熱</option>
+                <option>その他のワクチン</option>
+              </select>
+            </label>
+            <div class="inline-error" id="liveInjNameError" role="alert"></div>
+            <label>接種日<input type="date" id="liveInjDate"></label>
+            <div class="inline-error" id="liveInjDateError" role="alert"></div>
+            <div id="liveInjWarn" class="warn" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <h2>③ ご希望の日程</h2>
+
+      <div class="section-notice">
+        <div id="preferredDateNotice"></div>
+        <div>※ 時間は指定できません</div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate1Input">第1希望日<span class="required">必須</span></label>
+        <input type="date" id="preferredDate1Input" name="preferredDate1" required>
+        <div class="inline-error" id="preferredDate1Error" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate2Input">第2希望日<span class="optional">任意</span></label>
+        <input type="date" id="preferredDate2Input" name="preferredDate2">
+        <div class="inline-error" id="preferredDate2Error" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate3Input">第3希望日<span class="optional">任意</span></label>
+        <input type="date" id="preferredDate3Input" name="preferredDate3">
+        <div class="inline-error" id="preferredDate3Error" role="alert"></div>
+      </div>
+
+      <h2>④ 申込者について</h2>
+
+      <div class="field">
+        <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
+        <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
+          <label><input type="radio" name="applicant" value="本人" required>上記、接種を受ける方と同一である</label>
+          <label><input type="radio" name="applicant" value="家族・キーパーソン" required>接種を受ける方の家族もしくはキーパーソン</label>
+          <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
+        </div>
+        <div class="other-detail" id="applicantOtherDetail">
+          <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください"
+            aria-label="申込者「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
+          <div class="inline-error" id="applicantOtherError" role="alert"></div>
+        </div>
+        <div class="inline-error" id="applicantError" role="alert"></div>
+      </div>
+
+      <h2>⑤ 事前のご相談</h2>
+
+      <div class="field">
+        <label class="label" for="consultInput">事前に相談したいことがありますか<span class="optional">任意</span></label>
+        <textarea id="consultInput" name="consult" rows="4" autocomplete="off" maxlength="2000"
+          placeholder="ご相談・ご質問などがあれば、ご記入ください（任意）"></textarea>
+        <div class="help">※ いただいたご相談には、LINEにてご返答いたします。</div>
+      </div>
+
+      <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
+    </form>
+
+    <div id="result" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- ▼ 電話でのご予約 -->
+  <div id="phoneScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
+    <h1 id="phoneTitle">お電話でのご予約について</h1>
+
+    <div class="referral-box">
+      <p id="phoneMessage"></p>
+      <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+      <p style="margin-top:16px; font-size:0.85rem; color:#888;">
+        診療時間:<span data-clinic-hours></span>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // =============================================================
+    // 接続設定 — ここを編集してください
+    // =============================================================
+    const LIFF_ID = '2010076084-TAppgjXG';     // ワクチン予約用 LIFF アプリのID
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';     // 予約送信用 GAS ウェブアプリの /exec URL（POST）
+    const APP_TOKEN = 'a';   // 送信用 GAS と共有する合言葉
+
+    // ワクチンマスタを返す GAS（JSONP・GET）の /exec URL
+    //   ※これまで作った vaccine_test.gs をデプロイした /exec を指定
+    const VACCINE_MASTER_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
+
+    const CITY = '小郡市';    // 市区町村名（料金の注意書きに使用）
+
+    // =============================================================
+    // 院の連絡先設定 — 電話番号・診療時間はここだけ編集してください
+    // =============================================================
+    const CLINIC_INFO = {
+      phoneDisplay: '', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
+      phoneTel: '',    // tel:リンク用(数字のみ、例: 0312345678)
+      hours: '平日 9:00〜17:00（祝日の場合は除く）',
+    };
+
+    // =============================================================
+    // メッセージ定数 — 共通の文言はここだけ編集してください
+    //   {phone} は CLINIC_INFO の電話番号+telリンクに自動置換されます
+    // =============================================================
+    const MESSAGES = {
+      CONTACT_NOTICE: '内容を確認のうえ、月〜土曜日（祝日を除く）の午後にLINEにて順次ご連絡いたします。',
+      URGENT_PHONE_NOTICE: 'お急ぎの場合や内容の変更・キャンセルをご希望の場合は、お電話（{phone}）にてご連絡ください。',
+      PHONE_MULTI: '複数のワクチンを接種される場合は、接種間隔などの確認が必要なため、お手数ですがお電話にてご予約ください。',
+      PHONE_TICKET: '市区町村が発行した接種券・予診票をお持ちの方は、お手数ですがお電話にてご予約ください。',
+    };
+
+    const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function toJpDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return iso;
+      return `${m[1]}年${Number(m[2])}月${Number(m[3])}日`;
+    }
+
+    function toSlashDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return iso;
+      return `${m[1]}/${m[2]}/${m[3]}`;
+    }
+
+    function calcDateBoundaries() {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const threeDaysLater = new Date(today);
+      threeDaysLater.setDate(today.getDate() + 3);
+      const oneYearLater = new Date(today);
+      oneYearLater.setFullYear(today.getFullYear() + 1);
+      return {
+        TODAY: formatDate(today),
+        YESTERDAY: formatDate(yesterday),
+        PREFERRED_MIN: formatDate(threeDaysLater),
+        PREFERRED_MAX: formatDate(oneYearLater),
+        BIRTHDAY_MIN: '1899-01-01',
+      };
+    }
+
+    function applyDateBoundariesToDOM(b) {
+      ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
+        const el = document.querySelector(`input[name="${name}"]`);
+        if (el) {
+          el.setAttribute('min', b.PREFERRED_MIN);
+          el.setAttribute('max', b.PREFERRED_MAX);
+        }
+      });
+      // 過去の接種日（前回接種日・接種歴・別ワクチン）は今日以前
+      ['doseDate', 'histDate', 'liveInjDate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('max', b.TODAY);
+      });
+      const notice = document.getElementById('preferredDateNotice');
+      if (notice) {
+        notice.textContent = `${toJpDate(b.PREFERRED_MIN)}以降の日付を選択してください`;
+      }
+    }
+
+    const KANA_REGEX = /^[ァ-ヶー・　 ]+$/;
+
+    let currentType = null;       // 'single' のときフォームへ
+    let currentVaxName = null;    // 選択中のワクチン名
+    let selectedRow = null;       // 選択中の内容（行 / {consult:true} / {ticket:true} / null）
+    let ROWS = [];                // 有効なワクチン行
+    let submissionState = { id: null, inFlight: false, completed: false };
+    let formDirty = false;
+
+    function $(id) { return document.getElementById(id); }
+
+    function generateSubmissionId() {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    // ▼ ワクチンマスタ（JSONP）読み込み --------------------------------
+    function normalize(list) {
+      return list.map(function (r) {
+        var b = function (v) { var s = String(v == null ? "" : v).trim().toUpperCase(); return s === "TRUE" || s === "1"; };
+        return {
+          yuko: ("yuko" in r) ? !!r.yuko : b(r["有効"]),
+          order: Number(r.order != null ? r.order : r["表示順"]) || 999,
+          id: String(r.id != null ? r.id : r["メニューID"] || ""),
+          name: String(r.name != null ? r.name : r["ワクチン名"] || ""),
+          kubun: String(r.kubun != null ? r.kubun : r["接種区分"] || ""),
+          product: String(r.product != null ? r.product : r["使用ワクチン名"] || ""),
+          target: String(r.target != null ? r.target : r["対象者"] || ""),
+          price: String(r.price != null ? r.price : r["料金表示"] || ""),
+          doses: (function (v) { return (v === "" || v == null) ? null : Number(v); })(r.doses != null ? r.doses : r["使用回数"]),
+          history: String(r.history != null ? r.history : r["接種歴確認"] || "").trim(),
+          liveInj: ("liveInj" in r) ? !!r.liveInj : b(r["注射生ワクチン"]),
+          note: String(r.note != null ? r.note : r["注意書き"] || "")
+        };
+      });
+    }
+
+    function loadJsonp(url, timeoutMs) {
+      return new Promise(function (resolve, reject) {
+        var cbName = "__vcb_" + Date.now() + "_" + Math.floor(Math.random() * 1e6);
+        var script = document.createElement("script");
+        var timer = setTimeout(function () { cleanup(); reject(new Error("応答がありません（タイムアウト）。")); }, timeoutMs || 15000);
+        function cleanup() {
+          clearTimeout(timer);
+          try { delete window[cbName]; } catch (_) { window[cbName] = undefined; }
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+        window[cbName] = function (data) { cleanup(); resolve(data); };
+        script.onerror = function () { cleanup(); reject(new Error("読み込みに失敗しました。")); };
+        var sep = url.indexOf("?") >= 0 ? "&" : "?";
+        script.src = url + sep + "callback=" + cbName + "&t=" + Date.now();
+        document.body.appendChild(script);
+      });
+    }
+
+    async function loadVaccineMaster() {
+      const loadingEl = $('vaxLoading');
+      const errEl = $('vaxLoadError');
+      if (!VACCINE_MASTER_URL) {
+        if (loadingEl) loadingEl.style.display = 'none';
+        showInlineError(null, 'vaxLoadError', 'ワクチン一覧の接続先（VACCINE_MASTER_URL）が設定されていません。');
+        return;
+      }
+      try {
+        const data = await loadJsonp(VACCINE_MASTER_URL, 15000);
+        if (data && data.ok === false) throw new Error(data.error || 'GASエラー');
+        const list = (data && data.vaccines) || data;
+        if (!Array.isArray(list)) throw new Error('応答形式が不正です。');
+        ROWS = normalize(list).filter(function (r) { return r.yuko; });
+        ROWS.sort(function (a, b) { return a.order - b.order; });
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (ROWS.length === 0) {
+          showInlineError(null, 'vaxLoadError', '現在、予約可能なワクチンがありません。');
+          return;
+        }
+        if (errEl) errEl.classList.remove('show');
+        renderNames();
+      } catch (e) {
+        console.error('[loadVaccineMaster]', e);
+        if (loadingEl) loadingEl.style.display = 'none';
+        showInlineError(null, 'vaxLoadError', 'ワクチン一覧を取得できませんでした。お手数ですが、時間をおいて再度お試しください。');
+      }
+    }
+
+    function uniqueNames(rows) {
+      var seen = {}, out = [];
+      rows.forEach(function (r) { if (!seen[r.name]) { seen[r.name] = 1; out.push(r.name); } });
+      return out;
+    }
+
+    function renderNames() {
+      var box = $("nameList");
+      box.innerHTML = "";
+      uniqueNames(ROWS).forEach(function (name) {
+        var label = document.createElement("label");
+        label.className = "name";
+        var input = document.createElement("input");
+        input.type = "radio"; input.name = "vname"; input.value = name;
+        var span = document.createElement("span");
+        span.textContent = name;
+        label.appendChild(input); label.appendChild(span);
+        box.appendChild(label);
+        input.addEventListener("change", function () {
+          document.querySelectorAll("#nameList .name").forEach(function (l) { l.classList.remove("sel"); });
+          label.classList.add("sel");
+          clearInlineError(null, 'vaxNameError');
+          selectName(name);
+        });
+      });
+
+      // ▼ 一覧にないワクチン用の「その他」
+      var olabel = document.createElement("label");
+      olabel.className = "name";
+      var oinput = document.createElement("input");
+      oinput.type = "radio"; oinput.name = "vname"; oinput.value = "__other__";
+      var ospan = document.createElement("span");
+      ospan.textContent = "その他（上記にないワクチン）";
+      olabel.appendChild(oinput); olabel.appendChild(ospan);
+      box.appendChild(olabel);
+      oinput.addEventListener("change", function () {
+        document.querySelectorAll("#nameList .name").forEach(function (l) { l.classList.remove("sel"); });
+        olabel.classList.add("sel");
+        clearInlineError(null, 'vaxNameError');
+        selectOther();
+      });
+    }
+
+    function renderOptions(rows) {
+      var box = $("optionList");
+      box.innerHTML = "";
+
+      rows.forEach(function (row) {
+        var label = document.createElement("label");
+        label.className = "opt";
+        var input = document.createElement("input");
+        input.type = "radio"; input.name = "vopt"; input.value = row.id;
+        var body = document.createElement("span");
+        body.className = "opt-body";
+        var kubunClass = row.kubun === '定期' ? 'teiki' : (row.kubun === '任意' ? 'nini' : '');
+        var line1 = (row.kubun ? '<span class="opt-kubun ' + kubunClass + '">' + esc(row.kubun) + '接種</span>' : '') +
+          '<span class="opt-prod">' + esc(row.product) + '</span>';
+        var sub = (row.target ? '<span class="opt-sub">対象：' + esc(row.target) + '</span>' : '') +
+          (row.doses != null && row.doses > 0 ? '<span class="opt-sub">使用回数：' + row.doses + '回</span>' : '') +
+          (row.price ? '<span class="opt-price">' + esc(row.price) + '</span>' : '');
+        var noteHtml = row.note ? '<span class="opt-note">' + esc(row.note) + '</span>' : '';
+        body.innerHTML = line1 + sub + noteHtml;
+        label.appendChild(input); label.appendChild(body);
+        box.appendChild(label);
+        input.addEventListener("change", function () {
+          document.querySelectorAll("#optionList .opt").forEach(function (l) { l.classList.remove("sel"); });
+          label.classList.add("sel");
+          clearInlineError(null, 'vaxOptionError');
+          selectRow(row);
+        });
+      });
+
+      // 内容が複数あるときは「分からないのでLINEで相談したい」を追加
+      if (rows.length > 1) {
+        var clabel = document.createElement("label");
+        clabel.className = "opt";
+        var cinput = document.createElement("input");
+        cinput.type = "radio"; cinput.name = "vopt"; cinput.value = "__consult__";
+        var cbody = document.createElement("span");
+        cbody.className = "opt-body";
+        cbody.innerHTML = '<span class="opt-prod">分からないのでLINEで相談したい</span>' +
+          '<span class="opt-sub">どれを選べばよいか分からない場合はこちら</span>';
+        clabel.appendChild(cinput); clabel.appendChild(cbody);
+        box.appendChild(clabel);
+        cinput.addEventListener("change", function () {
+          document.querySelectorAll("#optionList .opt").forEach(function (l) { l.classList.remove("sel"); });
+          clabel.classList.add("sel");
+          clearInlineError(null, 'vaxOptionError');
+          selectConsult();
+        });
+      }
+
+      // ▼「内容」に定期接種が無いときは、接種券・予診票や市区町村からの案内をお持ちの方向けの選択肢を一番下に追加
+      var hasTeiki = rows.some(function (r) { return r.kubun === '定期'; });
+      if (!hasTeiki) {
+        var tlabel = document.createElement("label");
+        tlabel.className = "opt";
+        var tinput = document.createElement("input");
+        tinput.type = "radio"; tinput.name = "vopt"; tinput.value = "__ticket__";
+        var tbody = document.createElement("span");
+        tbody.className = "opt-body";
+        tbody.innerHTML = '<span class="opt-prod">接種券・予診票や市区町村からの案内があり公費で接種したい</span>' +
+          '<span class="opt-sub">市区町村が発行した接種券・予診票のほか、接種のお知らせ・案内が届いている方もこちら</span>';
+        tlabel.appendChild(tinput); tlabel.appendChild(tbody);
+        box.appendChild(tlabel);
+        tinput.addEventListener("change", function () {
+          document.querySelectorAll("#optionList .opt").forEach(function (l) { l.classList.remove("sel"); });
+          tlabel.classList.add("sel");
+          clearInlineError(null, 'vaxOptionError');
+          selectTicket();
+        });
+      }
+    }
+
+    function selectName(name) {
+      currentVaxName = name;
+      selectedRow = null;
+      var rows = ROWS.filter(function (r) { return r.name === name; });
+      renderOptions(rows);
+      resetConditionals();
+      $("detailField").style.display = "";
+      // 内容が1つだけ、かつ追加の選択肢(接種券・相談)が無いときだけ自動選択する
+      var optCount = $("optionList").querySelectorAll('input[name="vopt"]').length;
+      if (rows.length === 1 && optCount === 1) {
+        var only = document.querySelector('#optionList input[name="vopt"]');
+        if (only) { only.checked = true; only.closest(".opt").classList.add("sel"); selectRow(rows[0]); }
+      }
+    }
+
+    // 「分からないのでLINEで相談したい」を選んだとき（内容が未確定なので追加質問は出さない）
+    function selectConsult() {
+      resetConditionals();
+      selectedRow = { consult: true };
+    }
+
+    // 「接種券・予診票があり公費で接種したい」を選んだとき（内容が未確定なので追加質問は出さない）
+    function selectTicket() {
+      resetConditionals();
+      selectedRow = { ticket: true };
+    }
+
+    // 「その他（一覧にないワクチン）」を選んだとき：公費/自費の選択とワクチン名の入力を出す
+    function selectOther() {
+      currentVaxName = 'その他';
+      selectedRow = { other: true };
+      resetConditionals();
+      renderOtherOptions();
+      $("detailField").style.display = "";
+    }
+
+    // その他用の「内容を選択」UI（公費/自費 と ワクチン名入力）を描画
+    function renderOtherOptions() {
+      var box = $("optionList");
+      box.innerHTML = "";
+
+      var funds = [
+        { value: '公費', sub: '接種券・予診票や市区町村からの案内がある' },
+        { value: '自費', sub: '案内などがなく、全額自己負担で接種する' }
+      ];
+      funds.forEach(function (f) {
+        var label = document.createElement("label");
+        label.className = "opt";
+        var input = document.createElement("input");
+        input.type = "radio"; input.name = "otherFund"; input.value = f.value;
+        var body = document.createElement("span");
+        body.className = "opt-body";
+        body.innerHTML = '<span class="opt-prod">' + esc(f.value) + '</span>' +
+          '<span class="opt-sub">' + esc(f.sub) + '</span>';
+        label.appendChild(input); label.appendChild(body);
+        box.appendChild(label);
+        input.addEventListener("change", function () {
+          document.querySelectorAll('#optionList .opt').forEach(function (l) { l.classList.remove("sel"); });
+          label.classList.add("sel");
+          clearInlineError(null, 'vaxOptionError');
+        });
+      });
+
+      var nameBlock = document.createElement("div");
+      nameBlock.className = "qblock";
+      nameBlock.innerHTML =
+        '<p>ワクチン名をご記入ください</p>' +
+        '<div class="sub">' +
+        '<input type="text" id="otherVaxNameInput" maxlength="100" autocomplete="off" placeholder="例：◯◯ワクチン">' +
+        '<div class="inline-error" id="otherVaxNameError" role="alert">ワクチン名を入力してください</div>' +
+        '</div>';
+      box.appendChild(nameBlock);
+
+      var nameInput = nameBlock.querySelector('#otherVaxNameInput');
+      nameInput.addEventListener('input', function () {
+        if (nameInput.classList.contains('has-error')) clearInlineError(nameInput, 'otherVaxNameError');
+      });
+    }
+
+    function selectRow(row) {
+      selectedRow = row;
+      resetConditionals();
+      // 何回目（使用回数が2以上のとき）
+      if (row.doses != null && row.doses >= 2) {
+        var sel = $("doseSelect");
+        sel.innerHTML = '<option value="">選択してください</option>';
+        for (var i = 1; i <= row.doses; i++) {
+          var o = document.createElement("option");
+          o.value = String(i);
+          o.textContent = (i === 1) ? "はじめて" : (i + "回目");
+          sel.appendChild(o);
+        }
+        $("doseBlock").hidden = false;
+      }
+      // 接種歴（接種歴確認: なし / 過去全て / 今年 / 今シーズン）
+      var h = (row.history || "").trim();
+      var askHist = h !== "" && h !== "なし" && h.toUpperCase() !== "FALSE" && h !== "0";
+      if (askHist) {
+        var q;
+        if (h === "今年") { q = "今年中に接種しましたか？"; }
+        else if (h === "今シーズン") { q = "今シーズン（10月以降）に接種しましたか？"; }
+        else { q = "過去に接種したことがありますか？"; }
+        $("historyQ").textContent = q;
+        $("historyBlock").hidden = false;
+      }
+      $("liveInjBlock").hidden = !row.liveInj;
+    }
+
+    function resetConditionals() {
+      $("doseBlock").hidden = true; $("doseSelect").value = "";
+      $("doseDateSub").hidden = true; $("doseDate").value = "";
+      clearInlineError(null, 'vaxDoseError'); clearInlineError($("doseDate"), 'doseDateError');
+      $("historyBlock").hidden = true;
+      document.querySelectorAll('input[name="hist"]').forEach(function (i) { i.checked = false; });
+      $("histSub").hidden = true; $("histDate").value = "";
+      $("histPeriodSub").hidden = true; $("histPeriod").value = "";
+      clearInlineError(null, 'histAnsError'); clearInlineError($("histDate"), 'histDateError');
+      clearInlineError(null, 'histPeriodError');
+      $("liveInjBlock").hidden = true;
+      document.querySelectorAll('input[name="liveInj"]').forEach(function (i) { i.checked = false; });
+      $("liveInjSub").hidden = true; $("liveInjName").value = ""; $("liveInjDate").value = ""; $("liveInjWarn").hidden = true;
+      clearInlineError(null, 'liveInjAnsError'); clearInlineError(null, 'liveInjNameError'); clearInlineError($("liveInjDate"), 'liveInjDateError');
+    }
+
+    function checkLiveInjDate() {
+      var name = $("liveInjName").value;
+      var v = $("liveInjDate").value;
+      var isLive = name && name !== "その他のワクチン";
+      if (!isLive || !v) { $("liveInjWarn").hidden = true; return; }
+      var d = new Date(v); var t = new Date(); t.setHours(0, 0, 0, 0);
+      var days = Math.floor((t - d) / 86400000);
+      if (days >= 0 && days < 27) {
+        $("liveInjWarn").hidden = false;
+        $("liveInjWarn").textContent = "前回接種から" + days + "日です。注射生ワクチン同士は27日以上あける必要があるため、接種日の調整が必要な場合があります。";
+      } else {
+        $("liveInjWarn").hidden = true;
+      }
+    }
+
+    // ▼ 予約中チェック ----------------------------------------------
+    async function checkActiveReservation() {
+      if (TEST_MODE || !GAS_URL) return false;
+      try {
+        const payload = { idToken: liff.getIDToken(), appToken: APP_TOKEN, action: 'check_status' };
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), signal: controller.signal });
+        clearTimeout(tid);
+        const data = JSON.parse(await res.text());
+        return !!(data.ok && data.hasActive);
+      } catch (e) {
+        console.error('[checkActiveReservation]', e);
+        return false;
+      }
+    }
+
+    (async () => {
+      try {
+        if (!TEST_MODE) {
+          if (!LIFF_ID) throw new Error('LIFF_ID 未設定');
+          await liff.init({ liffId: LIFF_ID });
+          if (!liff.isLoggedIn()) { liff.login(); return; }
+        } else {
+          $('testBanner').style.display = '';
+          console.log('[TEST MODE] LIFF login skipped');
+        }
+
+        applyClinicInfo();
+        applyMessages();
+        applyDateBoundariesToDOM(calcDateBoundaries());
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) applyDateBoundariesToDOM(calcDateBoundaries());
+        });
+
+        await loadVaccineMaster();
+
+        const hasActive = await checkActiveReservation();
+
+        $('loading').style.display = 'none';
+
+        if (hasActive) {
+          $('pendingScreen').style.display = '';
+          return;
+        }
+
+        $('introScreen').style.display = '';
+        updateProgressBar(1);
+        history.replaceState({ screen: 'intro' }, '');
+
+        window.addEventListener('popstate', (e) => {
+          if (submissionState.completed) { history.pushState({ screen: 'complete' }, ''); return; }
+          if (submissionState.inFlight) { history.pushState({ screen: 'submitting' }, ''); return; }
+          const screen = (e.state && e.state.screen) || 'intro';
+          if (screen === 'form' && currentType !== 'single') {
+            showScreen('select');
+            history.replaceState({ screen: 'select' }, '');
+            return;
+          }
+          showScreen(screen);
+        });
+
+        const agreeCheck = $('agreeCheck');
+        const proceedBtn = $('proceedBtn');
+        agreeCheck.addEventListener('change', () => { proceedBtn.disabled = !agreeCheck.checked; });
+        proceedBtn.addEventListener('click', () => { navigateTo('select'); });
+
+        document.querySelectorAll('.select-btn').forEach(btn => {
+          const type = btn.dataset.type;
+          if (!type) return;
+          btn.addEventListener('click', () => {
+            if (type === 'single') {
+              showForm('single');
+            } else if (type === 'multi') {
+              setPhoneScreen('multi');
+              navigateTo('phone');
+            }
+          });
+        });
+
+        document.querySelectorAll('.back-btn').forEach(btn => {
+          btn.addEventListener('click', () => { history.back(); });
+        });
+
+        // ▼ ワクチン選択の条件質問（何回目・接種歴・別ワクチン）
+        document.addEventListener('change', (e) => {
+          if (e.target.id === 'doseSelect') {
+            const dv = e.target.value;
+            $('doseDateSub').hidden = !(dv && dv !== '1');
+            if (!(dv && dv !== '1')) $('doseDate').value = '';
+            clearInlineError(null, 'vaxDoseError');
+          }
+          if (e.target.name === 'hist') {
+            const isYes = e.target.value === 'yes';
+            const usePeriod = !!(selectedRow && (selectedRow.history || '').trim() === '過去全て');
+            $('histSub').hidden = !(isYes && !usePeriod);
+            $('histPeriodSub').hidden = !(isYes && usePeriod);
+            if (!isYes) { $('histDate').value = ''; $('histPeriod').value = ''; }
+            else if (usePeriod) { $('histDate').value = ''; }
+            else { $('histPeriod').value = ''; }
+            clearInlineError(null, 'histAnsError');
+            clearInlineError($('histDate'), 'histDateError');
+            clearInlineError(null, 'histPeriodError');
+          }
+          if (e.target.name === 'liveInj') {
+            $('liveInjSub').hidden = (e.target.value !== 'yes');
+            if (e.target.value !== 'yes') { $('liveInjName').value = ''; $('liveInjDate').value = ''; $('liveInjWarn').hidden = true; }
+            clearInlineError(null, 'liveInjAnsError');
+          }
+          if (e.target.id === 'liveInjName') { clearInlineError(null, 'liveInjNameError'); checkLiveInjDate(); }
+          if (e.target.id === 'liveInjDate') { clearInlineError(e.target, 'liveInjDateError'); checkLiveInjDate(); }
+          if (e.target.id === 'doseDate') { clearInlineError(e.target, 'doseDateError'); }
+          if (e.target.id === 'histDate') { clearInlineError(e.target, 'histDateError'); }
+          if (e.target.id === 'histPeriod') { clearInlineError(null, 'histPeriodError'); }
+        });
+
+        // ▼ 各種フィールドのイベント
+        const kanaInput = $('kanaInput');
+        kanaInput.addEventListener('blur', () => {
+          const v = kanaInput.value.trim();
+          if (v && !KANA_REGEX.test(v)) showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
+          else clearInlineError(kanaInput, 'kanaError');
+        });
+        kanaInput.addEventListener('input', () => {
+          if (kanaInput.classList.contains('has-error')) clearInlineError(kanaInput, 'kanaError');
+        });
+
+        const phoneInput = $('phoneInput');
+        phoneInput.addEventListener('blur', () => {
+          const v = phoneInput.value.trim();
+          if (v && !isValidPhone(v)) showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません');
+          else clearInlineError(phoneInput, 'phoneError');
+        });
+        phoneInput.addEventListener('input', () => {
+          if (phoneInput.classList.contains('has-error')) clearInlineError(phoneInput, 'phoneError');
+        });
+
+        populateBirthdaySelects();
+        ['birthdayYear', 'birthdayMonth'].forEach(id => {
+          $(id).addEventListener('change', () => { updateBirthdayDayOptions(); clearBirthdayError(); });
+        });
+        $('birthdayDay').addEventListener('change', clearBirthdayError);
+
+        document.querySelectorAll('input[name="gender"]').forEach(radio => {
+          radio.addEventListener('change', () => { clearInlineError(null, 'genderError'); });
+        });
+
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+          input.addEventListener('change', () => {
+            const isPreferred = ['preferredDate1', 'preferredDate2', 'preferredDate3'].includes(input.name);
+            if (isPreferred) { revalidateAllPreferredDates(); }
+          });
+        });
+
+        const applicantOtherCheck = $('applicantOtherCheck');
+        const applicantOtherInput = $('applicantOtherInput');
+        const applicantOtherDetail = $('applicantOtherDetail');
+        document.querySelectorAll('input[name="applicant"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            if (applicantOtherCheck.checked) {
+              applicantOtherDetail.classList.add('show');
+            } else {
+              applicantOtherDetail.classList.remove('show');
+              applicantOtherInput.value = '';
+              clearInlineError(applicantOtherInput, 'applicantOtherError');
+            }
+            clearInlineError(null, 'applicantError');
+          });
+        });
+        applicantOtherInput.addEventListener('input', () => {
+          if (applicantOtherInput.classList.contains('has-error')) clearInlineError(applicantOtherInput, 'applicantOtherError');
+        });
+
+        $('submitBtn').addEventListener('click', handleSubmit);
+
+        const formEl = $('form');
+        const markFormDirty = () => { formDirty = true; };
+        formEl.addEventListener('input', markFormDirty);
+        formEl.addEventListener('change', markFormDirty);
+
+        window.addEventListener('beforeunload', (e) => {
+          const isFormVisible = $('formScreen').style.display !== 'none';
+          if (isFormVisible && formDirty && !submissionState.completed) {
+            e.preventDefault();
+            e.returnValue = '';
+          }
+        });
+
+      } catch (err) {
+        console.error('[Init Error]', err);
+        $('loading').textContent = 'エラーが発生しました。LINEアプリから開き直してください。';
+      }
+    })();
+
+    function applyClinicInfo() {
+      document.querySelectorAll('[data-clinic-phone-link]').forEach(a => { a.href = 'tel:' + CLINIC_INFO.phoneTel; });
+      document.querySelectorAll('[data-clinic-phone-display]').forEach(el => { el.textContent = CLINIC_INFO.phoneDisplay; });
+      document.querySelectorAll('[data-clinic-hours]').forEach(el => { el.textContent = CLINIC_INFO.hours; });
+      document.querySelectorAll('[data-city]').forEach(el => { el.textContent = CITY; }); // 料金注意書きの市区町村名
+    }
+
+    function getPhoneHtml() {
+      return `<a href="tel:${CLINIC_INFO.phoneTel}">${CLINIC_INFO.phoneDisplay}</a>`;
+    }
+
+    function applyMessages() {
+      const phoneHtml = getPhoneHtml();
+      document.querySelectorAll('[data-message]').forEach(el => {
+        const tmpl = MESSAGES[el.dataset.message];
+        if (!tmpl) return;
+        if (tmpl.includes('{phone}')) el.innerHTML = tmpl.replace('{phone}', phoneHtml);
+        else el.textContent = tmpl;
+      });
+    }
+
+    function getMessage(key) {
+      const tmpl = MESSAGES[key];
+      if (!tmpl) return '';
+      return tmpl.replace('{phone}', getPhoneHtml());
+    }
+
+    function setPhoneScreen(reason) {
+      const msg = (reason === 'ticket') ? getMessage('PHONE_TICKET') : getMessage('PHONE_MULTI');
+      $('phoneMessage').textContent = msg;
+    }
+
+    function updateProgressBar(currentStep) {
+      const progressBar = $('progressBar');
+      if (!progressBar) return;
+      if (!currentStep) { progressBar.style.display = 'none'; return; }
+      progressBar.style.display = '';
+      const steps = progressBar.querySelectorAll('.step');
+      const lines = progressBar.querySelectorAll('.step-line');
+      steps.forEach((step, index) => {
+        const stepNum = index + 1;
+        step.classList.remove('active', 'completed');
+        if (stepNum < currentStep) step.classList.add('completed');
+        else if (stepNum === currentStep) step.classList.add('active');
+      });
+      lines.forEach((line, index) => {
+        if (index + 1 < currentStep) line.classList.add('completed');
+        else line.classList.remove('completed');
+      });
+    }
+
+    function showScreen(name) {
+      ['intro', 'select', 'form', 'phone'].forEach(s => {
+        const el = $(s + 'Screen');
+        if (el) el.style.display = (s === name) ? '' : 'none';
+      });
+      const stepMap = { intro: 1, select: 2, form: 3, phone: 2 };
+      updateProgressBar(stepMap[name] || 0);
+      window.scrollTo(0, 0);
+    }
+
+    function navigateTo(name) {
+      history.pushState({ screen: name }, '');
+      showScreen(name);
+    }
+
+    function showForm(type) {
+      currentType = type;
+      submissionState = { id: generateSubmissionId(), inFlight: false, completed: false };
+      formDirty = false;
+      navigateTo('form');
+    }
+
+    function isValidPhone(phone) {
+      const digits = phone.replace(/[\s\-\(\)]/g, '');
+      return /^0\d{9,10}$/.test(digits);
+    }
+
+    function showInlineError(input, errorId, msg) {
+      if (input) input.classList.add('has-error');
+      const errEl = $(errorId);
+      if (errEl) {
+        if (msg !== undefined) errEl.textContent = msg;
+        errEl.classList.add('show');
+      }
+    }
+    function clearInlineError(input, errorId) {
+      if (input) input.classList.remove('has-error');
+      const errEl = $(errorId);
+      if (errEl) errEl.classList.remove('show');
+    }
+
+    function validatePreferredDate(input) {
+      const errorId = input.name + 'Error';
+      const v = input.value;
+      if (!v) { clearInlineError(input, errorId); return; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { showInlineError(input, errorId, '年は4桁で入力してください(例:2026)'); return; }
+      const min = input.getAttribute('min');
+      const max = input.getAttribute('max');
+      if (min && v < min) { showInlineError(input, errorId, `${toSlashDate(min)}以降の日付を入力してください`); return; }
+      if (max && v > max) { showInlineError(input, errorId, `${toSlashDate(max)}以前の日付を入力してください`); return; }
+      const preferredFields = [
+        { name: 'preferredDate1', label: '第1希望日' },
+        { name: 'preferredDate2', label: '第2希望日' },
+        { name: 'preferredDate3', label: '第3希望日' },
+      ];
+      for (const p of preferredFields) {
+        const el = document.querySelector(`input[name="${p.name}"]`);
+        if (!el || el === input) continue;
+        if (el.value === v) { showInlineError(input, errorId, `${p.label}と同じ日付は選択できません`); return; }
+      }
+      clearInlineError(input, errorId);
+    }
+
+    function revalidateAllPreferredDates() {
+      ['preferredDate1', 'preferredDate2', 'preferredDate3'].forEach(name => {
+        const el = document.querySelector(`input[name="${name}"]`);
+        if (el) validatePreferredDate(el);
+      });
+    }
+
+    // ▼ 生年月日(年/月/日セレクト)関連 ----------------------------
+    function populateBirthdaySelects() {
+      const yearSel = $('birthdayYear');
+      const monthSel = $('birthdayMonth');
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 1899; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y); opt.textContent = String(y);
+        yearSel.appendChild(opt);
+      }
+      for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = String(m); opt.textContent = String(m);
+        monthSel.appendChild(opt);
+      }
+      updateBirthdayDayOptions();
+    }
+
+    function daysInMonth(year, month) {
+      if (!month) return 31;
+      const y = year || 2000;
+      return new Date(y, month, 0).getDate();
+    }
+
+    function updateBirthdayDayOptions() {
+      const yearSel = $('birthdayYear');
+      const monthSel = $('birthdayMonth');
+      const daySel = $('birthdayDay');
+      const y = parseInt(yearSel.value, 10) || null;
+      const mo = parseInt(monthSel.value, 10) || null;
+      const maxDay = daysInMonth(y, mo);
+      const prev = daySel.value;
+      daySel.innerHTML = '<option value="">--</option>';
+      for (let d = 1; d <= maxDay; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d); opt.textContent = String(d);
+        daySel.appendChild(opt);
+      }
+      if (prev && parseInt(prev, 10) <= maxDay) daySel.value = prev;
+    }
+
+    function getBirthdayFromSelects() {
+      const y = $('birthdayYear').value;
+      const mo = $('birthdayMonth').value;
+      const d = $('birthdayDay').value;
+      if (!y || !mo || !d) return null;
+      const yi = parseInt(y, 10), moi = parseInt(mo, 10), di = parseInt(d, 10);
+      const date = new Date(yi, moi - 1, di);
+      if (date.getFullYear() !== yi || date.getMonth() !== moi - 1 || date.getDate() !== di) return null;
+      return `${yi}-${String(moi).padStart(2, '0')}-${String(di).padStart(2, '0')}`;
+    }
+
+    function setBirthdayError(msg) {
+      ['birthdayYear', 'birthdayMonth', 'birthdayDay'].forEach(id => { $(id).classList.add('has-error'); });
+      const errEl = $('birthdayError');
+      if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+    }
+
+    function clearBirthdayError() {
+      ['birthdayYear', 'birthdayMonth', 'birthdayDay'].forEach(id => {
+        const el = $(id); if (el) el.classList.remove('has-error');
+      });
+      const errEl = $('birthdayError');
+      if (errEl) errEl.classList.remove('show');
+    }
+
+    // ▼ ワクチン選択のバリデーション
+    function validateVaccine() {
+      const b = calcDateBoundaries();
+      if (!currentVaxName) {
+        showInlineError(null, 'vaxNameError', '接種するワクチンを選択してください');
+        $('nameList').scrollIntoView({ block: 'center' });
+        return null;
+      }
+      if (!selectedRow) {
+        showInlineError(null, 'vaxOptionError', '内容を選択してください');
+        $('optionList').scrollIntoView({ block: 'center' });
+        return null;
+      }
+      if (selectedRow.consult) {
+        return { vaccineName: currentVaxName, consult: true };
+      }
+      if (selectedRow.ticket) {
+        return { vaccineName: currentVaxName, ticket: true };
+      }
+      if (selectedRow.other) {
+        const fundSel = document.querySelector('input[name="otherFund"]:checked');
+        if (!fundSel) {
+          showInlineError(null, 'vaxOptionError', '公費・自費のいずれかを選択してください');
+          $('optionList').scrollIntoView({ block: 'center' });
+          return null;
+        }
+        const otherNameInput = $('otherVaxNameInput');
+        const otherNameVal = otherNameInput ? otherNameInput.value.trim() : '';
+        if (!otherNameVal) {
+          showInlineError(otherNameInput, 'otherVaxNameError', 'ワクチン名を入力してください');
+          if (otherNameInput) otherNameInput.focus();
+          return null;
+        }
+        return { vaccineName: otherNameVal, other: true, fundType: fundSel.value };
+      }
+      const row = selectedRow;
+      const data = { vaccineName: currentVaxName, consult: false, menuId: row.id, kubun: row.kubun, product: row.product };
+
+      if (row.doses != null && row.doses >= 2) {
+        const ds = $('doseSelect');
+        if (!ds.value) { showInlineError(null, 'vaxDoseError', '今回が何回目かを選択してください'); ds.focus(); return null; }
+        data.doseNumber = (ds.value === '1') ? 'はじめて' : (ds.value + '回目');
+        if (ds.value !== '1') {
+          const dd = $('doseDate');
+          if (!dd.value) { showInlineError(dd, 'doseDateError', '前回の接種日を入力してください'); dd.focus(); return null; }
+          if (dd.value > b.TODAY) { showInlineError(dd, 'doseDateError', '前回の接種日は今日以前を入力してください'); dd.focus(); return null; }
+          data.lastDoseDate = dd.value;
+        }
+      }
+
+      const h = (row.history || '').trim();
+      if (h && h !== 'なし' && h.toUpperCase() !== 'FALSE' && h !== '0') {
+        const histSel = document.querySelector('input[name="hist"]:checked');
+        if (!histSel) { showInlineError(null, 'histAnsError', '接種歴について選択してください'); return null; }
+        data.historyMode = h;
+        data.historyAnswer = histSel.value;
+        if (histSel.value === 'yes') {
+          if (h === '過去全て') {
+            const hp = $('histPeriod');
+            if (!hp.value) { showInlineError(null, 'histPeriodError', '前回の接種時期を選択してください'); hp.focus(); return null; }
+            data.historyPeriod = hp.value;
+          } else {
+            const hd = $('histDate');
+            if (!hd.value) { showInlineError(hd, 'histDateError', '接種日を入力してください'); hd.focus(); return null; }
+            if (hd.value > b.TODAY) { showInlineError(hd, 'histDateError', '接種日は今日以前を入力してください'); hd.focus(); return null; }
+            data.historyDate = hd.value;
+          }
+        }
+      }
+
+      if (row.liveInj) {
+        const liSel = document.querySelector('input[name="liveInj"]:checked');
+        if (!liSel) { showInlineError(null, 'liveInjAnsError', '別のワクチンの接種について選択してください'); return null; }
+        data.otherVaxAnswer = liSel.value;
+        if (liSel.value === 'yes') {
+          const ln = $('liveInjName');
+          const ld = $('liveInjDate');
+          if (!ln.value) { showInlineError(null, 'liveInjNameError', '接種したワクチンを選択してください'); ln.focus(); return null; }
+          if (!ld.value) { showInlineError(ld, 'liveInjDateError', '接種日を入力してください'); ld.focus(); return null; }
+          if (ld.value > b.TODAY) { showInlineError(ld, 'liveInjDateError', '接種日は今日以前を入力してください'); ld.focus(); return null; }
+          data.otherVaxName = ln.value;
+          data.otherVaxDate = ld.value;
+        }
+      }
+      return data;
+    }
+
+    function validateForm(form) {
+      // 1. ワクチン選択
+      const vax = validateVaccine();
+      if (!vax) return null;
+
+      // 2. 必須項目（HTML）
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) firstInvalid.focus();
+        return null;
+      }
+
+      // 3. フリガナ
+      const kanaInput = $('kanaInput');
+      if (!KANA_REGEX.test(kanaInput.value.trim())) {
+        showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
+        kanaInput.focus();
+        return null;
+      }
+
+      // 4. 電話番号
+      const phoneInput = $('phoneInput');
+      if (!isValidPhone(phoneInput.value)) {
+        showInlineError(phoneInput, 'phoneError', '電話番号の形式が正しくありません。0から始まる10〜11桁の番号を入力してください(ハイフンあり/なし可)。');
+        phoneInput.focus();
+        return null;
+      }
+
+      // 5. 生年月日
+      const birthday = getBirthdayFromSelects();
+      if (!birthday) {
+        setBirthdayError('生年月日を正しく選択してください');
+        $('birthdayYear').focus();
+        return null;
+      }
+
+      // 6. 性別
+      const genderSelected = form.querySelector('input[name="gender"]:checked');
+      if (!genderSelected) {
+        showInlineError(null, 'genderError', '性別を選択してください');
+        const g = form.querySelector('input[name="gender"]'); if (g) g.focus();
+        return null;
+      }
+
+      // 7. 希望日の形式・範囲・重複
+      const preferredDate1 = form.querySelector('input[name="preferredDate1"]').value;
+      const preferredDate2 = form.querySelector('input[name="preferredDate2"]').value;
+      const preferredDate3 = form.querySelector('input[name="preferredDate3"]').value;
+
+      const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
+      const dateChecks = [
+        { label: '第1希望日', value: preferredDate1, name: 'preferredDate1' },
+        { label: '第2希望日', value: preferredDate2, name: 'preferredDate2' },
+        { label: '第3希望日', value: preferredDate3, name: 'preferredDate3' },
+      ];
+      for (const { label, value, name } of dateChecks) {
+        if (value && !dateFormatRe.test(value)) {
+          const inp = form.querySelector(`input[name="${name}"]`);
+          showInlineError(inp, name + 'Error', `${label}の年は4桁で入力してください(例:2026)`);
+          if (inp) inp.focus();
+          return null;
+        }
+      }
+
+      const b = calcDateBoundaries();
+      applyDateBoundariesToDOM(b);
+
+      if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
+        setBirthdayError(`生年月日は ${toJpDate(b.BIRTHDAY_MIN)} 〜 ${toJpDate(b.TODAY)} の範囲で入力してください`);
+        $('birthdayYear').focus();
+        return null;
+      }
+      if (preferredDate1 < b.PREFERRED_MIN || preferredDate1 > b.PREFERRED_MAX) {
+        const inp = form.querySelector('input[name="preferredDate1"]');
+        showInlineError(inp, 'preferredDate1Error', `第1希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+      if (preferredDate2 && (preferredDate2 < b.PREFERRED_MIN || preferredDate2 > b.PREFERRED_MAX)) {
+        const inp = form.querySelector('input[name="preferredDate2"]');
+        showInlineError(inp, 'preferredDate2Error', `第2希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+      if (preferredDate3 && (preferredDate3 < b.PREFERRED_MIN || preferredDate3 > b.PREFERRED_MAX)) {
+        const inp = form.querySelector('input[name="preferredDate3"]');
+        showInlineError(inp, 'preferredDate3Error', `第3希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
+        if (inp) inp.focus();
+        return null;
+      }
+
+      const preferredVals = [preferredDate1, preferredDate2, preferredDate3].filter(v => v);
+      if (preferredVals.length !== new Set(preferredVals).size) {
+        revalidateAllPreferredDates();
+        const firstErr = form.querySelector('input[name^="preferredDate"].has-error');
+        if (firstErr) firstErr.focus();
+        return null;
+      }
+
+      // 8. 申込者
+      const applicantSelected = form.querySelector('input[name="applicant"]:checked');
+      if (!applicantSelected) {
+        showInlineError(null, 'applicantError', '申込者を選択してください');
+        const a = form.querySelector('input[name="applicant"]'); if (a) a.focus();
+        return null;
+      }
+
+      return { vax, birthday };
+    }
+
+    function buildPayload(form, validated) {
+      const formData = {};
+      new FormData(form).forEach((v, k) => {
+        if (k === 'birthdayYear' || k === 'birthdayMonth' || k === 'birthdayDay') return;
+        formData[k] = v;
+      });
+      formData.type = currentType;
+      formData.birthday = validated.birthday;
+      formData.vaccine = validated.vax;
+      formData.submissionId = submissionState.id;
+      return formData;
+    }
+
+    async function submitToServer(formData) {
+      const payload = {
+        idToken: TEST_MODE ? null : liff.getIDToken(),
+        formData,
+        appToken: APP_TOKEN
+      };
+      if (TEST_MODE) payload.testMode = true;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), signal: controller.signal });
+        return JSON.parse(await res.text());
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function showSubmitSuccess(result, form) {
+      result.className = 'ok';
+      result.style.display = '';
+      let html = '✅ <strong>予約申込を受け付けました。</strong><br>' +
+        getMessage('CONTACT_NOTICE') + '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
+      const canCloseLiff = !TEST_MODE && typeof liff !== 'undefined' && typeof liff.closeWindow === 'function';
+      if (canCloseLiff) html += '<button type="button" class="submit close-line-btn">LINEに戻る</button>';
+      result.innerHTML = html;
+      if (canCloseLiff) {
+        const closeBtn = result.querySelector('.close-line-btn');
+        if (closeBtn) closeBtn.addEventListener('click', () => { try { liff.closeWindow(); } catch (e) { console.error('[closeWindow]', e); } });
+      }
+      form.style.display = 'none';
+      const backBtn = document.querySelector('#formScreen .back-btn');
+      if (backBtn) backBtn.style.display = 'none';
+      updateProgressBar(4);
+      history.replaceState({ screen: 'complete' }, '');
+    }
+
+    function showAlreadySubmitted(result, form) {
+      result.className = 'ok';
+      result.style.display = '';
+      result.innerHTML = '📩 <strong>現在、お申し込みを受付中です。</strong><br>' +
+        getMessage('CONTACT_NOTICE') + '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
+      form.style.display = 'none';
+      const backBtn = document.querySelector('#formScreen .back-btn');
+      if (backBtn) backBtn.style.display = 'none';
+      updateProgressBar(4);
+      history.replaceState({ screen: 'complete' }, '');
+    }
+
+    function showSubmitFailure(result, btn, errorDetail) {
+      console.error('[Submit Error]', errorDetail);
+      result.className = 'ng';
+      result.style.display = '';
+      result.innerHTML = '送信に失敗しました。<br>お手数ですが、もう一度お試しいただくか、お電話(' + getPhoneHtml() + ')でご連絡ください。';
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    function showNetworkFailure(result, btn, err) {
+      console.error('[Network Error]', err);
+      result.className = 'ng';
+      result.style.display = '';
+      if (err && err.name === 'AbortError') {
+        result.textContent = '通信がタイムアウトしました。電波の良い場所で、もう一度お試しください。';
+      } else {
+        result.textContent = '通信エラーが発生しました。ネットワークの状態をご確認のうえ、もう一度お試しください。';
+      }
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    async function handleSubmit() {
+      if (submissionState.inFlight) return;
+      if (submissionState.completed) return;
+
+      const form = $('form');
+      const btn = $('submitBtn');
+      const result = $('result');
+
+      if (currentType !== 'single') {
+        result.className = 'ng';
+        result.style.display = '';
+        result.textContent = '最初からやり直してください。';
+        return;
+      }
+
+      form.classList.add('form-submitted');
+
+      const validated = validateForm(form);
+      if (!validated) return;
+
+      if (!GAS_URL) {
+        result.className = 'ng';
+        result.style.display = '';
+        result.textContent = '送信先（GAS_URL）が設定されていません。設定後にお試しください。';
+        return;
+      }
+
+      const formData = buildPayload(form, validated);
+
+      submissionState.inFlight = true;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>送信中...';
+      result.className = '';
+      result.style.display = '';
+
+      try {
+        const data = await submitToServer(formData);
+        if (data.ok) {
+          submissionState.completed = true;
+          submissionState.inFlight = false;
+          formDirty = false;
+          showSubmitSuccess(result, form);
+        } else if (data.error === 'already_submitted') {
+          submissionState.completed = true;
+          submissionState.inFlight = false;
+          formDirty = false;
+          showAlreadySubmitted(result, form);
+        } else {
+          submissionState.inFlight = false;
+          showSubmitFailure(result, btn, data.error);
+        }
+      } catch (err) {
+        submissionState.inFlight = false;
+        showNetworkFailure(result, btn, err);
+      }
+    }
+  </script>
+
+</body>
+
+</html>
