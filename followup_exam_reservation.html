@@ -501,6 +501,7 @@
       text-decoration: none;
     }
 
+    /* ▼「症状の有無」項目は現在無効化中。復活させる場合は下のコメントを解除してください
     .symptom-detail {
       margin-top: 8px;
       display: none;
@@ -509,6 +510,7 @@
     .symptom-detail.show {
       display: block;
     }
+    */
 
     /* ▼「その他」選択時のみ表示する入力欄 */
     .other-detail {
@@ -618,7 +620,7 @@
     <h1>二次検診予約フォーム</h1>
 
     <div class="alert-box" role="alert">
-      <span class="icon">⚠️</span><strong>緊急と思われる症状(強い痛み・血便・血尿など)がある場合は、必ずお電話でご連絡ください。</strong>
+      <span class="icon">⚠️</span><strong>症状がある場合は、必ずお電話でご連絡ください。</strong>
       <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
     </div>
 
@@ -817,6 +819,7 @@
         <div class="inline-error" id="findingsError" role="alert"></div>
       </div>
 
+      <!-- ▼「症状の有無」項目は現在無効化中（コメントアウト）。復活させる場合は、この行と末尾の閉じ記号を外してください。
       <div class="field">
         <div class="label" id="hasSymptomLabel">症状の有無<span class="required">必須</span></div>
         <div class="checkboxes inline" role="radiogroup" aria-labelledby="hasSymptomLabel">
@@ -829,6 +832,7 @@
           <div class="inline-error" id="symptomDetailError" role="alert"></div>
         </div>
       </div>
+      -->
 
       <h2>③ ご希望の日程</h2>
 
@@ -1114,6 +1118,8 @@
           });
         });
 
+        // ▼「症状の有無」項目は現在無効化中。復活させる場合は下のブロックコメントを解除してください
+        /*
         document.querySelectorAll('input[name="hasSymptom"]').forEach(radio => {
           radio.addEventListener('change', () => {
             const detail = document.getElementById('symptomDetail');
@@ -1134,6 +1140,7 @@
             clearInlineError(symptomDetailInput, 'symptomDetailError');
           }
         });
+        */
 
         const kanaInput = document.getElementById('kanaInput');
         kanaInput.addEventListener('blur', () => {
