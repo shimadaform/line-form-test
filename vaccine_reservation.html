@@ -720,7 +720,7 @@
   <div id="pendingScreen" style="display:none;">
     <h1>ワクチン接種予約フォーム</h1>
     <div class="alert-box" role="alert">
-      <span class="icon">📩</span><strong>現在、お申し込みを受付中です。</strong><br>
+      <span class="icon">📩</span><strong>現在、<span id="pendingServiceName"></span>お申し込みを受付中です。</strong><br>
       <span data-message="CONTACT_NOTICE"></span><br>
       今しばらくお待ちください。
     </div>
@@ -1146,6 +1146,7 @@
     let ROWS = [];                // 有効なワクチン行
     let submissionState = { id: null, inFlight: false, completed: false };
     let formDirty = false;
+    let activeReservationService = '';  // 受付中の予約の種別（外来/二次検診/ワクチン）
 
     function $(id) { return document.getElementById(id); }
 
@@ -1493,6 +1494,7 @@
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), signal: controller.signal });
         clearTimeout(tid);
         const data = JSON.parse(await res.text());
+        activeReservationService = (data && data.activeService) ? data.activeService : '';
         return !!(data.ok && data.hasActive);
       } catch (e) {
         console.error('[checkActiveReservation]', e);
@@ -1525,6 +1527,8 @@
         $('loading').style.display = 'none';
 
         if (hasActive) {
+          const _ps = $('pendingServiceName');
+          if (_ps) _ps.textContent = pendingServicePrefix();
           $('pendingScreen').style.display = '';
           return;
         }
@@ -1702,6 +1706,11 @@
       const tmpl = MESSAGES[key];
       if (!tmpl) return '';
       return tmpl.replace('{phone}', getPhoneHtml());
+    }
+
+    // 受付中の予約の種別（外来/二次検診/ワクチン）を「◯◯の」の形で返す（不明なら空）
+    function pendingServicePrefix() {
+      return activeReservationService ? (activeReservationService + 'の') : '';
     }
 
     function setPhoneScreen(reason) {
@@ -2115,7 +2124,7 @@
     function showAlreadySubmitted(result, form) {
       result.className = 'ok';
       result.style.display = '';
-      result.innerHTML = '📩 <strong>現在、お申し込みを受付中です。</strong><br>' +
+      result.innerHTML = '📩 <strong>現在、' + pendingServicePrefix() + 'お申し込みを受付中です。</strong><br>' +
         getMessage('CONTACT_NOTICE') + '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
       form.style.display = 'none';
       const backBtn = document.querySelector('#formScreen .back-btn');
@@ -2192,6 +2201,7 @@
           submissionState.completed = true;
           submissionState.inFlight = false;
           formDirty = false;
+          activeReservationService = (data && data.activeService) ? data.activeService : activeReservationService;
           showAlreadySubmitted(result, form);
         } else {
           submissionState.inFlight = false;
