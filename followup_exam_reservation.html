@@ -617,7 +617,7 @@
     <div class="terms">
       <h3>ご利用にあたって</h3>
       <ul>
-        <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、嶋田病院よりご連絡し予約を確定します。</li>
+        <li><strong>予約申込について:</strong>本フォームは「予約申込」であり、「予約確定」ではありません。内容を確認のうえ、当院よりご連絡し予約を確定します。</li>
         <li>
           <strong>ご連絡について:</strong><span data-message="CONTACT_NOTICE"></span>
         </li>
@@ -660,8 +660,8 @@
 
     <button type="button" class="select-btn" data-type="own">
       <span class="arrow">›</span>
-      <div class="title">嶋田病院で健診を受けた方</div>
-      <div class="desc">嶋田病院の健診結果で再検査・精密検査等を指摘された場合</div>
+      <div class="title">当院で健診を受けた方</div>
+      <div class="desc">当院の健診結果で再検査・精密検査等を指摘された場合</div>
     </button>
 
     <button type="button" class="select-btn" data-type="other">
@@ -997,6 +997,7 @@
       if (TEST_MODE) return false;
       try {
         const payload = {
+          service: 'kenshin',
           idToken: liff.getIDToken(),
           appToken: APP_TOKEN,
           action: 'check_status'
@@ -1358,7 +1359,7 @@
     function showForm(type) {
       currentType = type;
       document.getElementById('typeBadge').textContent =
-        (type === 'own') ? '嶋田病院で健診' : '他院等で健診';
+        (type === 'own') ? '当院で健診' : '他院等で健診';
       const isOther = (type === 'other');
       document.querySelectorAll('.other-only').forEach(el => {
         el.style.display = isOther ? '' : 'none';
@@ -1674,6 +1675,7 @@
 
     async function submitToServer(formData) {
       const payload = {
+        service: 'kenshin',
         idToken: TEST_MODE ? null : liff.getIDToken(),
         formData,
         appToken: APP_TOKEN
