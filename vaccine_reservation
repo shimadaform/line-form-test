@@ -1050,13 +1050,13 @@
     // =============================================================
     // 接続設定 — ここを編集してください
     // =============================================================
-    const LIFF_ID = '2010076084-TAppgjXG';     // ワクチン予約用 LIFF アプリのID
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';     // 予約送信用 GAS ウェブアプリの /exec URL（POST）
-    const APP_TOKEN = 'a';   // 送信用 GAS と共有する合言葉
+    const LIFF_ID = '2010253863-H4ekdxCF';     // ワクチン予約用 LIFF アプリのID
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxB1dEzshRb7F03H0N53GN0lPTVnXb4aJXA7aXEgPknfD2gx5nO3ZHqi803xq-4Y9NX/exec';     // 予約送信用 GAS ウェブアプリの /exec URL（POST）
+    const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';   // 送信用 GAS と共有する合言葉
 
     // ワクチンマスタを返す GAS（JSONP・GET）の /exec URL
     //   ※これまで作った vaccine_test.gs をデプロイした /exec を指定
-    const VACCINE_MASTER_URL = 'https://script.google.com/macros/s/AKfycbztgCZlKrVigUUpOiCjoWDY6xARwKHSzUSjXXAyqdBJoI4PMFxZ7ZHXBDTrh8CLtuUY7w/exec';
+    const VACCINE_MASTER_URL = 'https://script.google.com/macros/s/AKfycbxB1dEzshRb7F03H0N53GN0lPTVnXb4aJXA7aXEgPknfD2gx5nO3ZHqi803xq-4Y9NX/exec';
 
     const CITY = '小郡市';    // 市区町村名（料金の注意書きに使用）
 
@@ -1064,8 +1064,8 @@
     // 院の連絡先設定 — 電話番号・診療時間はここだけ編集してください
     // =============================================================
     const CLINIC_INFO = {
-      phoneDisplay: '', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
-      phoneTel: '',    // tel:リンク用(数字のみ、例: 0312345678)
+      phoneDisplay: '0942-72-2236', // 画面表示用(ハイフンあり可、例: 03-1234-5678)
+      phoneTel: '0942722236',    // tel:リンク用(数字のみ、例: 0312345678)
       hours: '平日 9:00〜17:00（祝日の場合は除く）',
     };
 
