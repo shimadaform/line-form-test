@@ -1054,9 +1054,10 @@
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxB1dEzshRb7F03H0N53GN0lPTVnXb4aJXA7aXEgPknfD2gx5nO3ZHqi803xq-4Y9NX/exec';     // 予約送信用 GAS ウェブアプリの /exec URL（POST）
     const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';   // 送信用 GAS と共有する合言葉
 
-    // ワクチンマスタを返す GAS（JSONP・GET）の /exec URL
-    //   ※これまで作った vaccine_test.gs をデプロイした /exec を指定
-    const VACCINE_MASTER_URL = 'https://script.google.com/macros/s/AKfycbxB1dEzshRb7F03H0N53GN0lPTVnXb4aJXA7aXEgPknfD2gx5nO3ZHqi803xq-4Y9NX/exec';
+    // ワクチンマスタを返す GAS（JSONP・GET）の URL
+    //   ※統合フォーム受付GASの /exec に ?service=vaccine を付けたものを指定
+    //     例: https://script.google.com/macros/s/XXXX/exec?service=vaccine
+    const VACCINE_MASTER_URL = 'https://script.google.com/macros/s/AKfycbxB1dEzshRb7F03H0N53GN0lPTVnXb4aJXA7aXEgPknfD2gx5nO3ZHqi803xq-4Y9NX/exec?service=vaccine';
 
     const CITY = '小郡市';    // 市区町村名（料金の注意書きに使用）
 
@@ -1486,7 +1487,7 @@
     async function checkActiveReservation() {
       if (TEST_MODE || !GAS_URL) return false;
       try {
-        const payload = { idToken: liff.getIDToken(), appToken: APP_TOKEN, action: 'check_status' };
+        const payload = { service: 'vaccine', idToken: liff.getIDToken(), appToken: APP_TOKEN, action: 'check_status' };
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), 15000);
         const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload), signal: controller.signal });
@@ -2076,6 +2077,7 @@
 
     async function submitToServer(formData) {
       const payload = {
+        service: 'vaccine',
         idToken: TEST_MODE ? null : liff.getIDToken(),
         formData,
         appToken: APP_TOKEN
