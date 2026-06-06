@@ -1026,7 +1026,7 @@
       }
     }
 
-    const KANA_REGEX = /^[ァ-ヶー・  ]+$/;
+    const KANA_REGEX = /^[ァ-ヶー・\u0020\u3000]+$/;
 
     let currentType = null;
     let submissionState = { id: null, inFlight: false, completed: false };
