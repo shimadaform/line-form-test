@@ -29,6 +29,12 @@
       border-bottom: 2px solid #06c755;
     }
 
+    /* ▼ 診察予約の見出し(青下線・セクション間に余白を追加) */
+    h1.consult-heading {
+      border-bottom-color: #1976d2;
+      margin-top: 32px;
+    }
+
     h2 {
       font-size: 1rem;
       margin: 20px 0 10px;
@@ -455,6 +461,24 @@
       font-weight: bold;
     }
 
+    /* ▼ 診察予約ボタン(青系) */
+    .select-btn.consult {
+      border-color: #1976d2;
+    }
+
+    .select-btn.consult:hover,
+    .select-btn.consult:active {
+      background: #e3f2fd;
+    }
+
+    .select-btn.consult .title {
+      color: #1976d2;
+    }
+
+    .select-btn.consult .arrow {
+      color: #1976d2;
+    }
+
     .back-btn {
       background: none;
       border: none;
@@ -632,7 +656,7 @@
             </li>
             <li>
               <span class="badge badge-required">必須</span>
-              健診結果票<br>
+              健康診断結果票<br>
               <span class="note">※スマートフォンのアプリ・Web画面で結果が確認できる場合はそちらでも可</span>
             </li>
             <li>
@@ -660,13 +684,13 @@
 
     <button type="button" class="select-btn" data-type="own">
       <span class="arrow">›</span>
-      <div class="title">嶋田病院で健診を受けた方</div>
+      <div class="title">嶋田病院で健康診断を受けた方</div>
       <div class="desc">嶋田病院の健診結果で再検査・精密検査等を指摘された場合</div>
     </button>
 
     <button type="button" class="select-btn" data-type="other">
       <span class="arrow">›</span>
-      <div class="title">他院・職場・人間ドック・自治体等で健診を受けた方</div>
+      <div class="title">他院・職場・自治体等で健康診断を受けた方</div>
       <div class="desc">他の医療機関等の健診結果で再検査・精密検査等を指摘された場合</div>
     </button>
 
@@ -682,6 +706,15 @@
         </div>
       </div>
     </button>
+
+    <h1 class="consult-heading">診察の予約を申し込みたい方</h1>
+
+    <!-- ▼ 診察予約：診察予約専用の電話案内画面(consultScreen)へ遷移 -->
+    <button type="button" class="select-btn consult" data-type="consult">
+      <span class="arrow">›</span>
+      <div class="title">診察・通院の申し込みをしたい方</div>
+      <div class="desc">症状や気になることについて、診察を希望する場合</div>
+    </button>
   </div>
 
   <div id="formScreen" style="display:none;">
@@ -691,10 +724,10 @@
     <form id="form" onsubmit="return false;" novalidate>
 
       <div class="docs-notice other-only" style="display:none;">
-        <div class="docs-title">健診結果票のご準備について</div>
+        <div class="docs-title">健康診断結果票のご準備について</div>
         <ul class="docs-help">
-          <li>健診結果票、またはスマホ等で結果を確認できるものをご用意ください。</li>
-          <li>ご用意できない場合は、健診を受けた施設へお取り寄せください。</li>
+          <li>健康診断結果票、またはスマホ等で結果を確認できるものをご用意ください。</li>
+          <li>ご用意できない場合は、健康診断を受けた施設へお取り寄せください。</li>
           <li>精密検査依頼票がある場合は、あわせてご用意ください。</li>
         </ul>
       </div>
@@ -754,14 +787,14 @@
       <h2>② 健康診断について</h2>
 
       <div class="field other-only" style="display:none;">
-        <label class="label" for="clinicNameInput">健診実施機関名<span class="required">必須</span></label>
+        <label class="label" for="clinicNameInput">健康診断実施機関名<span class="required">必須</span></label>
         <input type="text" id="clinicNameInput" name="clinicName" required autocomplete="off" maxlength="200"
           placeholder="例:〇〇病院や△△健診センターなど">
         <div class="inline-error" id="clinicNameError" role="alert"></div>
       </div>
 
       <div class="field">
-        <label class="label" for="checkupDateInput">健診を受けた日<span class="required">必須</span></label>
+        <label class="label" for="checkupDateInput">健康診断を受けた日<span class="required">必須</span></label>
         <input type="date" id="checkupDateInput" name="checkupDate" required>
         <div class="inline-error" id="checkupDateError" role="alert"></div>
       </div>
@@ -776,7 +809,7 @@
 
           <label><input type="checkbox" name="findings" value="肝機能">肝機能</label>
           <label><input type="checkbox" name="findings" value="腎機能">腎機能</label>
-          <label><input type="checkbox" name="findings" value="尿検査">尿検査</label>
+          <label><input type="checkbox" name="findings" value="尿">尿</label>
           <label><input type="checkbox" name="findings" value="貧血">貧血</label>
 
           <label><input type="checkbox" name="findings" value="脳MRI・MRA">脳MRI・MRA</label>
@@ -793,7 +826,7 @@
           <label><input type="checkbox" name="findings" value="腹部エコー">腹部エコー</label>
 
           <label><input type="checkbox" name="findings" value="乳房">乳房</label>
-          <label><input type="checkbox" name="findings" value="骨密度検査">骨密度検査</label>
+          <label><input type="checkbox" name="findings" value="骨密度">骨密度</label>
 
           <label><input type="checkbox" name="findings" value="その他" id="findingsOtherCheck">その他</label>
         </div>
@@ -865,7 +898,7 @@
       <h2>⑤ 事前のご相談</h2>
 
       <div class="field">
-        <label class="label" for="consultInput">事前に相談したいことがありますか<span class="optional">任意</span></label>
+        <label class="label" for="consultInput">事前に相談したいことはありますか<span class="optional">任意</span></label>
         <textarea id="consultInput" name="consult" rows="4" autocomplete="off" maxlength="2000"
           placeholder="ご相談・ご質問などがあれば、ご記入ください（任意）"></textarea>
         <div class="help">※ いただいたご相談には、LINEにてご返答いたします。</div>
@@ -883,6 +916,19 @@
 
     <div class="referral-box">
       <p>紹介状をお持ちの方は、お手数ですがお電話にてご連絡ください。</p>
+      <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+      <p style="margin-top:16px; font-size:0.85rem; color:#888;">
+        診療時間:<span data-clinic-hours></span>
+      </p>
+    </div>
+  </div>
+
+  <div id="consultScreen" style="display:none;">
+    <button type="button" class="back-btn" data-back="select">← 選択に戻る</button>
+    <h1>診察・通院のお申し込みをご希望の方へ</h1>
+
+    <div class="referral-box">
+      <p>診察・通院のご予約を希望される方はお手数ですがお電話にてご連絡ください。</p>
       <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
       <p style="margin-top:16px; font-size:0.85rem; color:#888;">
         診療時間:<span data-clinic-hours></span>
@@ -1093,8 +1139,8 @@
           const type = btn.dataset.type;
           if (!type) return;
           btn.addEventListener('click', () => {
-            if (type === 'referral') {
-              navigateTo('referral');
+            if (type === 'referral' || type === 'consult') {
+              navigateTo(type);
             } else {
               showForm(type);
             }
@@ -1350,11 +1396,11 @@
 
     // 画面表示のみ(履歴操作はしない)
     function showScreen(name) {
-      ['intro', 'select', 'form', 'referral'].forEach(s => {
+      ['intro', 'select', 'form', 'referral', 'consult'].forEach(s => {
         const el = document.getElementById(s + 'Screen');
         if (el) el.style.display = (s === name) ? '' : 'none';
       });
-      const stepMap = { intro: 1, select: 2, form: 3, referral: 2 };
+      const stepMap = { intro: 1, select: 2, form: 3, referral: 2, consult: 2 };
       updateProgressBar(stepMap[name] || 0);
       window.scrollTo(0, 0);
     }
