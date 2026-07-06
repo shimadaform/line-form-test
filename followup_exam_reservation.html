@@ -857,6 +857,7 @@
 
       <div class="section-notice">
         <div id="preferredDateNotice"></div>
+        <div>※ 日曜・祝日は選択できません</div>
         <div>※ 時間は指定できません</div>
       </div>
 
@@ -1028,6 +1029,25 @@
 
     const KANA_REGEX = /^[ァ-ヶー・\u0020\u3000]+$/;
 
+    // =============================================================
+    // 休診日(祝日)データ
+    //   祝日は起動時に内閣府「国民の祝日」CSV(GAS経由)から投入する。
+    //   取得できなければ空のまま(=祝日は選択可能・警告なし)。
+    //   日曜日のブロックは HOLIDAYS と無関係に常に有効。
+    // =============================================================
+    const HOLIDAYS = new Set();
+
+    // 希望日が日曜または祝日なら理由(文字列)を、それ以外は null を返す
+    function getClosedDayReason(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return null;
+      // ローカル日付で生成(new Date('YYYY-MM-DD') はUTC扱いになるため避ける)
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      if (d.getDay() === 0) return '日曜日は休診のため選択できません';
+      if (HOLIDAYS.has(iso)) return '祝日・休日は休診のため選択できません';
+      return null;
+    }
+
     let currentType = null;
     let submissionState = { id: null, inFlight: false, completed: false };
     let formDirty = false;
@@ -1066,6 +1086,29 @@
       }
     }
 
+    // 祝日を内閣府CSV(GAS経由)から取得して HOLIDAYS に投入する。
+    // 失敗しても握りつぶす(HOLIDAYS は空のまま＝祝日チェック無効。仕様どおり警告は出さない)。
+    // 認証不要のためテストモードでも取得でき、?test=1 での動作確認にも祝日が効く。
+    async function loadHolidays() {
+      try {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'get_holidays', appToken: APP_TOKEN }),
+          signal: controller.signal
+        });
+        clearTimeout(tid);
+        const data = JSON.parse(await res.text());
+        if (data && data.ok && Array.isArray(data.holidays)) {
+          data.holidays.forEach(d => HOLIDAYS.add(d));
+        }
+        // 失敗時: HOLIDAYS は空のまま。仕様どおり何もしない
+      } catch (e) {
+        console.warn('[loadHolidays] 祝日取得に失敗。祝日チェックは無効になります。', e);
+      }
+    }
+
     (async () => {
       try {
         if (!TEST_MODE) {
@@ -1084,6 +1127,9 @@
             applyDateBoundariesToDOM(calcDateBoundaries());
           }
         });
+
+        // 祝日を内閣府CSV(GAS経由)から非同期取得。完了は待たない(初期表示を遅らせない)
+        loadHolidays();
 
         const hasActive = await checkActiveReservation();
 
@@ -1483,7 +1529,14 @@
         return;
       }
 
-      // 3. 他の希望日との重複チェック
+      // 3. 日曜・祝日チェック
+      const closedReason = getClosedDayReason(v);
+      if (closedReason) {
+        showInlineError(input, errorId, closedReason);
+        return;
+      }
+
+      // 4. 他の希望日との重複チェック
       const preferredFields = [
         { name: 'preferredDate1', label: '第1希望日' },
         { name: 'preferredDate2', label: '第2希望日' },
@@ -1692,6 +1745,23 @@
         showInlineError(inp, 'preferredDate3Error', `第3希望日は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
         if (inp) inp.focus();
         return null;
+      }
+
+      // 日曜・祝日チェック(希望日のみ)
+      const preferredClosedChecks = [
+        { name: 'preferredDate1', value: preferredDate1 },
+        { name: 'preferredDate2', value: preferredDate2 },
+        { name: 'preferredDate3', value: preferredDate3 },
+      ];
+      for (const { name, value } of preferredClosedChecks) {
+        if (!value) continue;
+        const reason = getClosedDayReason(value);
+        if (reason) {
+          const inp = form.querySelector(`input[name="${name}"]`);
+          showInlineError(inp, name + 'Error', reason);
+          if (inp) inp.focus();
+          return null;
+        }
       }
 
       const preferredVals = [preferredDate1, preferredDate2, preferredDate3].filter(v => v);
