@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#00796b">
+  <meta name="robots" content="noindex">
+  <title>インフルエンザワクチン接種予約申込</title>
+
+  <!-- =============================================================
+       vaccine-flu-standalone.html
+       LINE（LIFF）なしで動く、インフルエンザワクチン予約の単独ページ。
+
+       ① 利用規約 → ② 入力 → ③ 完了 の3ステップ。
+       CSS・JSをこのファイルに全部入れてあるので、
+       このファイル1つをどこに置いても（メール添付でも）動きます。
+
+       設定はページ下部のJS内「設定」ブロックだけ見れば済みます。
+       ============================================================= -->
+
+  <style>
+    /* =============================================================
+       配色
+       ここの3行を変えればページ全体の色が変わります
+       ============================================================= */
+    :root {
+      --accent: #00796b;
+      --accent-dark: #00695c;
+      --accent-light: #e0f2f1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      margin: 8px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin: 20px 0 10px;
+      color: var(--accent);
+      padding-left: 8px;
+      border-left: 4px solid var(--accent);
+    }
+
+    /* ▼ 持ち物リストの必須/任意ラベル */
+    .badge-required {
+      color: #e74c3c;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+
+    .badge-optional {
+      color: #888;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+
+    .test-banner {
+      background: #ff9800;
+      color: #fff;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    /* ▼ 進捗ステップ（中身はJSが生成します） */
+    .progress {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding: 4px 2px 0;
+    }
+
+    .progress .step {
+      flex: 0 0 auto;
+      text-align: center;
+      min-width: 50px;
+    }
+
+    .progress .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ddd;
+      color: #888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin: 0 auto;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .progress .step-label {
+      font-size: 0.7rem;
+      color: #888;
+      margin-top: 4px;
+      white-space: nowrap;
+      transition: color 0.2s ease, font-weight 0.2s ease;
+    }
+
+    .progress .step.active .step-circle {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.2);
+    }
+
+    .progress .step.active .step-label {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .progress .step.completed .step-circle {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .progress .step.completed .step-label {
+      color: #555;
+    }
+
+    .progress .step-line {
+      flex: 1;
+      height: 2px;
+      background: #ddd;
+      margin: 14px 4px 0;
+      transition: background 0.2s ease;
+    }
+
+    .progress .step-line.completed {
+      background: var(--accent);
+    }
+
+    /* ▼ 入力欄 */
+    .field {
+      background: #fff;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+
+    .required {
+      color: #e74c3c;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+
+    .optional {
+      color: #888;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+
+    .help {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input:user-invalid,
+    select:user-invalid {
+      border-color: #e74c3c;
+    }
+
+    form.form-submitted input:invalid,
+    form.form-submitted select:invalid {
+      border-color: #e74c3c;
+    }
+
+    input.has-error,
+    select.has-error {
+      border-color: #e74c3c !important;
+    }
+
+    input:disabled {
+      background: #f0f0f0;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    /* ▼ 生年月日（年/月/日）の横並び */
+    .birthday-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .birthday-group select {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 10px 6px;
+    }
+
+    .birthday-group select.year {
+      flex: 1.5 1 0;
+    }
+
+    .birthday-unit {
+      flex: 0 0 auto;
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    /* ▼ チェックボックス・ラジオ */
+    .checkboxes label {
+      display: block;
+      padding: 6px 0;
+      font-size: 0.95rem;
+    }
+
+    .checkboxes input {
+      margin-right: 8px;
+    }
+
+    .checkboxes.inline {
+      display: flex;
+      gap: 24px;
+    }
+
+    .checkboxes.inline label {
+      display: flex;
+      align-items: center;
+      padding: 10px 4px;
+    }
+
+    /* ▼「その他」選択時のみ表示する入力欄 */
+    .other-detail {
+      display: none;
+    }
+
+    .other-detail.show {
+      display: block;
+    }
+
+    /* ▼ ボタン */
+    button.submit {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-top: 16px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    button.submit:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+
+    button.submit.ghost {
+      background: #fff;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      max-width: 280px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      font-size: 0.95rem;
+      padding: 12px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: 0.95rem;
+      padding: 4px 0;
+      margin-bottom: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* ▼ 各種メッセージ枠 */
+    .alert-box {
+      background: #fff3e0;
+      border: 2px solid #ff9800;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .alert-box .icon {
+      font-size: 1.2rem;
+      margin-right: 4px;
+    }
+
+    .alert-box .phone {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #d84315;
+      text-decoration: none;
+    }
+
+    .terms {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    .terms h3 {
+      font-size: 1rem;
+      margin: 0 0 10px;
+      color: var(--accent);
+    }
+
+    .terms ul {
+      padding-left: 1.2em;
+      margin: 0;
+    }
+
+    .terms li {
+      margin-bottom: 6px;
+    }
+
+    .terms strong {
+      color: var(--accent-dark);
+    }
+
+    .agree-box {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .agree-box label {
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .agree-box input {
+      margin-right: 10px;
+      transform: scale(1.2);
+    }
+
+    .section-notice {
+      background: #fff8e1;
+      border-left: 4px solid #ffa726;
+      padding: 10px 12px;
+      margin: 0 0 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: #5d4037;
+    }
+
+    .section-notice div+div {
+      margin-top: 2px;
+    }
+
+    /* ▼ エラー表示 */
+    .inline-error {
+      color: #c62828;
+      font-size: 0.8rem;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .inline-error.show {
+      display: block;
+    }
+
+    /* ▼ 送信結果 */
+    .result-box {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .result-box.ok {
+      background: #e8f5e9;
+      color: #2e7d32;
+      display: block;
+      line-height: 1.8;
+    }
+
+    .result-box.ng {
+      background: #ffebee;
+      color: #c62828;
+      display: block;
+    }
+
+    /* ▼ 完了画面の申込内容 */
+    .summary {
+      background: #fff;
+      padding: 14px;
+      border-radius: 8px;
+      margin-top: 16px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      font-size: 0.9rem;
+    }
+
+    .summary h3 {
+      font-size: 0.95rem;
+      margin: 0 0 10px;
+      color: var(--accent);
+    }
+
+    .summary dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: 7em 1fr;
+      row-gap: 6px;
+    }
+
+    .summary dt {
+      color: #888;
+    }
+
+    .summary dd {
+      margin: 0;
+    }
+
+    /* ▼ いたずら送信よけの欄（画面には出しません） */
+    .hp-field {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    /* ▼ ローディング（送信ボタン内） */
+    .btn-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: -2px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="testBanner" class="test-banner" style="display:none;"></div>
+  <nav id="progressBar" class="progress" style="display:none;" aria-label="入力の進捗"></nav>
+
+  <!-- =========================================================
+       ステップ① 利用規約
+       ========================================================= -->
+  <div id="termsScreen" style="display:none;">
+    <h1>インフルエンザワクチン接種の予約申し込み</h1>
+
+    <div class="alert-box" role="alert">
+      <span class="icon">⚠️</span><strong>発熱や体調不良があるときは、当日接種できない場合があります。重いアレルギーの既往がある方は、事前にお電話でご相談ください。</strong>
+      <a href="#" class="phone" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+    </div>
+
+    <div class="terms">
+      <h3>ご利用にあたって</h3>
+      <ul>
+        <li>
+          <strong>予約申込について:</strong>
+          本フォームは「予約申込」であり、この時点では予約は確定していません。当院からのご連絡をもって予約確定となります。
+        </li>
+        <li>
+          <strong>ご連絡について:</strong>
+          <span data-message="CONTACT_NOTICE"></span>
+        </li>
+        <li>
+          <strong>予約希望日について:</strong>
+          ワクチンの在庫状況や接種枠により、ご希望の日に添えない場合があります。また、時間や医師のご指定はできません。
+        </li>
+        <li>
+          <strong>キャンセル・変更について:</strong>
+          ワクチンの準備・在庫管理の都合がありますので、キャンセル・変更をご希望の場合は、できるだけ早めにお電話でご連絡ください。
+        </li>
+        <li>
+          <strong>料金について:</strong>
+          表示している料金は、主に<span data-city></span>にお住まいの方向けの内容です。他の市町村にお住まいの方は、料金が異なる場合があります。
+        </li>
+        <li>
+          <strong>公費接種について:</strong>
+          定期接種・公費助成の対象となるかは、年齢・お住まい・接種歴・接種券などにより確認します。対象とならない場合は、自費での接種となることがあります。
+        </li>
+        <li>
+          <strong>接種可否・体調不良時について:</strong>
+          予約が確定していても、当日の体温・体調・接種歴・予診の内容や医師の判断により、接種を見合わせる場合があります。発熱や急な体調不良があるときは、来院前にお電話でご相談ください。
+        </li>
+        <li>
+          <strong>未成年者について:</strong>
+          未成年の方は、保護者の同意または同伴が必要となる場合があります。年齢や接種するワクチンの種類により確認させていただきます。
+        </li>
+        <li>
+          <strong>個人情報の取り扱いについて:</strong>
+          ご入力いただいた内容は、ワクチン接種の予約受付とそのご連絡のためにのみ使用します。
+        </li>
+        <li>
+          <strong>来院時のお持ち物について:</strong>
+          <ul class="items">
+            <li>
+              <span class="badge-required">必須</span>
+              マイナ保険証（マイナンバーカード）または資格確認書などの本人確認書類
+            </li>
+            <li>
+              <span class="badge-optional">任意</span><span class="note">（お持ちの方のみ）</span>
+              <ul>
+                <li>接種券・助成券・案内はがき</li>
+                <li>母子手帳・接種済証</li>
+                <li>お薬手帳</li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="agree-box">
+      <label>
+        <input type="checkbox" id="agreeCheck">
+        上記内容に同意します
+      </label>
+    </div>
+
+    <button type="button" class="submit" id="proceedBtn" disabled>次へ進む</button>
+  </div>
+
+  <!-- =========================================================
+       ステップ② 入力
+       ========================================================= -->
+  <div id="formScreen" style="display:none;">
+    <button type="button" class="back-btn">← 利用規約に戻る</button>
+    <h1>インフルエンザワクチン接種予約</h1>
+
+    <form id="form" onsubmit="return false;" novalidate>
+
+      <h2>① ご本人について</h2>
+
+      <div class="field">
+        <label class="label" for="nameInput">氏名<span class="required">必須</span></label>
+        <input type="text" id="nameInput" name="name" required autocomplete="name" maxlength="100"
+          placeholder="例:嶋田 太郎">
+      </div>
+
+      <div class="field">
+        <label class="label" for="kanaInput">フリガナ<span class="required">必須</span></label>
+        <input type="text" id="kanaInput" name="kana" required autocomplete="off" maxlength="100"
+          placeholder="例:シマダ タロウ">
+        <div class="inline-error" id="kanaError" role="alert">カタカナで入力してください</div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="birthdayLabel">生年月日<span class="required">必須</span></div>
+        <div class="birthday-group">
+          <select class="year" name="birthdayYear" id="birthdayYear" required autocomplete="bday-year"
+            aria-label="生年(西暦)">
+            <option value="">----</option>
+          </select>
+          <span class="birthday-unit">年</span>
+          <select name="birthdayMonth" id="birthdayMonth" required autocomplete="bday-month" aria-label="月">
+            <option value="">--</option>
+          </select>
+          <span class="birthday-unit">月</span>
+          <select name="birthdayDay" id="birthdayDay" required autocomplete="bday-day" aria-label="日">
+            <option value="">--</option>
+          </select>
+          <span class="birthday-unit">日</span>
+        </div>
+        <div class="inline-error" id="birthdayError" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <div class="label" id="genderLabel">性別<span class="required">必須</span></div>
+        <div class="checkboxes inline" role="radiogroup" aria-labelledby="genderLabel">
+          <label><input type="radio" name="gender" value="男性" required>男性</label>
+          <label><input type="radio" name="gender" value="女性" required>女性</label>
+        </div>
+        <div class="inline-error" id="genderError" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="phoneInput">携帯電話番号<span class="required">必須</span></label>
+        <input type="tel" id="phoneInput" name="phone" required autocomplete="tel" maxlength="30"
+          placeholder="例:09012345678 / 090-1234-5678">
+        <div class="help">※ 結果をショートメールでご連絡します。</div>
+        <div class="inline-error" id="phoneError" role="alert">携帯電話番号の形式が正しくありません</div>
+      </div>
+
+      <h2>② ご希望の日程</h2>
+
+      <div class="section-notice">
+        <div id="preferredDateNotice"></div>
+        <div id="closedDayNotice" style="display:none;"></div>
+        <div>※ 時間は指定できません</div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate1Input">第1希望日<span class="required">必須</span></label>
+        <input type="date" id="preferredDate1Input" name="preferredDate1" required>
+        <div class="inline-error" id="preferredDate1Error" role="alert"></div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="preferredDate2Input">第2希望日<span class="optional">任意</span></label>
+        <input type="date" id="preferredDate2Input" name="preferredDate2">
+        <div class="inline-error" id="preferredDate2Error" role="alert"></div>
+      </div>
+
+      <h2>③ 申込者について</h2>
+
+      <div class="field">
+        <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
+        <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
+          <label><input type="radio" name="applicant" value="本人" required>上記、接種を受ける方と同一である</label>
+          <label><input type="radio" name="applicant" value="家族・キーパーソン" required>接種を受ける方の家族もしくはキーパーソン</label>
+          <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
+        </div>
+        <div class="other-detail" id="applicantOtherDetail">
+          <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください"
+            aria-label="申込者「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
+          <div class="inline-error" id="applicantOtherError" role="alert"></div>
+        </div>
+        <div class="inline-error" id="applicantError" role="alert"></div>
+      </div>
+
+      <!-- ▼ いたずら送信よけ（人には見えない欄。埋まっていたら送信しません） -->
+      <div class="hp-field" aria-hidden="true">
+        <label>この欄は入力しないでください
+          <input type="text" name="website" id="hpInput" tabindex="-1" autocomplete="off">
+        </label>
+      </div>
+
+      <button type="button" class="submit" id="submitBtn">予約を申し込む</button>
+    </form>
+
+    <div id="result" class="result-box" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- =========================================================
+       ステップ③ 完了
+       ========================================================= -->
+  <div id="completeScreen" style="display:none;">
+    <h1>お申し込みを受け付けました</h1>
+    <div id="completeBox" class="result-box ok" role="status" aria-live="polite"></div>
+    <div id="completeSummary" class="summary" style="display:none;">
+      <h3>お申し込み内容</h3>
+      <dl id="summaryList"></dl>
+    </div>
+    <button type="button" class="submit ghost" id="againBtn">別の方の申し込みをする</button>
+  </div>
+
+
+  <script>
+    'use strict';
+
+    /* =============================================================
+       設定 — 変更が必要なのはこのブロックだけです
+       ============================================================= */
+
+    // 送信方法
+    //   'gas'  … 下の GAS_URL へ送信する（本番）
+    //   'demo' … 送信せず完了画面だけ出す（画面確認用）
+    // GAS_URL を空にした場合も自動的に 'demo' として動きます。
+    const SUBMIT_MODE = 'gas';
+
+    // インフル予約専用 GAS ウェブアプリの /exec URL（POST）
+    // 予約の送信も、休診日（日曜・祝日・臨時休診日）の取得も、このURLに投げます。
+    // ※ このページは LINE を使わないため idToken を送れません。
+    //    GAS 側を「idToken なしでも受け付ける」よう対応させてください。
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzqaMEGup4w0Y2_NwdGwY7AQ1qEFcjbuPzsU21FHWLJnvokhN6GyEtD7NKGHve-Unf6yA/exec';
+
+    // 送信用 GAS と共有する合言葉
+    const APP_TOKEN = 'csAGkeP-h88FDkGhhkKNAaL2_cG_Sr58';
+
+    // 市区町村名（規約の料金注意書きに使用）
+    const CITY = '小郡市';
+
+    // 院の連絡先
+    const CLINIC_INFO = {
+      phoneDisplay: '0942-72-2236', // 画面表示用
+      phoneTel: '0942722236',       // tel:リンク用（数字のみ）
+      hours: '平日 9:00〜17:00（祝日の場合は除く）',
+    };
+
+    // 共通文言（HTML側は data-message="キー名" を書くだけで反映されます）
+    // {phone} は CLINIC_INFO の電話番号 + tel:リンクに自動置換されます。
+    const MESSAGES = {
+      CONTACT_NOTICE: '内容を確認のうえ、月〜土曜日（祝日を除く）の午後に、ご入力いただいた携帯電話へショートメールまたはお電話にて順次ご連絡いたします。お申し込みの時間帯により、翌診療日以降のご連絡となることがございます。',
+      URGENT_PHONE_NOTICE: 'お急ぎの場合や内容の変更・キャンセルをご希望の場合は、お電話（{phone}）にてご連絡ください。',
+    };
+
+    // GAS に送る値
+    const SERVICE = 'vaccine';
+    const VACCINE_NAME = 'インフルエンザ';
+    const PAYLOAD_TYPE = 'single';
+
+    // 休診日チェック
+    //   true  … 日曜・祝日・臨時休診日を希望日に選べなくします。
+    //           祝日と臨時休診日の一覧は GAS（action: 'get_holidays'）から受け取ります。
+    //           取得できなかった場合は日曜だけを弾き、最終判定はGAS側が行います。
+    //   false … 何もチェックしません（元の vaccine-flu.js と同じ動き）
+    const CHECK_CLOSED_DAYS = true;
+
+    // 希望日フィールドの設定
+    const FORM_CFG = {
+      sel: '#form',
+      preferred: [
+        { name: 'preferredDate1', label: '第1希望日' },
+        { name: 'preferredDate2', label: '第2希望日' },
+      ],
+      checkClosedDays: CHECK_CLOSED_DAYS,
+      noticeId: 'preferredDateNotice',
+      birthday: { year: 'birthdayYear', month: 'birthdayMonth', day: 'birthdayDay', error: 'birthdayError' },
+    };
+
+
+    /* =============================================================
+       テストモード（?test=1 で送信データに testMode を付けます）
+       ============================================================= */
+    const TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+
+
+    /* =============================================================
+       日付ヘルパー
+       ============================================================= */
+
+    function formatDate(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // 'YYYY-MM-DD' → 'YYYY年M月D日'
+    function toJpDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return iso;
+      return `${m[1]}年${Number(m[2])}月${Number(m[3])}日`;
+    }
+
+    // 'YYYY-MM-DD' → 'YYYY/MM/DD'
+    function toSlashDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return iso;
+      return `${m[1]}/${m[2]}/${m[3]}`;
+    }
+
+    function calcDateBoundaries() {
+      const today = new Date();
+      const threeDaysLater = new Date(today);
+      threeDaysLater.setDate(today.getDate() + 3);
+      const oneYearLater = new Date(today);
+      oneYearLater.setFullYear(today.getFullYear() + 1);
+      return {
+        TODAY: formatDate(today),
+        PREFERRED_MIN: formatDate(threeDaysLater),
+        PREFERRED_MAX: formatDate(oneYearLater),
+        BIRTHDAY_MIN: '1899-01-01',
+      };
+    }
+
+    // 日付をまたいでフォームを開きっぱなしにしていた場合の対策
+    function watchDateBoundaries(apply) {
+      apply(calcDateBoundaries());
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) apply(calcDateBoundaries());
+      });
+    }
+
+
+    /* =============================================================
+       入力チェック
+       ============================================================= */
+
+    const KANA_REGEX = /^[ァ-ヶー・\u0020\u3000]+$/;
+
+    // 携帯電話番号（070/080/090の11桁）。ショートメール送信のため固定電話は不可
+    // 固定電話も許可する場合は /^0\d{9,10}$/ に差し替えてください
+    function isValidMobilePhone(phone) {
+      const digits = phone.replace(/[\s\-\(\)]/g, '');
+      return /^0[789]0\d{8}$/.test(digits);
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+      ));
+    }
+
+
+    /* =============================================================
+       休診日（日曜・祝日・臨時休診日）
+         祝日と臨時休診日の一覧は GAS から受け取ります。
+         取得できなかったときは日曜だけを弾きます
+         （送信時の最終判定はGAS側でも行っています）。
+       ============================================================= */
+
+    const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+    const CLOSED_DAYS = new Set();
+    let closedWeekdays = [0];   // 0=日曜。GASから受け取ったら上書きされます
+    const CLOSED_CACHE_KEY = 'shimada_closed_days';
+
+    // 休診日なら理由（文字列）を、そうでなければ null を返す
+    function getClosedDayReason(iso) {
+      if (!CHECK_CLOSED_DAYS) return null;
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      if (!m) return null;
+      // new Date('YYYY-MM-DD') はUTC扱いになるため、ローカル日付で生成する
+      const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      if (closedWeekdays.indexOf(d.getDay()) >= 0) {
+        return WEEKDAY_NAMES[d.getDay()] + '曜日は休診のため選択できません';
+      }
+      if (CLOSED_DAYS.has(iso)) return '祝日・休診日のため選択できません';
+      return null;
+    }
+
+    function applyClosedDayNotice() {
+      const el = document.getElementById('closedDayNotice');
+      if (!el) return;
+      if (!CHECK_CLOSED_DAYS) { el.style.display = 'none'; return; }
+      const names = closedWeekdays.map(w => WEEKDAY_NAMES[w] + '曜').join('・');
+      el.textContent = '※ ' + names + '・祝日・休診日は選択できません';
+      el.style.display = '';
+    }
+
+    function applyClosedDays(days, weekdays) {
+      days.forEach(d => CLOSED_DAYS.add(d));
+      if (Array.isArray(weekdays) && weekdays.length) closedWeekdays = weekdays;
+      console.log('[休診日] ' + CLOSED_DAYS.size + '件を読み込みました（休診曜日: ' +
+        closedWeekdays.map(w => WEEKDAY_NAMES[w]).join('・') + '）');
+      applyClosedDayNotice();
+      // 取得前に日付を入れていた場合に備えて、入力済みの希望日を検証し直す
+      revalidateAllPreferredDates(FORM_CFG);
+    }
+
+    // 取得を待たずに画面を出すため、await せずに呼びます
+    async function loadClosedDays() {
+      if (!CHECK_CLOSED_DAYS) return;
+      if (SUBMIT_MODE === 'demo' || !GAS_URL) return;   // demoモードでは日曜のみ判定
+
+      const today = formatDate(new Date());
+
+      // 同じセッション内では取り直さない
+      try {
+        const raw = sessionStorage.getItem(CLOSED_CACHE_KEY);
+        if (raw) {
+          const c = JSON.parse(raw);
+          if (c.date === today && Array.isArray(c.days)) {
+            applyClosedDays(c.days, c.weekdays);
+            return;
+          }
+        }
+      } catch (e) { /* sessionStorage が使えない環境では毎回取得する */ }
+
+      try {
+        const data = await postToGas({ action: 'get_holidays', appToken: APP_TOKEN }, 15000);
+        // closedDays … このフォーム用のGAS / holidays … LINE用GASの既存の返し方
+        const days = data && data.ok && (data.closedDays || data.holidays);
+        if (Array.isArray(days)) {
+          applyClosedDays(days, data.closedWeekdays);
+          if (days.length) {
+            // 空の結果はキャッシュしない（一時的な失敗がセッション中ずっと残らないように）
+            try {
+              sessionStorage.setItem(CLOSED_CACHE_KEY, JSON.stringify({
+                date: today, days: days, weekdays: data.closedWeekdays
+              }));
+            } catch (e) { /* 保存できなくても動作に影響なし */ }
+          } else {
+            console.warn('[loadClosedDays] GASから返った休診日が0件です。' +
+              'GASを最新版で再デプロイしたか、/exec?debug=holidays の結果を確認してください。');
+          }
+        } else {
+          console.warn('[loadClosedDays] 休診日の一覧を受け取れませんでした。日曜のみ判定します。応答:', data);
+        }
+      } catch (e) {
+        console.warn('[loadClosedDays] 休診日の取得に失敗。日曜のみ判定します。', e);
+      }
+    }
+
+
+    /* =============================================================
+       エラー表示
+       ============================================================= */
+
+    function errorIdOf(input) {
+      if (input && input.dataset && input.dataset.error) return input.dataset.error;
+      return input ? input.name + 'Error' : '';
+    }
+
+    function showInlineError(input, errorId, msg) {
+      if (input) input.classList.add('has-error');
+      const errEl = document.getElementById(errorId);
+      if (errEl) {
+        if (msg !== undefined) errEl.textContent = msg;
+        errEl.classList.add('show');
+      }
+    }
+
+    function clearInlineError(input, errorId) {
+      if (input) input.classList.remove('has-error');
+      const errEl = document.getElementById(errorId);
+      if (errEl) errEl.classList.remove('show');
+    }
+
+
+    /* =============================================================
+       生年月日（年/月/日セレクト）
+       ============================================================= */
+
+    function populateBirthdaySelects(set) {
+      const yearSel = document.getElementById(set.year);
+      const monthSel = document.getElementById(set.month);
+      if (!yearSel || !monthSel) return;
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= 1899; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        yearSel.appendChild(opt);
+      }
+      for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = String(m);
+        opt.textContent = String(m);
+        monthSel.appendChild(opt);
+      }
+      updateBirthdayDayOptions(set);
+    }
+
+    function daysInMonth(year, month) {
+      if (!month) return 31;
+      const y = year || 2000; // うるう年で最大日数をフォールバック
+      return new Date(y, month, 0).getDate();
+    }
+
+    function updateBirthdayDayOptions(set) {
+      const yearSel = document.getElementById(set.year);
+      const monthSel = document.getElementById(set.month);
+      const daySel = document.getElementById(set.day);
+      if (!yearSel || !monthSel || !daySel) return;
+      const y = parseInt(yearSel.value, 10) || null;
+      const mo = parseInt(monthSel.value, 10) || null;
+      const maxDay = daysInMonth(y, mo);
+      const prev = daySel.value;
+
+      daySel.innerHTML = '<option value="">--</option>';
+      for (let d = 1; d <= maxDay; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d);
+        opt.textContent = String(d);
+        daySel.appendChild(opt);
+      }
+      if (prev && parseInt(prev, 10) <= maxDay) daySel.value = prev;
+    }
+
+    function getBirthdayFromSelects(set) {
+      const y = document.getElementById(set.year).value;
+      const mo = document.getElementById(set.month).value;
+      const d = document.getElementById(set.day).value;
+      if (!y || !mo || !d) return null;
+      const yi = parseInt(y, 10), moi = parseInt(mo, 10), di = parseInt(d, 10);
+      const date = new Date(yi, moi - 1, di);
+      if (date.getFullYear() !== yi || date.getMonth() !== moi - 1 || date.getDate() !== di) return null;
+      return `${yi}-${String(moi).padStart(2, '0')}-${String(di).padStart(2, '0')}`;
+    }
+
+    function setBirthdayError(set, msg) {
+      [set.year, set.month, set.day].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('has-error');
+      });
+      const errEl = document.getElementById(set.error);
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.classList.add('show');
+      }
+    }
+
+    function clearBirthdayError(set) {
+      [set.year, set.month, set.day].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('has-error');
+      });
+      const errEl = document.getElementById(set.error);
+      if (errEl) errEl.classList.remove('show');
+    }
+
+
+    /* =============================================================
+       希望日チェック（3日後〜1年後・重複不可）
+       ============================================================= */
+
+    function applyPreferredDateBoundaries(cfg, b) {
+      cfg.preferred.forEach(p => {
+        const el = document.querySelector(`${cfg.sel} input[name="${p.name}"]`);
+        if (el) {
+          el.setAttribute('min', b.PREFERRED_MIN);
+          el.setAttribute('max', b.PREFERRED_MAX);
+        }
+      });
+      const notice = document.getElementById(cfg.noticeId);
+      if (notice) notice.textContent = `${toJpDate(b.PREFERRED_MIN)}以降の日付を選択してください`;
+    }
+
+    function validatePreferredDate(input, cfg) {
+      const errorId = errorIdOf(input);
+      const v = input.value;
+
+      if (!v) {
+        clearInlineError(input, errorId);
+        return;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
+        return;
+      }
+      const min = input.getAttribute('min');
+      const max = input.getAttribute('max');
+      if (min && v < min) {
+        showInlineError(input, errorId, `${toSlashDate(min)}以降の日付を入力してください`);
+        return;
+      }
+      if (max && v > max) {
+        showInlineError(input, errorId, `${toSlashDate(max)}以前の日付を入力してください`);
+        return;
+      }
+      if (cfg.checkClosedDays) {
+        const closedReason = getClosedDayReason(v);
+        if (closedReason) {
+          showInlineError(input, errorId, closedReason);
+          return;
+        }
+      }
+      for (const p of cfg.preferred) {
+        const el = document.querySelector(`${cfg.sel} input[name="${p.name}"]`);
+        if (!el || el === input) continue;
+        if (el.value === v) {
+          showInlineError(input, errorId, `${p.label}と同じ日付は選択できません`);
+          return;
+        }
+      }
+      clearInlineError(input, errorId);
+    }
+
+    function revalidateAllPreferredDates(cfg) {
+      cfg.preferred.forEach(p => {
+        const el = document.querySelector(`${cfg.sel} input[name="${p.name}"]`);
+        if (el) validatePreferredDate(el, cfg);
+      });
+    }
+
+    function validatePreferredDatesOnSubmit(form, cfg, b) {
+      const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
+      const values = [];
+
+      for (const p of cfg.preferred) {
+        const inp = form.querySelector(`input[name="${p.name}"]`);
+        if (!inp) continue;
+        const v = inp.value;
+        if (!v) continue;
+        const errorId = errorIdOf(inp);
+
+        if (!dateFormatRe.test(v)) {
+          showInlineError(inp, errorId, `${p.label}の年は4桁で入力してください(例:2026)`);
+          inp.focus();
+          return false;
+        }
+        if (v < b.PREFERRED_MIN || v > b.PREFERRED_MAX) {
+          showInlineError(inp, errorId, `${p.label}は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
+          inp.focus();
+          return false;
+        }
+        if (cfg.checkClosedDays) {
+          const reason = getClosedDayReason(v);
+          if (reason) {
+            showInlineError(inp, errorId, reason);
+            inp.focus();
+            return false;
+          }
+        }
+        values.push(v);
+      }
+
+      if (values.length !== new Set(values).size) {
+        revalidateAllPreferredDates(cfg);
+        const firstErr = form.querySelector('input[name^="preferredDate"].has-error');
+        if (firstErr) firstErr.focus();
+        return false;
+      }
+      return true;
+    }
+
+
+    /* =============================================================
+       フォーム共通項目のイベント設定
+       ============================================================= */
+
+    function setupCommonFields(cfg) {
+      // フリガナ
+      const kanaInput = document.getElementById('kanaInput');
+      kanaInput.addEventListener('blur', () => {
+        const v = kanaInput.value.trim();
+        if (v && !KANA_REGEX.test(v)) showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
+        else clearInlineError(kanaInput, 'kanaError');
+      });
+      kanaInput.addEventListener('input', () => {
+        if (kanaInput.classList.contains('has-error')) clearInlineError(kanaInput, 'kanaError');
+      });
+
+      // 携帯電話番号
+      const phoneInput = document.getElementById('phoneInput');
+      phoneInput.addEventListener('blur', () => {
+        const v = phoneInput.value.trim();
+        if (v && !isValidMobilePhone(v)) showInlineError(phoneInput, 'phoneError', '携帯電話番号の形式が正しくありません');
+        else clearInlineError(phoneInput, 'phoneError');
+      });
+      phoneInput.addEventListener('input', () => {
+        if (phoneInput.classList.contains('has-error')) clearInlineError(phoneInput, 'phoneError');
+      });
+
+      // 生年月日
+      populateBirthdaySelects(cfg.birthday);
+      [cfg.birthday.year, cfg.birthday.month].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', () => {
+          updateBirthdayDayOptions(cfg.birthday);
+          clearBirthdayError(cfg.birthday);
+        });
+      });
+      const daySel = document.getElementById(cfg.birthday.day);
+      if (daySel) daySel.addEventListener('change', () => clearBirthdayError(cfg.birthday));
+
+      // 性別
+      document.querySelectorAll(`${cfg.sel} input[name="gender"]`).forEach(radio => {
+        radio.addEventListener('change', () => clearInlineError(null, 'genderError'));
+      });
+
+      // 希望日
+      document.querySelectorAll(`${cfg.sel} input[type="date"]`).forEach(input => {
+        input.addEventListener('change', () => revalidateAllPreferredDates(cfg));
+      });
+
+      // 申込者「その他」
+      const otherCheck = document.getElementById('applicantOtherCheck');
+      const otherDetail = document.getElementById('applicantOtherDetail');
+      const otherInput = document.getElementById('applicantOtherInput');
+      document.querySelectorAll(`${cfg.sel} input[name="applicant"]`).forEach(radio => {
+        radio.addEventListener('change', () => {
+          if (otherCheck.checked) {
+            otherDetail.classList.add('show');
+          } else {
+            otherDetail.classList.remove('show');
+            otherInput.value = '';
+            clearInlineError(otherInput, 'applicantOtherError');
+          }
+          clearInlineError(null, 'applicantError');
+        });
+      });
+      otherInput.addEventListener('input', () => {
+        if (otherInput.classList.contains('has-error')) {
+          clearInlineError(otherInput, 'applicantOtherError');
+        }
+      });
+    }
+
+    // 送信用に <form> の値を集める（生年月日の生のセレクト値は除外）
+    function collectFormData(form) {
+      const formData = {};
+      new FormData(form).forEach((v, k) => {
+        if (k === 'birthdayYear' || k === 'birthdayMonth' || k === 'birthdayDay') return;
+        formData[k] = v;
+      });
+      return formData;
+    }
+
+
+    /* =============================================================
+       文言・連絡先の反映
+       ============================================================= */
+
+    function applyClinicInfo() {
+      document.querySelectorAll('[data-clinic-phone-link]').forEach(a => {
+        a.href = 'tel:' + CLINIC_INFO.phoneTel;
+      });
+      document.querySelectorAll('[data-clinic-phone-display]').forEach(el => {
+        el.textContent = CLINIC_INFO.phoneDisplay;
+      });
+      document.querySelectorAll('[data-clinic-hours]').forEach(el => {
+        el.textContent = CLINIC_INFO.hours;
+      });
+      document.querySelectorAll('[data-city]').forEach(el => {
+        el.textContent = CITY;
+      });
+    }
+
+    function getPhoneHtml() {
+      return `<a href="tel:${CLINIC_INFO.phoneTel}">${CLINIC_INFO.phoneDisplay}</a>`;
+    }
+
+    function applyMessages() {
+      const phoneHtml = getPhoneHtml();
+      document.querySelectorAll('[data-message]').forEach(el => {
+        const tmpl = MESSAGES[el.dataset.message];
+        if (!tmpl) return;
+        if (tmpl.includes('{phone}')) el.innerHTML = tmpl.replace('{phone}', phoneHtml);
+        else el.textContent = tmpl;
+      });
+    }
+
+    function getMessage(key) {
+      const tmpl = MESSAGES[key];
+      if (!tmpl) return '';
+      return tmpl.replace('{phone}', getPhoneHtml());
+    }
+
+
+    /* =============================================================
+       進捗バー（① 利用規約 → ② 入力 → ③ 完了）
+       ============================================================= */
+
+    const PROGRESS_LABELS = ['利用規約', '入力', '完了'];
+
+    function buildProgressBar() {
+      const bar = document.getElementById('progressBar');
+      if (!bar || bar.children.length) return;
+      PROGRESS_LABELS.forEach((label, i) => {
+        if (i > 0) {
+          const line = document.createElement('div');
+          line.className = 'step-line';
+          bar.appendChild(line);
+        }
+        const step = document.createElement('div');
+        step.className = 'step';
+        step.dataset.step = String(i + 1);
+        const circle = document.createElement('div');
+        circle.className = 'step-circle';
+        circle.textContent = String(i + 1);
+        const lab = document.createElement('div');
+        lab.className = 'step-label';
+        lab.textContent = label;
+        step.appendChild(circle);
+        step.appendChild(lab);
+        bar.appendChild(step);
+      });
+    }
+
+    function updateProgressBar(currentStep) {
+      const bar = document.getElementById('progressBar');
+      if (!bar) return;
+      if (!currentStep) {
+        bar.style.display = 'none';
+        return;
+      }
+      bar.style.display = '';
+      bar.querySelectorAll('.step').forEach((step, index) => {
+        const stepNum = index + 1;
+        step.classList.remove('active', 'completed');
+        if (stepNum < currentStep) step.classList.add('completed');
+        else if (stepNum === currentStep) step.classList.add('active');
+      });
+      bar.querySelectorAll('.step-line').forEach((line, index) => {
+        if (index + 1 < currentStep) line.classList.add('completed');
+        else line.classList.remove('completed');
+      });
+    }
+
+
+    /* =============================================================
+       画面遷移と履歴
+       ============================================================= */
+
+    const PAGE_SCREENS = ['terms', 'form', 'complete'];
+    const PAGE_STEPS = { terms: 1, form: 2, complete: 3 };
+
+    function showScreen(name) {
+      PAGE_SCREENS.forEach(s => {
+        const el = document.getElementById(s + 'Screen');
+        if (el) el.style.display = (s === name) ? '' : 'none';
+      });
+      updateProgressBar(PAGE_STEPS[name] || 0);
+      window.scrollTo(0, 0);
+    }
+
+    function navigateTo(name) {
+      history.pushState({ screen: name }, '');
+      showScreen(name);
+    }
+
+    function setupScreens(first) {
+      showScreen(first);
+      history.replaceState({ screen: first }, '');
+
+      window.addEventListener('popstate', (e) => {
+        // 送信完了後・送信中は戻れないようにする
+        if (submissionState.completed) { history.pushState({ screen: 'complete' }, ''); return; }
+        if (submissionState.inFlight) { history.pushState({ screen: 'submitting' }, ''); return; }
+
+        const screen = (e.state && e.state.screen) || first;
+        showScreen(PAGE_SCREENS.includes(screen) ? screen : first);
+      });
+    }
+
+    function setupBackButtons() {
+      document.querySelectorAll('.back-btn').forEach(btn => {
+        btn.addEventListener('click', () => history.back());
+      });
+    }
+
+
+    /* =============================================================
+       送信状態・離脱警告
+       ============================================================= */
+
+    let submissionState = { id: null, inFlight: false, completed: false };
+    let formDirty = false;
+
+    function generateSubmissionId() {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function startSubmissionSession() {
+      submissionState = { id: generateSubmissionId(), inFlight: false, completed: false };
+      formDirty = false;
+    }
+
+    function registerUnsavedWarning() {
+      const form = document.getElementById('form');
+      const mark = () => { formDirty = true; };
+      form.addEventListener('input', mark);
+      form.addEventListener('change', mark);
+
+      window.addEventListener('beforeunload', (e) => {
+        const screen = document.getElementById('formScreen');
+        const visible = screen && screen.style.display !== 'none';
+        if (visible && formDirty && !submissionState.completed) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
+    }
+
+
+    /* =============================================================
+       検証
+       ============================================================= */
+
+    function validateVaccineForm(form) {
+      const bset = FORM_CFG.birthday;
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        const firstInvalid = form.querySelector(':invalid');
+        if (firstInvalid) firstInvalid.focus();
+        return null;
+      }
+
+      const kanaInput = document.getElementById('kanaInput');
+      if (!KANA_REGEX.test(kanaInput.value.trim())) {
+        showInlineError(kanaInput, 'kanaError', 'カタカナで入力してください');
+        kanaInput.focus();
+        return null;
+      }
+
+      const phoneInput = document.getElementById('phoneInput');
+      if (!isValidMobilePhone(phoneInput.value)) {
+        showInlineError(phoneInput, 'phoneError', 'ショートメールをお送りするため、携帯電話番号(070・080・090で始まる11桁)を入力してください(ハイフンあり/なし可)。');
+        phoneInput.focus();
+        return null;
+      }
+
+      const birthday = getBirthdayFromSelects(bset);
+      if (!birthday) {
+        setBirthdayError(bset, '生年月日を正しく選択してください');
+        document.getElementById(bset.year).focus();
+        return null;
+      }
+
+      if (!form.querySelector('input[name="gender"]:checked')) {
+        showInlineError(null, 'genderError', '性別を選択してください');
+        const first = form.querySelector('input[name="gender"]');
+        if (first) first.focus();
+        return null;
+      }
+
+      const b = calcDateBoundaries();
+      applyPreferredDateBoundaries(FORM_CFG, b);
+
+      if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
+        setBirthdayError(bset, `生年月日は ${toJpDate(b.BIRTHDAY_MIN)} 〜 ${toJpDate(b.TODAY)} の範囲で入力してください`);
+        document.getElementById(bset.year).focus();
+        return null;
+      }
+
+      if (!validatePreferredDatesOnSubmit(form, FORM_CFG, b)) return null;
+
+      if (!form.querySelector('input[name="applicant"]:checked')) {
+        showInlineError(null, 'applicantError', '申込者を選択してください');
+        const first = form.querySelector('input[name="applicant"]');
+        if (first) first.focus();
+        return null;
+      }
+
+      return { birthday };
+    }
+
+
+    /* =============================================================
+       送信データ
+       ============================================================= */
+
+    function buildVaccinePayload(form, validated) {
+      const formData = collectFormData(form);
+      delete formData.website;   // いたずら送信よけの欄はGASに送りません
+      formData.type = PAYLOAD_TYPE;
+      formData.birthday = validated.birthday;
+      formData.vaccine = { vaccineName: VACCINE_NAME, consult: false };
+      formData.submissionId = submissionState.id;
+      return formData;
+    }
+
+
+    /* =============================================================
+       送信と結果表示
+
+       ▼ GAS 側について
+         LINE を使わないため idToken は送れません（null 固定）。
+         代わりに channel: 'web' を付けているので、GAS の doPost で
+           ・channel === 'web' のときは idToken 検証をスキップする
+           ・LINEユーザーIDに依存する重複チェックもスキップする
+           ・LINEユーザーID欄は空で記録する
+         といった分岐を入れてください。
+         ウェブアプリのデプロイ設定は「アクセスできるユーザー: 全員」が必要です。
+       ============================================================= */
+
+    async function postToGas(payload, timeoutMs) {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), timeoutMs || 30000);
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        return JSON.parse(await res.text());
+      } finally {
+        clearTimeout(tid);
+      }
+    }
+
+    function showComplete(formData) {
+      submissionState.completed = true;
+      formDirty = false;
+
+      document.getElementById('completeBox').innerHTML =
+        '✅ <strong>予約申込を受け付けました。</strong><br>' +
+        getMessage('CONTACT_NOTICE') +
+        '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
+
+      // 申込内容のひかえ
+      const rows = [
+        ['お名前', formData.name],
+        ['生年月日', toJpDate(formData.birthday)],
+        ['携帯電話', formData.phone],
+        ['第1希望日', toJpDate(formData.preferredDate1)],
+      ];
+      if (formData.preferredDate2) rows.push(['第2希望日', toJpDate(formData.preferredDate2)]);
+      document.getElementById('summaryList').innerHTML = rows
+        .map(r => `<dt>${escapeHtml(r[0])}</dt><dd>${escapeHtml(r[1])}</dd>`).join('');
+      document.getElementById('completeSummary').style.display = '';
+
+      showScreen('complete');
+      history.replaceState({ screen: 'complete' }, '');
+    }
+
+    // 同じ携帯番号・生年月日の申込が既にある場合
+    function showDuplicateNotice() {
+      const result = document.getElementById('result');
+      const btn = document.getElementById('submitBtn');
+      result.className = 'result-box ng';
+      result.innerHTML = '同じ内容のお申し込みを既に受け付けています。<br>' +
+        'お心当たりがない場合や内容の変更は、お電話(' + getPhoneHtml() + ')でご連絡ください。';
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    // 休診日の一覧が取得できていなかった場合の受け皿（最終判定はGAS側）
+    function showClosedDayRejection(form, field) {
+      const result = document.getElementById('result');
+      const btn = document.getElementById('submitBtn');
+      result.className = 'result-box';
+      const inp = form.querySelector(`input[name="${field || 'preferredDate1'}"]`);
+      if (inp) {
+        showInlineError(inp, errorIdOf(inp), '選択された日は休診日のため受け付けられません。別の日をお選びください。');
+        inp.focus();
+      }
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    function showSubmitFailure(detail) {
+      console.error('[Submit Error]', detail);
+      const result = document.getElementById('result');
+      const btn = document.getElementById('submitBtn');
+      result.className = 'result-box ng';
+      result.innerHTML = '送信に失敗しました。<br>お手数ですが、もう一度お試しいただくか、お電話(' +
+        getPhoneHtml() + ')でご連絡ください。';
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    function showNetworkFailure(err) {
+      console.error('[Network Error]', err);
+      const result = document.getElementById('result');
+      const btn = document.getElementById('submitBtn');
+      result.className = 'result-box ng';
+      if (err && err.name === 'AbortError') {
+        result.textContent = '通信がタイムアウトしました。電波の良い場所で、もう一度お試しください。';
+      } else {
+        result.textContent = '通信エラーが発生しました。ネットワークの状態をご確認のうえ、もう一度お試しください。';
+      }
+      btn.disabled = false;
+      btn.textContent = '予約を申し込む';
+    }
+
+    async function handleSubmit() {
+      if (submissionState.inFlight || submissionState.completed) return;
+
+      const form = document.getElementById('form');
+      const btn = document.getElementById('submitBtn');
+      const result = document.getElementById('result');
+
+      form.classList.add('form-submitted');
+
+      const validated = validateVaccineForm(form);
+      if (!validated) return;
+
+      const formData = buildVaccinePayload(form, validated);
+
+      // いたずら送信よけの欄が埋まっていたら、送信せず完了画面だけ出す
+      if (document.getElementById('hpInput').value) {
+        console.warn('[Spam] honeypot filled — 送信をスキップしました');
+        showComplete(formData);
+        return;
+      }
+
+      submissionState.inFlight = true;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>送信中...';
+      result.className = 'result-box';
+      result.style.display = '';
+
+      // ▼ 画面確認用（送信しない）
+      if (SUBMIT_MODE === 'demo' || !GAS_URL) {
+        await new Promise(r => setTimeout(r, 500));
+        submissionState.inFlight = false;
+        console.log('[DEMO MODE] 送信内容', formData);
+        showComplete(formData);
+        return;
+      }
+
+      const payload = {
+        service: SERVICE,
+        channel: 'web',   // LINE以外からの申込であることをGASで判別するための目印
+        idToken: null,
+        formData,
+        appToken: APP_TOKEN
+      };
+      if (TEST_MODE) payload.testMode = true;
+
+      try {
+        const data = await postToGas(payload, 30000);
+        submissionState.inFlight = false;
+        const err = data && data.error;
+
+        if (data && data.ok) {
+          showComplete(formData);
+        } else if (err === 'already_submitted') {
+          showDuplicateNotice();
+        } else if (err === 'closed_day') {
+          showClosedDayRejection(form, data.field);
+        } else {
+          showSubmitFailure(err);
+        }
+      } catch (err) {
+        submissionState.inFlight = false;
+        showNetworkFailure(err);
+      }
+    }
+
+
+    /* =============================================================
+       起動
+       ============================================================= */
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (TEST_MODE) {
+        const banner = document.getElementById('testBanner');
+        banner.textContent = '🧪 テストモード(送信データに testMode を付けます)';
+        banner.style.display = '';
+      }
+
+      applyClinicInfo();
+      applyMessages();
+      buildProgressBar();
+
+      setupScreens('terms');
+      setupBackButtons();
+
+      watchDateBoundaries(b => applyPreferredDateBoundaries(FORM_CFG, b));
+
+      applyClosedDayNotice();
+      loadClosedDays();   // 取得完了は待たない（画面の表示を遅らせないため）
+
+      // ▼ ステップ① 同意チェック → 入力画面へ
+      const agreeCheck = document.getElementById('agreeCheck');
+      const proceedBtn = document.getElementById('proceedBtn');
+      agreeCheck.addEventListener('change', () => { proceedBtn.disabled = !agreeCheck.checked; });
+      proceedBtn.addEventListener('click', () => {
+        startSubmissionSession();
+        navigateTo('form');
+      });
+
+      setupCommonFields(FORM_CFG);
+
+      document.getElementById('submitBtn').addEventListener('click', handleSubmit);
+      registerUnsavedWarning();
+
+      // ▼ ステップ③ もう一度申し込む（家族など別の方の分）
+      document.getElementById('againBtn').addEventListener('click', () => {
+        formDirty = false;
+        window.location.href = window.location.pathname + window.location.search;
+      });
+    });
+  </script>
+</body>
+
+</html>
