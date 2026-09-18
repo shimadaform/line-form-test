@@ -12,7 +12,16 @@
        vaccine-flu-standalone.html
        LINE（LIFF）なしで動く、インフルエンザワクチン予約の単独ページ。
 
-       ① 利用規約 → ② 入力 → ③ 完了 の3ステップ。
+       ① 申込 → ② 利用規約 → ③ 入力 → ④ 完了 の4ステップ。
+       ① 申込で選んだ内容により、その後の流れが変わります。
+         インフルエンザワクチン … ② 利用規約 → ③ 入力 → ④ 完了
+         予約変更               … ② 利用規約（予約変更用）→ ③ 入力 → ④ 完了
+         キャンセル             … 利用規約なしで ③ 入力 → ④ 完了
+         インフルエンザワクチン以外・リハビリ予約の変更・キャンセル
+                                … お電話でのご連絡をお願いする案内画面
+       ※ 送信先の GAS は1つです。送信時に URL の末尾へ ?type=flu / change / cancel を
+         付けて、GAS 側でインフル予約・予約変更・キャンセルを振り分けます
+         （JS の「▼ インフル予約・予約変更・キャンセルの振り分け」のコメント参照）。
        CSS・JSをこのファイルに全部入れてあるので、
        このファイル1つをどこに置いても（メール添付でも）動きます。
 
@@ -22,16 +31,24 @@
   <style>
     /* =============================================================
        配色
-       ここの3行を変えればページ全体の色が変わります
+       ここの変数を変えればページ全体の色が変わります
        ============================================================= */
     :root {
       --accent: #00796b;
       --accent-dark: #00695c;
       --accent-light: #e0f2f1;
+      /* ① 申込画面の「予約変更・キャンセル」（下段）の色 */
+      --change: #1976d2;
+      --change-light: #e3f2fd;
     }
 
     * {
       box-sizing: border-box;
+    }
+
+    /* 申込の種類で出し分ける部分（data-modes）は hidden 属性で隠します */
+    [hidden] {
+      display: none !important;
     }
 
     body {
@@ -327,6 +344,96 @@
       text-decoration: underline;
     }
 
+    /* ▼ ① 申込画面の選択ボタン（小項目） */
+    .select-btn {
+      display: block;
+      width: 100%;
+      background: #fff;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 18px 16px;
+      margin-bottom: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .select-btn:hover,
+    .select-btn:active {
+      background: var(--accent-light);
+    }
+
+    .select-btn .title {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .select-btn .desc {
+      display: block;
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .select-btn .arrow {
+      float: right;
+      color: var(--accent);
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    /* ▼ 下段「予約変更・キャンセルのお申込み」（青系・上段との間に余白） */
+    h1.change-heading {
+      border-bottom-color: var(--change);
+      margin-top: 32px;
+    }
+
+    .select-btn.change {
+      border-color: var(--change);
+    }
+
+    .select-btn.change:hover,
+    .select-btn.change:active {
+      background: var(--change-light);
+    }
+
+    .select-btn.change .title,
+    .select-btn.change .arrow {
+      color: var(--change);
+    }
+
+    /* ▼ 電話案内（インフルエンザワクチン以外・予約変更・キャンセル） */
+    .guide-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .guide-box .phone-link {
+      display: block;
+      margin-top: 16px;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    .guide-box .hours {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+
     /* ▼ 各種メッセージ枠 */
     .alert-box {
       background: #fff3e0;
@@ -366,6 +473,10 @@
       font-size: 1rem;
       margin: 0 0 10px;
       color: var(--accent);
+    }
+
+    .terms p {
+      margin: 0 0 8px;
     }
 
     .terms ul {
@@ -414,6 +525,11 @@
 
     .section-notice div+div {
       margin-top: 2px;
+    }
+
+    .section-notice a {
+      color: var(--accent-dark);
+      overflow-wrap: anywhere;
     }
 
     /* ▼ エラー表示 */
@@ -516,9 +632,84 @@
   <nav id="progressBar" class="progress" style="display:none;" aria-label="入力の進捗"></nav>
 
   <!-- =========================================================
-       ステップ① 利用規約
+       ステップ① 申込（お申し込み内容の選択）
+         data-screen … 次に表示する画面
+         data-mode   … 入力画面の種類（flu=インフル予約 / change=予約変更 / cancel=キャンセル）
+           インフルエンザ … ② 利用規約 → ③ 入力 → ④ 完了
+           予約変更       … ② 利用規約（予約変更用）→ ③ 入力 → ④ 完了
+           キャンセル     … 利用規約なしで ③ 入力 → ④ 完了
+           インフルエンザ以外・リハビリ … 電話案内の画面
+       ========================================================= -->
+  <div id="selectScreen" style="display:none;">
+    <h1>ワクチン接種の予約申し込み</h1>
+
+    <button type="button" class="select-btn" data-screen="terms" data-mode="flu">
+      <span class="arrow">›</span>
+      <span class="title">インフルエンザワクチンの接種をご希望の方</span>
+      <span class="desc">インフルエンザワクチンのみご予約いただけます</span>
+    </button>
+
+    <button type="button" class="select-btn" data-screen="otherVaccine">
+      <span class="arrow">›</span>
+      <span class="title">インフルエンザワクチン以外をご希望の方</span>
+      <span class="desc">お電話でのご予約となります</span>
+    </button>
+
+    <h1 class="change-heading">予約変更・キャンセルのお申込み</h1>
+
+    <button type="button" class="select-btn change" data-screen="changeTerms" data-mode="change">
+      <span class="arrow">›</span>
+      <span class="title">予約変更をご希望の方</span>
+      <span class="desc">ご予約の日程変更を受け付けます</span>
+    </button>
+
+    <button type="button" class="select-btn change" data-screen="form" data-mode="cancel">
+      <span class="arrow">›</span>
+      <span class="title">キャンセルをご希望の方</span>
+      <span class="desc">ご予約のキャンセルを受け付けます</span>
+    </button>
+
+    <button type="button" class="select-btn change" data-screen="rehab">
+      <span class="arrow">›</span>
+      <span class="title">リハビリ予約の変更・キャンセルをご希望の方</span>
+      <span class="desc">お電話での変更・キャンセルとなります</span>
+    </button>
+  </div>
+
+  <!-- =========================================================
+       インフルエンザワクチン以外をご希望の方（電話案内）
+       ========================================================= -->
+  <div id="otherVaccineScreen" style="display:none;">
+    <button type="button" class="back-btn">← 選択に戻る</button>
+    <h1>インフルエンザワクチン以外をご希望の方へ</h1>
+
+    <div class="guide-box">
+      <p>インフルエンザワクチン以外の接種をご希望の方は、お手数ですがお電話にてご連絡ください。</p>
+      <a href="#" class="phone-link" data-clinic-phone-link>📞 <span data-clinic-phone-display></span></a>
+      <p class="hours">診療時間:<span data-clinic-hours></span></p>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       リハビリ予約の変更・キャンセルをご希望の方（電話案内）
+         電話番号・受付時間は JS の「設定」ブロックの REHAB_INFO で変更できます
+       ========================================================= -->
+  <div id="rehabScreen" style="display:none;">
+    <button type="button" class="back-btn">← 選択に戻る</button>
+    <h1>リハビリ予約の変更・キャンセルをご希望の方へ</h1>
+
+    <div class="guide-box">
+      <p>申し訳ございません。<br>リハビリ予約の変更・キャンセルはお電話で承ります。</p>
+      <a href="#" class="phone-link" data-rehab-phone-link>📞 <span data-rehab-phone-display></span></a>
+      <p class="hours">受付時間：<span data-rehab-hours></span></p>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       ステップ② 利用規約（インフルエンザの予約申込）
        ========================================================= -->
   <div id="termsScreen" style="display:none;">
+    <button type="button" class="back-btn">← 選択に戻る</button>
     <h1>インフルエンザワクチン接種の予約申し込み</h1>
 
     <div class="alert-box" role="alert">
@@ -562,10 +753,6 @@
           未成年の方は、保護者の同意または同伴が必要となる場合があります。年齢や接種するワクチンの種類により確認させていただきます。
         </li>
         <li>
-          <strong>個人情報の取り扱いについて:</strong>
-          ご入力いただいた内容は、ワクチン接種の予約受付とそのご連絡のためにのみ使用します。
-        </li>
-        <li>
           <strong>来院時のお持ち物について:</strong>
           <ul class="items">
             <li>
@@ -596,18 +783,52 @@
   </div>
 
   <!-- =========================================================
-       ステップ② 入力
+       ステップ② 利用規約（予約変更）
+       ※ キャンセルはこの画面を通らず、① 申込から直接 ③ 入力へ進みます
+       ========================================================= -->
+  <div id="changeTermsScreen" style="display:none;">
+    <button type="button" class="back-btn">← 選択に戻る</button>
+    <h1>予約変更のお申込み</h1>
+
+    <div class="terms">
+      <h3>ご利用にあたって</h3>
+      <p>このウェブ予約変更システムは下記の点をご了承頂く必要があります。</p>
+      <ul>
+        <li>お伺いする日は予約変更希望日であり、確定ではありません。結果は改めてショートメールもしくはお電話でお伝えします。</li>
+        <li>お申込み頂いた内容は、月～土（祝日除く）の午後に確認し、ご連絡いたします。</li>
+        <li>希望日に応じられない可能性があります。</li>
+        <li>時間指定や医師変更はできません。</li>
+      </ul>
+    </div>
+
+    <div class="agree-box">
+      <label>
+        <input type="checkbox" id="changeAgreeCheck">
+        上記内容に同意します
+      </label>
+    </div>
+
+    <button type="button" class="submit" id="changeProceedBtn" disabled>次へ進む</button>
+  </div>
+
+  <!-- =========================================================
+       ステップ③ 入力
+         インフル予約・予約変更・キャンセルで同じフォームを使います。
+         data-modes="…" を付けた部分は、その種類のときだけ表示・送信します
+           （flu=インフル予約 / change=予約変更 / cancel=キャンセル）
+         見出し・ボタンの文言は JS の FORM_MODES で切り替えています。
        ========================================================= -->
   <div id="formScreen" style="display:none;">
-    <button type="button" class="back-btn">← 利用規約に戻る</button>
-    <h1>インフルエンザワクチン接種予約</h1>
+    <button type="button" class="back-btn" id="formBackBtn">← 利用規約に戻る</button>
+    <h1 id="formTitle">インフルエンザワクチン接種予約</h1>
 
     <form id="form" onsubmit="return false;" novalidate>
 
       <h2>① ご本人について</h2>
 
       <div class="field">
-        <label class="label" for="nameInput">氏名<span class="required">必須</span></label>
+        <label class="label" for="nameInput"><span data-modes="flu">氏名</span><span
+            data-modes="change cancel">患者氏名</span><span class="required">必須</span></label>
         <input type="text" id="nameInput" name="name" required autocomplete="name" maxlength="100"
           placeholder="例:嶋田 太郎">
       </div>
@@ -639,7 +860,7 @@
         <div class="inline-error" id="birthdayError" role="alert"></div>
       </div>
 
-      <div class="field">
+      <div class="field" data-modes="flu">
         <div class="label" id="genderLabel">性別<span class="required">必須</span></div>
         <div class="checkboxes inline" role="radiogroup" aria-labelledby="genderLabel">
           <label><input type="radio" name="gender" value="男性" required>男性</label>
@@ -656,41 +877,113 @@
         <div class="inline-error" id="phoneError" role="alert">携帯電話番号の形式が正しくありません</div>
       </div>
 
-      <h2>② ご希望の日程</h2>
+      <!-- ▼ 予約変更・キャンセル：対象のご予約 -->
+      <div data-modes="change cancel">
+        <h2>
+          <span data-modes="change">② 現在のご予約</span>
+          <span data-modes="cancel">② キャンセルするご予約</span>
+        </h2>
 
-      <div class="section-notice">
-        <div id="preferredDateNotice"></div>
-        <div id="closedDayNotice" style="display:none;"></div>
-        <div>※ 時間は指定できません</div>
-      </div>
-
-      <div class="field">
-        <label class="label" for="preferredDate1Input">第1希望日<span class="required">必須</span></label>
-        <input type="date" id="preferredDate1Input" name="preferredDate1" required>
-        <div class="inline-error" id="preferredDate1Error" role="alert"></div>
-      </div>
-
-      <div class="field">
-        <label class="label" for="preferredDate2Input">第2希望日<span class="optional">任意</span></label>
-        <input type="date" id="preferredDate2Input" name="preferredDate2">
-        <div class="inline-error" id="preferredDate2Error" role="alert"></div>
-      </div>
-
-      <h2>③ 申込者について</h2>
-
-      <div class="field">
-        <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
-        <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
-          <label><input type="radio" name="applicant" value="本人" required>上記、接種を受ける方と同一である</label>
-          <label><input type="radio" name="applicant" value="家族・キーパーソン" required>接種を受ける方の家族もしくはキーパーソン</label>
-          <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
+        <div class="field">
+          <label class="label" for="reservedDateInput"><span data-modes="change">変更前の予約日</span><span
+              data-modes="cancel">キャンセルする予約日</span><span class="required">必須</span></label>
+          <input type="date" id="reservedDateInput" name="reservedDate" required>
+          <div class="inline-error" id="reservedDateError" role="alert"></div>
         </div>
-        <div class="other-detail" id="applicantOtherDetail">
-          <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください"
-            aria-label="申込者「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
-          <div class="inline-error" id="applicantOtherError" role="alert"></div>
+
+        <!-- 診療科・検査名／予約医師は予約変更・キャンセル共通（選択肢も共通。項目名だけ切り替え） -->
+        <div class="field" data-modes="change cancel">
+          <div class="label" id="departmentLabel"><span data-modes="change">現在の予約診療科・検査名</span><span
+              data-modes="cancel">キャンセルする診療科・検査名</span><span class="required">必須</span></div>
+          <div class="checkboxes" role="radiogroup" aria-labelledby="departmentLabel">
+            <label><input type="radio" name="department" value="消化器外科" required>消化器外科</label>
+            <label><input type="radio" name="department" value="整形外科" required>整形外科</label>
+            <label><input type="radio" name="department" value="消化器内科" required>消化器内科</label>
+            <label><input type="radio" name="department" value="糖尿病内科" required>糖尿病内科</label>
+            <label><input type="radio" name="department" value="脳神経内科" required>脳神経内科</label>
+            <label><input type="radio" name="department" value="循環器内科" required>循環器内科</label>
+            <label><input type="radio" name="department" value="呼吸器内科" required>呼吸器内科</label>
+            <label><input type="radio" name="department" value="緩和ケア" required>緩和ケア</label>
+            <label><input type="radio" name="department" value="血管外科" required>血管外科</label>
+            <label><input type="radio" name="department" value="肝臓内科" required>肝臓内科</label>
+            <label><input type="radio" name="department" value="乳腺外来" required>乳腺外来</label>
+            <label><input type="radio" name="department" value="総合外来" required>総合外来</label>
+            <label><input type="radio" name="department" value="内視鏡検査（上部内視鏡・下部内視鏡）" required>内視鏡検査（上部内視鏡・下部内視鏡）</label>
+            <label><input type="radio" name="department" value="不明" required>不明</label>
+          </div>
+          <div class="inline-error" id="departmentError" role="alert"></div>
         </div>
-        <div class="inline-error" id="applicantError" role="alert"></div>
+
+        <div class="field" data-modes="change cancel">
+          <label class="label" for="doctorInput"><span data-modes="change">現在の予約医師</span><span
+              data-modes="cancel">キャンセルする予約医師</span><span class="optional">任意</span></label>
+          <input type="text" id="doctorInput" name="doctor" autocomplete="off" maxlength="100" placeholder="医師名">
+        </div>
+      </div>
+
+      <!-- ▼ インフル予約：ご希望の日程 / 予約変更：変更のご希望日 -->
+      <div data-modes="flu change">
+        <h2>
+          <span data-modes="flu">② ご希望の日程</span>
+          <span data-modes="change">③ 変更のご希望日</span>
+        </h2>
+
+        <div class="section-notice">
+          <div data-modes="change">
+            外来担当医表を参考に、日付を入力してください。<br>
+            <a href="https://www.shimadahp.jp/gairai/tantou/" target="_blank" rel="noopener">
+              ▶ 外来担当医表を確認する
+            </a>
+          </div>
+          <div id="preferredDateNotice"></div>
+          <div id="closedDayNotice" style="display:none;"></div>
+          <div>※ 時間は指定できません</div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="preferredDate1Input">第1希望日<span class="required">必須</span></label>
+          <input type="date" id="preferredDate1Input" name="preferredDate1" required>
+          <div class="inline-error" id="preferredDate1Error" role="alert"></div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="preferredDate2Input">第2希望日<span class="optional">任意</span></label>
+          <input type="date" id="preferredDate2Input" name="preferredDate2">
+          <div class="inline-error" id="preferredDate2Error" role="alert"></div>
+        </div>
+
+        <div class="field" data-modes="change">
+          <label class="label" for="preferredDate3Input">第3希望日<span class="optional">任意</span></label>
+          <input type="date" id="preferredDate3Input" name="preferredDate3">
+          <div class="inline-error" id="preferredDate3Error" role="alert"></div>
+        </div>
+      </div>
+
+      <!-- ▼ 申込者（全種類共通。選択肢の文言だけ インフル予約 / 予約変更・キャンセル で切り替え。送る値は共通） -->
+      <div>
+        <h2>
+          <span data-modes="flu cancel">③ 申込者について</span>
+          <span data-modes="change">④ 申込者について</span>
+        </h2>
+
+        <div class="field">
+          <div class="label" id="applicantLabel">申込者<span class="required">必須</span></div>
+          <div class="checkboxes" role="radiogroup" aria-labelledby="applicantLabel">
+            <label><input type="radio" name="applicant" value="本人" required><span
+                data-modes="flu">上記、接種を受ける方と同一である</span><span data-modes="change cancel">上記、患者氏名と同一である</span></label>
+            <label><input type="radio" name="applicant" value="家族・キーパーソン" required><span
+                data-modes="flu">接種を受ける方の家族もしくはキーパーソン</span><span
+                data-modes="change cancel">患者の家族もしくはキーパーソン</span></label>
+            <label><input type="radio" name="applicant" value="その他" id="applicantOtherCheck" required>その他</label>
+          </div>
+          <!-- 「その他」の記入欄はインフル予約のみ（予約変更・キャンセルでは欄ごと隠れ、送信もされません） -->
+          <div class="other-detail" id="applicantOtherDetail" data-modes="flu">
+            <input type="text" name="applicantOther" id="applicantOtherInput" placeholder="その他の場合は内容をご記入ください"
+              aria-label="申込者「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
+            <div class="inline-error" id="applicantOtherError" role="alert"></div>
+          </div>
+          <div class="inline-error" id="applicantError" role="alert"></div>
+        </div>
       </div>
 
       <!-- ▼ いたずら送信よけ（人には見えない欄。埋まっていたら送信しません） -->
@@ -707,7 +1000,7 @@
   </div>
 
   <!-- =========================================================
-       ステップ③ 完了
+       ステップ④ 完了
        ========================================================= -->
   <div id="completeScreen" style="display:none;">
     <h1>お申し込みを受け付けました</h1>
@@ -733,8 +1026,10 @@
     // GAS_URL を空にした場合も自動的に 'demo' として動きます。
     const SUBMIT_MODE = 'gas';
 
-    // インフル予約専用 GAS ウェブアプリの /exec URL（POST）
-    // 予約の送信も、休診日（日曜・祝日・臨時休診日）の取得も、このURLに投げます。
+    // GAS ウェブアプリの /exec URL（POST）
+    // インフル予約・予約変更・キャンセルの送信も、休診日（日曜・祝日・臨時休診日）の取得も、このURLに投げます。
+    // 送信時は末尾に ?type=flu / ?type=change / ?type=cancel を自動で付け、GAS 側で振り分けます
+    // （ここには ?type を付けない /exec までのURLを書いてください）。
     // ※ このページは LINE を使わないため idToken を送れません。
     //    GAS 側を「idToken なしでも受け付ける」よう対応させてください。
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzqaMEGup4w0Y2_NwdGwY7AQ1qEFcjbuPzsU21FHWLJnvokhN6GyEtD7NKGHve-Unf6yA/exec';
@@ -752,6 +1047,13 @@
       hours: '平日 9:00〜17:00（祝日の場合は除く）',
     };
 
+    // リハビリ予約の変更・キャンセルの連絡先（① 申込 →「リハビリ予約の…」の画面で表示）
+    const REHAB_INFO = {
+      phoneDisplay: '0942-23-9364', // 画面表示用
+      phoneTel: '0942239364',       // tel:リンク用（数字のみ）
+      hours: '９時～17時',
+    };
+
     // 共通文言（HTML側は data-message="キー名" を書くだけで反映されます）
     // {phone} は CLINIC_INFO の電話番号 + tel:リンクに自動置換されます。
     const MESSAGES = {
@@ -763,6 +1065,11 @@
     const SERVICE = 'vaccine';
     const VACCINE_NAME = 'インフルエンザ';
     const PAYLOAD_TYPE = 'single';
+    // 送信先URLに付ける ?type= の値（申込の種類ごと）。GAS はこの値で転記先を振り分けます
+    const GAS_TYPES = { flu: 'flu', change: 'change', cancel: 'cancel' };
+    // 予約変更・キャンセルは本文にも action を付けて送ります
+    // （GAS は ?type が無い送信のときだけ action を見ます。詳しくは下の「▼ GAS 側について」を参照）
+    const ACTIONS = { change: 'change_request', cancel: 'cancel_request' };
 
     // 休診日チェック
     //   true  … 日曜・祝日・臨時休診日を希望日に選べなくします。
@@ -771,12 +1078,13 @@
     //   false … 何もチェックしません（元の vaccine-flu.js と同じ動き）
     const CHECK_CLOSED_DAYS = true;
 
-    // 希望日フィールドの設定
+    // 希望日フィールドの設定（第3希望日は予約変更のときだけ表示されます）
     const FORM_CFG = {
       sel: '#form',
       preferred: [
         { name: 'preferredDate1', label: '第1希望日' },
         { name: 'preferredDate2', label: '第2希望日' },
+        { name: 'preferredDate3', label: '第3希望日' },
       ],
       checkClosedDays: CHECK_CLOSED_DAYS,
       noticeId: 'preferredDateNotice',
@@ -867,6 +1175,15 @@
 
     const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
     const CLOSED_DAYS = new Set();
+
+    // 毎年固定の休診日（月-日）
+    // 8/14、8/15、12/30、12/31、1/1、1/2、1/3
+    const ANNUAL_CLOSED_MMDD = new Set([
+      '08-14', '08-15',
+      '12-30', '12-31',
+      '01-01', '01-02', '01-03',
+    ]);
+
     let closedWeekdays = [0];   // 0=日曜。GASから受け取ったら上書きされます
     const CLOSED_CACHE_KEY = 'shimada_closed_days';
 
@@ -875,12 +1192,20 @@
       if (!CHECK_CLOSED_DAYS) return null;
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
       if (!m) return null;
+
       // new Date('YYYY-MM-DD') はUTC扱いになるため、ローカル日付で生成する
       const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
       if (closedWeekdays.indexOf(d.getDay()) >= 0) {
         return WEEKDAY_NAMES[d.getDay()] + '曜日は休診のため選択できません';
       }
-      if (CLOSED_DAYS.has(iso)) return '祝日・休診日のため選択できません';
+      if (CLOSED_DAYS.has(iso)) return '祝日のため選択できません';
+
+      // 毎年固定の休診日を最優先で判定する
+      const mmdd = `${m[2]}-${m[3]}`;
+      if (ANNUAL_CLOSED_MMDD.has(mmdd)) {
+        return '休診日のため選択できません';
+      }
+
       return null;
     }
 
@@ -1101,9 +1426,14 @@
           return;
         }
       }
+      const reservedDate = activeReservedDate();
+      if (reservedDate && v === reservedDate) {
+        showInlineError(input, errorId, '変更前の予約日と同じ日は選択できません');
+        return;
+      }
       for (const p of cfg.preferred) {
         const el = document.querySelector(`${cfg.sel} input[name="${p.name}"]`);
-        if (!el || el === input) continue;
+        if (!el || el === input || el.disabled) continue;   // 非表示の欄（インフル予約の第3希望日など）は比べない
         if (el.value === v) {
           showInlineError(input, errorId, `${p.label}と同じ日付は選択できません`);
           return;
@@ -1122,10 +1452,11 @@
     function validatePreferredDatesOnSubmit(form, cfg, b) {
       const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
       const values = [];
+      const reservedDate = activeReservedDate();
 
       for (const p of cfg.preferred) {
         const inp = form.querySelector(`input[name="${p.name}"]`);
-        if (!inp) continue;
+        if (!inp || inp.disabled) continue;
         const v = inp.value;
         if (!v) continue;
         const errorId = errorIdOf(inp);
@@ -1148,6 +1479,11 @@
             return false;
           }
         }
+        if (reservedDate && v === reservedDate) {
+          showInlineError(inp, errorId, '変更前の予約日と同じ日は選択できません');
+          inp.focus();
+          return false;
+        }
         values.push(v);
       }
 
@@ -1157,6 +1493,49 @@
         if (firstErr) firstErr.focus();
         return false;
       }
+      return true;
+    }
+
+
+    /* =============================================================
+       ご予約日チェック（予約変更・キャンセル：今日〜1年後）
+       ============================================================= */
+
+    // 予約変更・キャンセルの「ご予約日」（いまの申込で使っていなければ空）
+    function activeReservedDate() {
+      const el = document.getElementById('reservedDateInput');
+      return (el && !el.disabled) ? el.value : '';
+    }
+
+    function applyReservedDateBoundaries(b) {
+      const el = document.getElementById('reservedDateInput');
+      if (!el) return;
+      el.setAttribute('min', b.TODAY);
+      el.setAttribute('max', b.PREFERRED_MAX);
+    }
+
+    // 問題がなければ true
+    function validateReservedDate(input) {
+      const v = input.value;
+      if (!v) {
+        clearInlineError(input, 'reservedDateError');
+        return true;
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        showInlineError(input, 'reservedDateError', '年は4桁で入力してください(例:2026)');
+        return false;
+      }
+      const min = input.getAttribute('min');
+      const max = input.getAttribute('max');
+      if (min && v < min) {
+        showInlineError(input, 'reservedDateError', '本日以降の日付を入力してください');
+        return false;
+      }
+      if (max && v > max) {
+        showInlineError(input, 'reservedDateError', `${toSlashDate(max)}以前の日付を入力してください`);
+        return false;
+      }
+      clearInlineError(input, 'reservedDateError');
       return true;
     }
 
@@ -1205,30 +1584,39 @@
         radio.addEventListener('change', () => clearInlineError(null, 'genderError'));
       });
 
-      // 希望日
+      // 希望日（ご予約日を変えたときも「同じ日は不可」を見直すため、日付欄すべてで再チェック）
       document.querySelectorAll(`${cfg.sel} input[type="date"]`).forEach(input => {
         input.addEventListener('change', () => revalidateAllPreferredDates(cfg));
       });
 
-      // 申込者「その他」
-      const otherCheck = document.getElementById('applicantOtherCheck');
-      const otherDetail = document.getElementById('applicantOtherDetail');
-      const otherInput = document.getElementById('applicantOtherInput');
+      // ご予約日（予約変更・キャンセル）
+      const reservedInput = document.getElementById('reservedDateInput');
+      reservedInput.addEventListener('change', () => validateReservedDate(reservedInput));
+
+      // 診療科・検査名（予約変更・キャンセル）
+      document.querySelectorAll(`${cfg.sel} input[name="department"]`).forEach(radio => {
+        radio.addEventListener('change', () => clearInlineError(null, 'departmentError'));
+      });
+
+      // 申込者「その他」（記入欄はインフル予約のみ。予約変更・キャンセルでは欄ごと隠れています）
+      const applicantOtherCheck = document.getElementById('applicantOtherCheck');
+      const applicantOtherDetail = document.getElementById('applicantOtherDetail');
+      const applicantOtherInput = document.getElementById('applicantOtherInput');
       document.querySelectorAll(`${cfg.sel} input[name="applicant"]`).forEach(radio => {
         radio.addEventListener('change', () => {
-          if (otherCheck.checked) {
-            otherDetail.classList.add('show');
+          if (applicantOtherCheck.checked) {
+            applicantOtherDetail.classList.add('show');
           } else {
-            otherDetail.classList.remove('show');
-            otherInput.value = '';
-            clearInlineError(otherInput, 'applicantOtherError');
+            applicantOtherDetail.classList.remove('show');
+            applicantOtherInput.value = '';
+            clearInlineError(applicantOtherInput, 'applicantOtherError');
           }
           clearInlineError(null, 'applicantError');
         });
       });
-      otherInput.addEventListener('input', () => {
-        if (otherInput.classList.contains('has-error')) {
-          clearInlineError(otherInput, 'applicantOtherError');
+      applicantOtherInput.addEventListener('input', () => {
+        if (applicantOtherInput.classList.contains('has-error')) {
+          clearInlineError(applicantOtherInput, 'applicantOtherError');
         }
       });
     }
@@ -1261,6 +1649,16 @@
       document.querySelectorAll('[data-city]').forEach(el => {
         el.textContent = CITY;
       });
+      // リハビリ予約の変更・キャンセル（電話案内）
+      document.querySelectorAll('[data-rehab-phone-link]').forEach(a => {
+        a.href = 'tel:' + REHAB_INFO.phoneTel;
+      });
+      document.querySelectorAll('[data-rehab-phone-display]').forEach(el => {
+        el.textContent = REHAB_INFO.phoneDisplay;
+      });
+      document.querySelectorAll('[data-rehab-hours]').forEach(el => {
+        el.textContent = REHAB_INFO.hours;
+      });
     }
 
     function getPhoneHtml() {
@@ -1285,15 +1683,30 @@
 
 
     /* =============================================================
-       進捗バー（① 利用規約 → ② 入力 → ③ 完了）
+       進捗バー
+         インフル予約・予約変更 … ① 申込 → ② 利用規約 → ③ 入力 → ④ 完了
+         キャンセル             … ① 申込 → ② 入力 → ③ 完了（利用規約を通らないため）
        ============================================================= */
 
-    const PROGRESS_LABELS = ['利用規約', '入力', '完了'];
+    const PROGRESS_LABELS = ['申込', '利用規約', '入力', '完了'];
+    const PROGRESS_LABELS_NO_TERMS = ['申込', '入力', '完了'];
 
-    function buildProgressBar() {
+    // 各画面が進捗バーのどの段階にあたるか
+    // （電話案内の画面は、分岐元の「申込」を表示します）
+    const SCREEN_STEP = {
+      select: '申込', otherVaccine: '申込', rehab: '申込',
+      terms: '利用規約', changeTerms: '利用規約',
+      form: '入力', complete: '完了',
+    };
+
+    function buildProgressBar(labels) {
       const bar = document.getElementById('progressBar');
-      if (!bar || bar.children.length) return;
-      PROGRESS_LABELS.forEach((label, i) => {
+      if (!bar) return;
+      const key = labels.join(',');
+      if (bar.dataset.labels === key) return;   // 同じ構成なら作り直さない
+      bar.dataset.labels = key;
+      bar.innerHTML = '';
+      labels.forEach((label, i) => {
         if (i > 0) {
           const line = document.createElement('div');
           line.className = 'step-line';
@@ -1336,37 +1749,112 @@
 
 
     /* =============================================================
+       申込の種類（入力画面の切り替え）
+         flu    … インフルエンザワクチンの予約申込
+         change … 予約変更
+         cancel … キャンセル
+       ============================================================= */
+
+    const FORM_MODES = {
+      flu: {
+        title: 'インフルエンザワクチン接種予約',
+        back: '← 利用規約に戻る',
+        submit: '予約を申し込む',
+        done: '予約申込を受け付けました。',
+        again: '別の方の申し込みをする',
+      },
+      change: {
+        title: '予約変更のお申込み',
+        back: '← 利用規約に戻る',
+        submit: '予約変更を申し込む',
+        done: '予約変更のお申込みを受け付けました。',
+        reservedLabel: '変更前の予約日',   // 完了画面の控えの見出し
+        again: '最初の画面に戻る',
+      },
+      cancel: {
+        title: '予約キャンセルのお申込み',
+        back: '← 選択に戻る',
+        submit: 'キャンセルを申し込む',
+        done: '予約キャンセルのお申込みを受け付けました。',
+        reservedLabel: 'ご予約日',
+        again: '最初の画面に戻る',
+      },
+    };
+
+    let currentMode = null;
+
+    function setMode(mode) {
+      const m = FORM_MODES[mode];
+      if (!m) return;
+      currentMode = mode;
+
+      // data-modes に今の種類が入っていない部分は隠し、中の入力欄を無効にする
+      // （無効な欄は入力チェックの対象外になり、送信データにも入りません）
+      document.querySelectorAll('[data-modes]').forEach(el => {
+        el.hidden = !el.dataset.modes.split(' ').includes(mode);
+      });
+      document.querySelectorAll('#form input, #form select, #form textarea').forEach(el => {
+        el.disabled = !!el.closest('[hidden]');
+      });
+
+      document.getElementById('formTitle').textContent = m.title;
+      document.getElementById('formBackBtn').textContent = m.back;
+      document.getElementById('submitBtn').textContent = m.submit;
+      document.getElementById('againBtn').textContent = m.again;
+
+      // 前の種類で出ていた送信結果・赤枠表示を消す
+      document.getElementById('form').classList.remove('form-submitted');
+      const result = document.getElementById('result');
+      result.className = 'result-box';
+      result.textContent = '';
+      revalidateAllPreferredDates(FORM_CFG);
+    }
+
+    function submitLabel() {
+      return (FORM_MODES[currentMode] || FORM_MODES.flu).submit;
+    }
+
+
+    /* =============================================================
        画面遷移と履歴
        ============================================================= */
 
-    const PAGE_SCREENS = ['terms', 'form', 'complete'];
-    const PAGE_STEPS = { terms: 1, form: 2, complete: 3 };
+    const PAGE_SCREENS = ['select', 'otherVaccine', 'rehab', 'terms', 'changeTerms', 'form', 'complete'];
 
     function showScreen(name) {
       PAGE_SCREENS.forEach(s => {
         const el = document.getElementById(s + 'Screen');
         if (el) el.style.display = (s === name) ? '' : 'none';
       });
-      updateProgressBar(PAGE_STEPS[name] || 0);
+      // キャンセルの入力・完了画面は、利用規約のない3ステップで表示
+      const noTerms = (currentMode === 'cancel') && (name === 'form' || name === 'complete');
+      const labels = noTerms ? PROGRESS_LABELS_NO_TERMS : PROGRESS_LABELS;
+      buildProgressBar(labels);
+      updateProgressBar(labels.indexOf(SCREEN_STEP[name]) + 1);
       window.scrollTo(0, 0);
     }
 
+    // 履歴には申込の種類も残す（戻る・進むで入力画面の種類を復元するため）
     function navigateTo(name) {
-      history.pushState({ screen: name }, '');
+      history.pushState({ screen: name, mode: currentMode }, '');
       showScreen(name);
     }
 
     function setupScreens(first) {
       showScreen(first);
-      history.replaceState({ screen: first }, '');
+      history.replaceState({ screen: first, mode: currentMode }, '');
 
       window.addEventListener('popstate', (e) => {
         // 送信完了後・送信中は戻れないようにする
         if (submissionState.completed) { history.pushState({ screen: 'complete' }, ''); return; }
         if (submissionState.inFlight) { history.pushState({ screen: 'submitting' }, ''); return; }
 
-        const screen = (e.state && e.state.screen) || first;
-        showScreen(PAGE_SCREENS.includes(screen) ? screen : first);
+        const st = e.state || {};
+        if (st.mode && st.mode !== currentMode) setMode(st.mode);
+        const screen = PAGE_SCREENS.includes(st.screen) ? st.screen : first;
+        // 再読み込みのあと履歴で入力画面に来た場合も、送信IDを用意しておく
+        if (screen === 'form' && !submissionState.id) startSubmissionSession();
+        showScreen(screen);
       });
     }
 
@@ -1417,6 +1905,11 @@
        検証
        ============================================================= */
 
+    // いまの申込の種類で使っている（表示中の）項目か
+    function isActiveField(form, name) {
+      return !!form.querySelector(`[name="${name}"]:not(:disabled)`);
+    }
+
     function validateVaccineForm(form) {
       const bset = FORM_CFG.birthday;
 
@@ -1448,7 +1941,7 @@
         return null;
       }
 
-      if (!form.querySelector('input[name="gender"]:checked')) {
+      if (isActiveField(form, 'gender') && !form.querySelector('input[name="gender"]:checked')) {
         showInlineError(null, 'genderError', '性別を選択してください');
         const first = form.querySelector('input[name="gender"]');
         if (first) first.focus();
@@ -1457,6 +1950,7 @@
 
       const b = calcDateBoundaries();
       applyPreferredDateBoundaries(FORM_CFG, b);
+      applyReservedDateBoundaries(b);
 
       if (birthday < b.BIRTHDAY_MIN || birthday > b.TODAY) {
         setBirthdayError(bset, `生年月日は ${toJpDate(b.BIRTHDAY_MIN)} 〜 ${toJpDate(b.TODAY)} の範囲で入力してください`);
@@ -1464,12 +1958,37 @@
         return null;
       }
 
-      if (!validatePreferredDatesOnSubmit(form, FORM_CFG, b)) return null;
+      // 予約変更・キャンセル：ご予約日
+      const reservedInput = document.getElementById('reservedDateInput');
+      if (!reservedInput.disabled && !validateReservedDate(reservedInput)) {
+        reservedInput.focus();
+        return null;
+      }
 
-      if (!form.querySelector('input[name="applicant"]:checked')) {
+      // 予約変更・キャンセル：診療科・検査名
+      if (isActiveField(form, 'department') && !form.querySelector('input[name="department"]:checked')) {
+        showInlineError(null, 'departmentError', '診療科・検査名を選択してください');
+        const first = form.querySelector('input[name="department"]');
+        if (first) first.focus();
+        return null;
+      }
+
+      // インフル予約・予約変更：希望日
+      if (isActiveField(form, 'preferredDate1') && !validatePreferredDatesOnSubmit(form, FORM_CFG, b)) return null;
+
+      if (isActiveField(form, 'applicant') && !form.querySelector('input[name="applicant"]:checked')) {
         showInlineError(null, 'applicantError', '申込者を選択してください');
         const first = form.querySelector('input[name="applicant"]');
         if (first) first.focus();
+        return null;
+      }
+
+      // インフル予約：申込者が「その他」なら内容も必要（予約変更・キャンセルは記入欄が無効なので対象外）
+      const applicantOtherInput = document.getElementById('applicantOtherInput');
+      if (!applicantOtherInput.disabled && document.getElementById('applicantOtherCheck').checked &&
+        !applicantOtherInput.value.trim()) {
+        showInlineError(applicantOtherInput, 'applicantOtherError', '「その他」の内容をご記入ください');
+        applicantOtherInput.focus();
         return null;
       }
 
@@ -1479,14 +1998,16 @@
 
     /* =============================================================
        送信データ
+         非表示（無効）の欄は collectFormData に入らないので、
+         予約変更・キャンセルでは性別などは送られません。
        ============================================================= */
 
     function buildVaccinePayload(form, validated) {
       const formData = collectFormData(form);
       delete formData.website;   // いたずら送信よけの欄はGASに送りません
-      formData.type = PAYLOAD_TYPE;
+      if (currentMode === 'flu') formData.type = PAYLOAD_TYPE;   // type・vaccine はインフル予約のときだけ（従来どおり）
       formData.birthday = validated.birthday;
-      formData.vaccine = { vaccineName: VACCINE_NAME, consult: false };
+      if (currentMode === 'flu') formData.vaccine = { vaccineName: VACCINE_NAME, consult: false };
       formData.submissionId = submissionState.id;
       return formData;
     }
@@ -1503,13 +2024,47 @@
            ・LINEユーザーID欄は空で記録する
          といった分岐を入れてください。
          ウェブアプリのデプロイ設定は「アクセスできるユーザー: 全員」が必要です。
+
+       ▼ インフル予約・予約変更・キャンセルの振り分け
+         GAS の URL は1つです。送信時に URL の末尾へ ?type=… を付け、
+         GAS の doPost が e.parameter.type を見て転記先を振り分けます。
+           インフル予約 … ?type=flu
+           予約変更     … ?type=change（本文にも action: 'change_request'）
+           キャンセル   … ?type=cancel（本文にも action: 'cancel_request'）
+         本文の action は、?type を付ける前のページから送られてきた場合に
+         GAS が種類を判断するための予備です。
+         formData の中身
+           共通       … name, kana, birthday, phone, submissionId
+           インフル予約 … gender, preferredDate1〜2, type, vaccine,
+                         applicant, applicantOther（申込者「その他」の内容。その他以外は空欄）
+           予約変更   … reservedDate（変更前の予約日）,
+                         department（現在の予約診療科・検査名）,
+                         doctor（現在の予約医師・空欄あり）,
+                         preferredDate1〜3（第1〜第3希望日。2・3は空欄あり）,
+                         applicant（申込者。値はインフル予約と同じ）
+           キャンセル … reservedDate（キャンセルする予約日）,
+                         department（キャンセルする診療科・検査名）,
+                         doctor（キャンセルする予約医師・空欄あり）,
+                         applicant（申込者。値はインフル予約と同じ）
+           ※ 予約変更・キャンセルには type・vaccine・gender・applicantOther は付きません
+         GAS を先に更新してから、このページを公開してください
+         （古い GAS は ?type を見ないため、予約変更・キャンセルがエラーになります）。
+         応答は3種類とも { ok: true } / { ok: false, error: '…' } です。
        ============================================================= */
 
-    async function postToGas(payload, timeoutMs) {
+    // 送信先URL。type（flu / change / cancel）があれば末尾に ?type=… を付けます
+    function gasUrlFor(type) {
+      const t = GAS_TYPES[type];
+      if (!t) return GAS_URL;
+      return GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'type=' + encodeURIComponent(t);
+    }
+
+    // type … 申込の種類（currentMode）。休診日の取得など、振り分けが不要なときは省略
+    async function postToGas(payload, timeoutMs, type) {
       const controller = new AbortController();
       const tid = setTimeout(() => controller.abort(), timeoutMs || 30000);
       try {
-        const res = await fetch(GAS_URL, {
+        const res = await fetch(gasUrlFor(type), {
           method: 'POST',
           body: JSON.stringify(payload),
           signal: controller.signal
@@ -1523,9 +2078,10 @@
     function showComplete(formData) {
       submissionState.completed = true;
       formDirty = false;
+      const m = FORM_MODES[currentMode] || FORM_MODES.flu;
 
       document.getElementById('completeBox').innerHTML =
-        '✅ <strong>予約申込を受け付けました。</strong><br>' +
+        '✅ <strong>' + escapeHtml(m.done) + '</strong><br>' +
         getMessage('CONTACT_NOTICE') +
         '<br><br>' + getMessage('URGENT_PHONE_NOTICE');
 
@@ -1534,9 +2090,13 @@
         ['お名前', formData.name],
         ['生年月日', toJpDate(formData.birthday)],
         ['携帯電話', formData.phone],
-        ['第1希望日', toJpDate(formData.preferredDate1)],
       ];
-      if (formData.preferredDate2) rows.push(['第2希望日', toJpDate(formData.preferredDate2)]);
+      if (formData.reservedDate) rows.push([m.reservedLabel || 'ご予約日', toJpDate(formData.reservedDate)]);
+      if (formData.department) rows.push(['診療科・検査', formData.department]);
+      if (formData.doctor) rows.push(['予約医師', formData.doctor]);
+      FORM_CFG.preferred.forEach(p => {
+        if (formData[p.name]) rows.push([p.label, toJpDate(formData[p.name])]);
+      });
       document.getElementById('summaryList').innerHTML = rows
         .map(r => `<dt>${escapeHtml(r[0])}</dt><dd>${escapeHtml(r[1])}</dd>`).join('');
       document.getElementById('completeSummary').style.display = '';
@@ -1553,7 +2113,7 @@
       result.innerHTML = '同じ内容のお申し込みを既に受け付けています。<br>' +
         'お心当たりがない場合や内容の変更は、お電話(' + getPhoneHtml() + ')でご連絡ください。';
       btn.disabled = false;
-      btn.textContent = '予約を申し込む';
+      btn.textContent = submitLabel();
     }
 
     // 休診日の一覧が取得できていなかった場合の受け皿（最終判定はGAS側）
@@ -1567,7 +2127,7 @@
         inp.focus();
       }
       btn.disabled = false;
-      btn.textContent = '予約を申し込む';
+      btn.textContent = submitLabel();
     }
 
     function showSubmitFailure(detail) {
@@ -1578,7 +2138,7 @@
       result.innerHTML = '送信に失敗しました。<br>お手数ですが、もう一度お試しいただくか、お電話(' +
         getPhoneHtml() + ')でご連絡ください。';
       btn.disabled = false;
-      btn.textContent = '予約を申し込む';
+      btn.textContent = submitLabel();
     }
 
     function showNetworkFailure(err) {
@@ -1592,7 +2152,7 @@
         result.textContent = '通信エラーが発生しました。ネットワークの状態をご確認のうえ、もう一度お試しください。';
       }
       btn.disabled = false;
-      btn.textContent = '予約を申し込む';
+      btn.textContent = submitLabel();
     }
 
     async function handleSubmit() {
@@ -1638,10 +2198,11 @@
         formData,
         appToken: APP_TOKEN
       };
+      if (ACTIONS[currentMode]) payload.action = ACTIONS[currentMode];   // 予約変更・キャンセルのみ
       if (TEST_MODE) payload.testMode = true;
 
       try {
-        const data = await postToGas(payload, 30000);
+        const data = await postToGas(payload, 30000, currentMode);   // URLに ?type=flu / change / cancel が付きます
         submissionState.inFlight = false;
         const err = data && data.error;
 
@@ -1674,23 +2235,44 @@
 
       applyClinicInfo();
       applyMessages();
-      buildProgressBar();
 
-      setupScreens('terms');
+      setMode('flu');   // 入力画面の初期状態（① 申込で選んだ種類に切り替わります）
+      setupScreens('select');
       setupBackButtons();
 
-      watchDateBoundaries(b => applyPreferredDateBoundaries(FORM_CFG, b));
+      watchDateBoundaries(b => {
+        applyPreferredDateBoundaries(FORM_CFG, b);
+        applyReservedDateBoundaries(b);
+      });
 
       applyClosedDayNotice();
       loadClosedDays();   // 取得完了は待たない（画面の表示を遅らせないため）
 
-      // ▼ ステップ① 同意チェック → 入力画面へ
-      const agreeCheck = document.getElementById('agreeCheck');
-      const proceedBtn = document.getElementById('proceedBtn');
-      agreeCheck.addEventListener('change', () => { proceedBtn.disabled = !agreeCheck.checked; });
-      proceedBtn.addEventListener('click', () => {
-        startSubmissionSession();
-        navigateTo('form');
+      // ▼ ステップ① 申込の選択 → ボタンの data-screen の画面へ
+      //   data-mode があれば、入力画面をその種類（flu / change / cancel）に切り替える
+      document.querySelectorAll('.select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const next = btn.dataset.screen;
+          if (!PAGE_SCREENS.includes(next)) return;
+          if (btn.dataset.mode) setMode(btn.dataset.mode);
+          if (next === 'form') startSubmissionSession();   // 利用規約を通らない場合（キャンセル）
+          navigateTo(next);
+        });
+      });
+
+      // ▼ ステップ② 同意チェック → 入力画面へ（インフル予約・予約変更それぞれの利用規約）
+      [
+        { check: 'agreeCheck', btn: 'proceedBtn', mode: 'flu' },
+        { check: 'changeAgreeCheck', btn: 'changeProceedBtn', mode: 'change' },
+      ].forEach(t => {
+        const check = document.getElementById(t.check);
+        const btn = document.getElementById(t.btn);
+        check.addEventListener('change', () => { btn.disabled = !check.checked; });
+        btn.addEventListener('click', () => {
+          if (currentMode !== t.mode) setMode(t.mode);
+          startSubmissionSession();
+          navigateTo('form');
+        });
       });
 
       setupCommonFields(FORM_CFG);
@@ -1698,7 +2280,7 @@
       document.getElementById('submitBtn').addEventListener('click', handleSubmit);
       registerUnsavedWarning();
 
-      // ▼ ステップ③ もう一度申し込む（家族など別の方の分）
+      // ▼ ステップ④ 最初（① 申込）の画面に戻る（家族など別の方の申し込みなど）
       document.getElementById('againBtn').addEventListener('click', () => {
         formDirty = false;
         window.location.href = window.location.pathname + window.location.search;
