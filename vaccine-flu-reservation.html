@@ -392,6 +392,11 @@
       margin-top: 32px;
     }
 
+    /* ▼ 上段（ワクチン接種の予約申し込み）を表示しない期間は、下段の見出しを一番上に詰める */
+    #vaccineMenu[hidden]+h1.change-heading {
+      margin-top: 8px;
+    }
+
     .select-btn.change {
       border-color: var(--change);
     }
@@ -641,19 +646,23 @@
            インフルエンザ以外・リハビリ … 電話案内の画面
        ========================================================= -->
   <div id="selectScreen" style="display:none;">
-    <h1>ワクチン接種の予約申し込み</h1>
+    <!-- 上段：ワクチン接種の予約申し込み
+         JS の「設定」ブロックの VACCINE_MENU_HIDE_FROM の日（2027年4月1日）から表示しません -->
+    <div id="vaccineMenu">
+      <h1>ワクチン接種の予約申し込み</h1>
 
-    <button type="button" class="select-btn" data-screen="terms" data-mode="flu">
-      <span class="arrow">›</span>
-      <span class="title">インフルエンザワクチンの接種をご希望の方</span>
-      <span class="desc">インフルエンザワクチンのみご予約いただけます</span>
-    </button>
+      <button type="button" class="select-btn" data-screen="terms" data-mode="flu">
+        <span class="arrow">›</span>
+        <span class="title">インフルエンザワクチンの接種をご希望の方</span>
+        <span class="desc">インフルエンザワクチンのみご予約いただけます</span>
+      </button>
 
-    <button type="button" class="select-btn" data-screen="otherVaccine">
-      <span class="arrow">›</span>
-      <span class="title">インフルエンザワクチン以外をご希望の方</span>
-      <span class="desc">お電話でのご予約となります</span>
-    </button>
+      <button type="button" class="select-btn" data-screen="otherVaccine">
+        <span class="arrow">›</span>
+        <span class="title">インフルエンザワクチン以外をご希望の方</span>
+        <span class="desc">お電話でのご予約となります</span>
+      </button>
+    </div>
 
     <h1 class="change-heading">予約変更・キャンセルのお申込み</h1>
 
@@ -794,7 +803,7 @@
       <h3>ご利用にあたって</h3>
       <p>このウェブ予約変更システムは下記の点をご了承頂く必要があります。</p>
       <ul>
-        <li>お伺いする日は予約変更希望日であり、確定ではありません。結果は改めてショートメールもしくはお電話でお伝えします。</li>
+        <li>お伺いする日は予約変更希望日であり、確定ではありません。結果は改めてショートメールでお伝えします。</li>
         <li>お申込み頂いた内容は、月～土（祝日除く）の午後に確認し、ご連絡いたします。</li>
         <li>希望日に応じられない可能性があります。</li>
         <li>時間指定や医師変更はできません。</li>
@@ -1030,8 +1039,8 @@
     // インフル予約・予約変更・キャンセルの送信も、休診日（日曜・祝日・臨時休診日）の取得も、このURLに投げます。
     // 送信時は末尾に ?type=flu / ?type=change / ?type=cancel を自動で付け、GAS 側で振り分けます
     // （ここには ?type を付けない /exec までのURLを書いてください）。
-    // ※ このページは LINE を使わないため idToken を送れません。
-    //    GAS 側を「idToken なしでも受け付ける」よう対応させてください。
+    // ※ このページは LINE を使わないため、idToken（LINE の認証情報）や LINEユーザーID は送りません。
+    //    受付GASも LINE の認証はせず、APP_TOKEN（合言葉）が一致する送信だけを受け付けます。
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzqaMEGup4w0Y2_NwdGwY7AQ1qEFcjbuPzsU21FHWLJnvokhN6GyEtD7NKGHve-Unf6yA/exec';
 
     // 送信用 GAS と共有する合言葉
@@ -1078,6 +1087,22 @@
     //   false … 何もチェックしません（元の vaccine-flu.js と同じ動き）
     const CHECK_CLOSED_DAYS = true;
 
+    // インフル予約の希望日（第1・第2希望日）の制限
+    //   weekdays … 選べる曜日（0=日 1=月 2=火 3=水 4=木 5=金 6=土）。[] にすると曜日の制限なし
+    //   lastDate … 選べる最後の日（'YYYY-MM-DD'）。これより後の日付を選ぶとエラーになります。'' にすると制限なし
+    // ※ 予約変更（第1〜第3希望日）には適用しません。
+    //    休診日（日曜・祝日・臨時休診日など）のチェックは、これとは別に上の CHECK_CLOSED_DAYS で行います。
+    const FLU_DATE_RULE = {
+      weekdays: [4],            // 木曜日のみ
+      lastDate: '2027-03-31',   // 2027年3月31日まで（2027年4月1日以降はエラー）
+    };
+
+    // ① 申込画面の上段「ワクチン接種の予約申し込み」
+    //   （見出しと「インフルエンザワクチンの接種をご希望の方」「インフルエンザワクチン以外をご希望の方」のボタン）を
+    //   表示しなくなる日（'YYYY-MM-DD'）。この日からは下段の「予約変更・キャンセルのお申込み」だけになります。
+    //   見ている方の端末の日付で判定します。'' にすると常に表示します。
+    const VACCINE_MENU_HIDE_FROM = '2027-04-01';
+
     // 希望日フィールドの設定（第3希望日は予約変更のときだけ表示されます）
     const FORM_CFG = {
       sel: '#form',
@@ -1121,6 +1146,21 @@
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
       if (!m) return iso;
       return `${m[1]}/${m[2]}/${m[3]}`;
+    }
+
+    // 'YYYY-MM-DD' → Date（形式が違えば null）
+    // new Date('YYYY-MM-DD') はUTC扱いになるため、ローカル日付で生成する
+    function parseIsoDate(iso) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+    }
+
+    // 'YYYY-MM-DD' の翌日（'2027-03-31' → '2027-04-01'）
+    function nextDateOf(iso) {
+      const d = parseIsoDate(iso);
+      if (!d) return iso;
+      d.setDate(d.getDate() + 1);
+      return formatDate(d);
     }
 
     function calcDateBoundaries() {
@@ -1213,8 +1253,13 @@
       const el = document.getElementById('closedDayNotice');
       if (!el) return;
       if (!CHECK_CLOSED_DAYS) { el.style.display = 'none'; return; }
-      const names = closedWeekdays.map(w => WEEKDAY_NAMES[w] + '曜').join('・');
-      el.textContent = '※ ' + names + '・祝日・休診日は選択できません';
+      // インフル予約は選べる曜日が決まっているので、それ以外の曜日の休診（日曜など）は書かない
+      const rule = activeDateRule();
+      const allowed = (rule && rule.weekdays && rule.weekdays.length) ? rule.weekdays : null;
+      const names = closedWeekdays
+        .filter(w => !allowed || allowed.indexOf(w) >= 0)
+        .map(w => WEEKDAY_NAMES[w] + '曜・').join('');
+      el.textContent = '※ ' + names + '祝日・休診日は選択できません';
       el.style.display = '';
     }
 
@@ -1383,18 +1428,66 @@
 
     /* =============================================================
        希望日チェック（3日後〜1年後・重複不可）
+         インフル予約は、さらに FLU_DATE_RULE（木曜日のみ・2027年3月31日まで）で制限します
        ============================================================= */
 
+    // いまの申込の種類に適用する希望日の制限（インフル予約のみ。予約変更は null）
+    function activeDateRule() {
+      return currentMode === 'flu' ? FLU_DATE_RULE : null;
+    }
+
+    // 希望日の上限（通常は1年後。インフル予約は受付最終日のほうが早ければそちら）
+    function preferredMaxOf(b) {
+      const rule = activeDateRule();
+      if (rule && rule.lastDate && rule.lastDate < b.PREFERRED_MAX) return rule.lastDate;
+      return b.PREFERRED_MAX;
+    }
+
+    // [4] → '木曜日'、[2, 4] → '火・木曜日'
+    function weekdaysLabel(weekdays) {
+      return weekdays.map(w => WEEKDAY_NAMES[w]).join('・') + '曜日';
+    }
+
+    // インフル予約の制限（受付最終日・曜日）に合わなければエラー文言を、合えば null を返す
+    function getDateRuleError(iso) {
+      const rule = activeDateRule();
+      if (!rule) return null;
+      if (rule.lastDate && iso > rule.lastDate) {
+        return `${toJpDate(nextDateOf(rule.lastDate))}以降は選択できません（受付は${toJpDate(rule.lastDate)}までです）`;
+      }
+      const d = parseIsoDate(iso);
+      if (d && rule.weekdays && rule.weekdays.length && rule.weekdays.indexOf(d.getDay()) < 0) {
+        const label = weekdaysLabel(rule.weekdays);
+        return `ご予約は${label}のみです。${label}を選択してください`;
+      }
+      return null;
+    }
+
     function applyPreferredDateBoundaries(cfg, b) {
+      const max = preferredMaxOf(b);   // インフル予約は受付最終日（FLU_DATE_RULE.lastDate）まで
       cfg.preferred.forEach(p => {
         const el = document.querySelector(`${cfg.sel} input[name="${p.name}"]`);
         if (el) {
           el.setAttribute('min', b.PREFERRED_MIN);
-          el.setAttribute('max', b.PREFERRED_MAX);
+          el.setAttribute('max', max);
         }
       });
       const notice = document.getElementById(cfg.noticeId);
-      if (notice) notice.textContent = `${toJpDate(b.PREFERRED_MIN)}以降の日付を選択してください`;
+      if (notice) notice.innerHTML = preferredDateNoticeHtml(b, max);
+    }
+
+    // 希望日の案内文
+    //   予約変更     …「2026年9月29日以降の日付を選択してください」
+    //   インフル予約 …「2026年9月29日〜2027年3月31日の木曜日を選択してください」（曜日は太字）
+    function preferredDateNoticeHtml(b, max) {
+      const rule = activeDateRule();
+      const range = (rule && rule.lastDate)
+        ? `${toJpDate(b.PREFERRED_MIN)}〜${toJpDate(max)}の`
+        : `${toJpDate(b.PREFERRED_MIN)}以降の`;
+      const days = (rule && rule.weekdays && rule.weekdays.length)
+        ? `<strong>${escapeHtml(weekdaysLabel(rule.weekdays))}</strong>`
+        : '日付';
+      return escapeHtml(range) + days + 'を選択してください';
     }
 
     function validatePreferredDate(input, cfg) {
@@ -1407,6 +1500,12 @@
       }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
         showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
+        return;
+      }
+      // インフル予約：受付最終日より後（2027年4月1日以降）・木曜日以外はエラー
+      const ruleError = getDateRuleError(v);
+      if (ruleError) {
+        showInlineError(input, errorId, ruleError);
         return;
       }
       const min = input.getAttribute('min');
@@ -1453,6 +1552,7 @@
       const dateFormatRe = /^\d{4}-\d{2}-\d{2}$/;
       const values = [];
       const reservedDate = activeReservedDate();
+      const maxDate = preferredMaxOf(b);   // インフル予約は受付最終日まで
 
       for (const p of cfg.preferred) {
         const inp = form.querySelector(`input[name="${p.name}"]`);
@@ -1466,8 +1566,15 @@
           inp.focus();
           return false;
         }
-        if (v < b.PREFERRED_MIN || v > b.PREFERRED_MAX) {
-          showInlineError(inp, errorId, `${p.label}は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(b.PREFERRED_MAX)} の範囲で入力してください`);
+        // インフル予約：受付最終日より後（2027年4月1日以降）・木曜日以外はエラー
+        const ruleError = getDateRuleError(v);
+        if (ruleError) {
+          showInlineError(inp, errorId, ruleError);
+          inp.focus();
+          return false;
+        }
+        if (v < b.PREFERRED_MIN || v > maxDate) {
+          showInlineError(inp, errorId, `${p.label}は ${toJpDate(b.PREFERRED_MIN)} 〜 ${toJpDate(maxDate)} の範囲で入力してください`);
           inp.focus();
           return false;
         }
@@ -1807,11 +1914,28 @@
       const result = document.getElementById('result');
       result.className = 'result-box';
       result.textContent = '';
+      // 希望日の上限・案内文を今の種類に合わせる（インフル予約は木曜日のみ・受付最終日まで）
+      applyPreferredDateBoundaries(FORM_CFG, calcDateBoundaries());
+      applyClosedDayNotice();
       revalidateAllPreferredDates(FORM_CFG);
     }
 
     function submitLabel() {
       return (FORM_MODES[currentMode] || FORM_MODES.flu).submit;
+    }
+
+
+    /* =============================================================
+       ① 申込画面の上段（ワクチン接種の予約申し込み）の表示期間
+         VACCINE_MENU_HIDE_FROM の日になったら上段（見出し＋ボタン2つ）を隠し、
+         下段の「予約変更・キャンセルのお申込み」だけを表示します。
+         ページを開いたまま日付をまたいだ場合も、画面に戻ったときに隠します（watchDateBoundaries）。
+       ============================================================= */
+
+    function applyVaccineMenuPeriod(b) {
+      const menu = document.getElementById('vaccineMenu');
+      if (!menu) return;
+      menu.hidden = !!VACCINE_MENU_HIDE_FROM && b.TODAY >= VACCINE_MENU_HIDE_FROM;
     }
 
 
@@ -2017,12 +2141,13 @@
        送信と結果表示
 
        ▼ GAS 側について
-         LINE を使わないため idToken は送れません（null 固定）。
-         代わりに channel: 'web' を付けているので、GAS の doPost で
-           ・channel === 'web' のときは idToken 検証をスキップする
-           ・LINEユーザーIDに依存する重複チェックもスキップする
-           ・LINEユーザーID欄は空で記録する
-         といった分岐を入れてください。
+         このページは LINE を使わないため、idToken や LINEユーザーID は送りません。
+         受付GAS（Web予約フォーム用）は LINE の認証をせず、
+         appToken（合言葉）が一致する送信だけを受け付けます。
+         channel: 'web' は Webフォームからの送信であることの目印です
+         （今の受付GASは判定に使っていません）。
+         重複した申込には error: 'already_submitted' が返り、showDuplicateNotice() で案内します
+         （インフル予約は、同じ携帯電話番号＋生年月日の申込が24時間以内にあると重複扱い）。
          ウェブアプリのデプロイ設定は「アクセスできるユーザー: 全員」が必要です。
 
        ▼ インフル予約・予約変更・キャンセルの振り分け
@@ -2193,8 +2318,7 @@
 
       const payload = {
         service: SERVICE,
-        channel: 'web',   // LINE以外からの申込であることをGASで判別するための目印
-        idToken: null,
+        channel: 'web',   // Webフォームからの送信であることの目印（今の受付GASは判定に使っていません）
         formData,
         appToken: APP_TOKEN
       };
@@ -2243,6 +2367,7 @@
       watchDateBoundaries(b => {
         applyPreferredDateBoundaries(FORM_CFG, b);
         applyReservedDateBoundaries(b);
+        applyVaccineMenuPeriod(b);   // 2027年4月1日からは ① 申込画面の上段を隠す
       });
 
       applyClosedDayNotice();
