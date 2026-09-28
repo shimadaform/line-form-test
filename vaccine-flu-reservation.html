@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#00796b">
   <meta name="robots" content="noindex">
-  <title>インフルエンザワクチン接種予約申込</title>
+  <title>インフルエンザワクチン接種予約お申込み・外来予約変更/キャンセルのお申込み</title>
 
   <!-- =============================================================
        vaccine-flu-standalone.html
@@ -628,6 +628,32 @@
         transform: rotate(360deg);
       }
     }
+
+    .terms li>p {
+      margin: 0.25em 0 0;
+    }
+
+    .fee-table {
+      border-collapse: collapse;
+      margin: 0.5em 0;
+    }
+
+    .fee-table th,
+    .fee-table td {
+      padding: 0.4em 0.8em;
+      border: 1px solid #ddd;
+    }
+
+    .fee-table th {
+      font-weight: normal;
+      text-align: left;
+      background: #f7f7f7;
+    }
+
+    .fee-table td {
+      text-align: right;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -730,50 +756,76 @@
       <h3>ご利用にあたって</h3>
       <ul>
         <li>
-          <strong>予約申込について:</strong>
-          本フォームは「予約申込」であり、この時点では予約は確定していません。当院からのご連絡をもって予約確定となります。
+          <strong>予約申込について</strong>
+          <p>
+            本フォームは「予約申込」のため、お申し込みいただいた時点では予約は確定しておりません。
+            当院からのご連絡をもって、予約確定となります。
+          </p>
         </li>
+
         <li>
-          <strong>ご連絡について:</strong>
-          <span data-message="CONTACT_NOTICE"></span>
+          <strong>ご連絡について</strong>
+          <p><span data-message="CONTACT_NOTICE"></span></p>
         </li>
+
         <li>
-          <strong>予約希望日について:</strong>
-          ワクチンの在庫状況や接種枠により、ご希望の日に添えない場合があります。また、時間や医師のご指定はできません。
+          <strong>予約希望日について</strong>
+          <p>
+            予約可能な日時は、木曜日の15:00～16:00（祝日を除く）です。
+            時間および医師のご指定はできません。
+          </p>
         </li>
+
         <li>
-          <strong>キャンセル・変更について:</strong>
-          ワクチンの準備・在庫管理の都合がありますので、キャンセル・変更をご希望の場合は、できるだけ早めにお電話でご連絡ください。
+          <strong>キャンセル・変更について</strong>
+          <p>
+            ワクチンの準備や在庫管理の都合上、予約のキャンセル・変更をご希望の場合は、
+            できるだけ早めにお電話でご連絡ください。
+          </p>
         </li>
+
         <li>
-          <strong>料金について:</strong>
-          表示している料金は、主に<span data-city></span>にお住まいの方向けの内容です。他の市町村にお住まいの方は、料金が異なる場合があります。
+          <strong>料金について（2026/10/1～2027/1/31）</strong>
+          <p>接種料金は以下のとおりです。</p>
+
+          <table class="fee-table">
+            <tr>
+              <th scope="row">一般の方</th>
+              <td>3,740円</td>
+            </tr>
+            <tr>
+              <th scope="row">65歳以上の方</th>
+              <td>1,500円</td>
+            </tr>
+          </table>
+
+          <p>
+            ※お住まいの市町村や所得状況などにより、自己負担額が異なる場合があります。
+          </p>
         </li>
+
         <li>
-          <strong>公費接種について:</strong>
-          定期接種・公費助成の対象となるかは、年齢・お住まい・接種歴・接種券などにより確認します。対象とならない場合は、自費での接種となることがあります。
+          <strong>未成年者について</strong>
+          <p>
+            12歳以下の方は、保護者の同伴が必要です。
+          </p>
         </li>
+
         <li>
-          <strong>接種可否・体調不良時について:</strong>
-          予約が確定していても、当日の体温・体調・接種歴・予診の内容や医師の判断により、接種を見合わせる場合があります。発熱や急な体調不良があるときは、来院前にお電話でご相談ください。
-        </li>
-        <li>
-          <strong>未成年者について:</strong>
-          未成年の方は、保護者の同意または同伴が必要となる場合があります。年齢や接種するワクチンの種類により確認させていただきます。
-        </li>
-        <li>
-          <strong>来院時のお持ち物について:</strong>
+          <strong>来院時のお持ち物について</strong>
           <ul class="items">
             <li>
               <span class="badge-required">必須</span>
-              マイナ保険証（マイナンバーカード）または資格確認書などの本人確認書類
+              マイナ保険証（マイナンバーカード）、資格確認書などの本人確認書類
             </li>
+
             <li>
-              <span class="badge-optional">任意</span><span class="note">（お持ちの方のみ）</span>
+              <span class="badge-optional">任意</span>
+              <span class="note">（お持ちの方のみ）</span>
               <ul>
-                <li>接種券・助成券・案内はがき</li>
-                <li>母子手帳・接種済証</li>
-                <li>お薬手帳</li>
+                <li>非課税確認書</li>
+                <li>介護保険負担限度額認定証</li>
+                <li>後期高齢者医療資格確認書</li>
               </ul>
             </li>
           </ul>
@@ -1066,7 +1118,7 @@
     // 共通文言（HTML側は data-message="キー名" を書くだけで反映されます）
     // {phone} は CLINIC_INFO の電話番号 + tel:リンクに自動置換されます。
     const MESSAGES = {
-      CONTACT_NOTICE: '内容を確認のうえ、月〜土曜日（祝日を除く）の午後に、ご入力いただいた携帯電話へショートメールまたはお電話にて順次ご連絡いたします。お申し込みの時間帯により、翌診療日以降のご連絡となることがございます。',
+      CONTACT_NOTICE: 'お申し込み内容を確認のうえ、月曜日～土曜日（祝日を除く）の午後に、ご入力いただいた携帯電話番号へショートメールにて順次ご連絡いたします。お申し込みいただいた時間帯によっては、翌診療日以降のご連絡となる場合がありますので、あらかじめご了承ください。',
       URGENT_PHONE_NOTICE: 'お急ぎの場合や内容の変更・キャンセルをご希望の場合は、お電話（{phone}）にてご連絡ください。',
     };
 
