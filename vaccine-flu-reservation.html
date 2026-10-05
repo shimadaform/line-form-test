@@ -19,6 +19,9 @@
          キャンセル             … 利用規約なしで ③ 入力 → ④ 完了
          インフルエンザワクチン以外・リハビリ予約の変更・キャンセル
                                 … お電話でのご連絡をお願いする案内画面
+       ④ 完了 の一番上には、ショートメールでご連絡する最短の日時
+         （例：本日の午後 / 明日の午後 / 10月7日（水）の午後）を大きく表示します
+         （締め時刻は JS の「設定」ブロックの SMS_CONTACT_RULE）。
        ※ 送信先の GAS は1つです。送信時に URL の末尾へ ?type=flu / change / cancel を
          付けて、GAS 側でインフル予約・予約変更・キャンセルを振り分けます
          （JS の「▼ インフル予約・予約変更・キャンセルの振り分け」のコメント参照）。
@@ -570,6 +573,54 @@
       display: block;
     }
 
+    /* ▼ 完了画面の一番上：ショートメールでご連絡する最短の日時（日付はJSが入れます） */
+    .sms-eta {
+      background: #fff;
+      border: 3px solid var(--accent);
+      border-radius: 12px;
+      padding: 16px 12px 14px;
+      margin-bottom: 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .sms-eta-label {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--accent-dark);
+    }
+
+    /* 見出しと注意書きは、言葉の途中ではなく区切り（、）で改行する */
+    .sms-eta-label span,
+    .sms-eta-note span {
+      display: inline-block;
+    }
+
+    .sms-eta-when {
+      margin: 8px 0 0;
+      font-size: clamp(1.5rem, 7.5vw, 2.2rem);
+      font-weight: bold;
+      line-height: 1.35;
+      color: #222;
+    }
+
+    /* 日付の途中では改行しない（幅が足りないときは「の午後」だけ次の行へ） */
+    .sms-eta-when span {
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .sms-eta-time {
+      color: var(--accent-dark);
+    }
+
+    .sms-eta-note {
+      margin: 10px 0 0;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
     /* ▼ 完了画面の申込内容 */
     .summary {
       background: #fff;
@@ -1068,9 +1119,18 @@
 
   <!-- =========================================================
        ステップ④ 完了
+         一番上（#smsEta）に、ショートメールでご連絡する最短の日時を大きく表示します。
+         日付は送信した時刻から JS（renderSmsEta）が計算して入れます。
        ========================================================= -->
   <div id="completeScreen" style="display:none;">
     <h1>お申し込みを受け付けました</h1>
+
+    <div id="smsEta" class="sms-eta" hidden>
+      <p class="sms-eta-label"><span>📱 ショートメールでのご連絡は、</span><span>最短で</span></p>
+      <p class="sms-eta-when"><span id="smsEtaDate"></span><span id="smsEtaTime" class="sms-eta-time"></span></p>
+      <p class="sms-eta-note"><span>お申し込みの順にご連絡するため、</span><span>これより遅くなる場合があります。</span></p>
+    </div>
+
     <div id="completeBox" class="result-box ok" role="status" aria-live="polite"></div>
     <div id="completeSummary" class="summary" style="display:none;">
       <h3>お申し込み内容</h3>
@@ -1126,6 +1186,18 @@
     const MESSAGES = {
       CONTACT_NOTICE: 'お申し込み内容を確認のうえ、月曜日～土曜日（祝日を除く）の午後に、ご入力いただいた携帯電話番号へショートメールにて順次ご連絡いたします。お申し込みいただいた時間帯によっては、翌診療日以降のご連絡となる場合がありますので、あらかじめご了承ください。',
       URGENT_PHONE_NOTICE: 'お急ぎの場合や内容の変更・キャンセルをご希望の場合は、お電話（{phone}）にてご連絡ください。',
+    };
+
+    // ④ 完了画面の一番上に大きく出す「ショートメールでのご連絡は、最短で ○○の午後」の計算ルール
+    //   cutoff    … 締め時刻（'HH:MM'・日本時間）。この時刻ちょうどまでのお申し込みは当日の午後、
+    //               1分でも過ぎたら次回診療日の午後を「最短」として表示します
+    //   timeLabel … 「本日の午後」の「午後」の部分
+    // ※ 次回診療日 = 希望日のカレンダーで申し込める日（日曜・祝日・臨時休診日・8/14・8/15・年末年始以外の日）。
+    //    カレンダーと同じ判定（getClosedDayReason）を使います。当日が休診日なら、締め時刻前でも次回診療日になります。
+    // ※ 表示は 当日 →「本日の午後」、翌日 →「明日の午後」、明後日以降 →「10月7日（水）の午後」です。
+    const SMS_CONTACT_RULE = {
+      cutoff: '18:00',   // 18:00までのお申し込み → 本日の午後 / 18:01以降 → 次回診療日の午後
+      timeLabel: '午後',
     };
 
     // GAS に送る値
@@ -1373,6 +1445,74 @@
       } catch (e) {
         console.warn('[loadClosedDays] 休診日の取得に失敗。日曜のみ判定します。', e);
       }
+    }
+
+
+    /* =============================================================
+       ショートメールでご連絡する最短の日時（④ 完了画面の一番上に表示）
+         送信した時刻（日本時間）と、設定の SMS_CONTACT_RULE から求めます。
+           締め時刻（18:00）ちょうどまで … その日の午後（その日が休診日なら次回診療日の午後）
+           締め時刻を1分でも過ぎたら   … 次回診療日の午後
+         次回診療日 = 希望日のカレンダーで申し込める日（getClosedDayReason で休診日にならない日）
+           例）月曜 16:00 に送信 → 本日の午後
+               月曜 18:01 に送信 → 明日の午後（火曜が休診日なら「10月7日（水）の午後」のように日付）
+               土曜 18:01 に送信 → 月曜の日付（月曜が祝日なら火曜の日付）
+         表示 … 当日 →「本日の午後」/ 翌日 →「明日の午後」/ 明後日以降 →「10月7日（水）の午後」
+         ※ 祝日・臨時休診日は、ページを開いたときに GAS から受け取った一覧を使います（カレンダーと同じ）。
+            受け取れなかった場合は日曜と毎年固定の休診日だけを飛ばします
+            （画面には「遅くなる場合があります」の注意書きを添えています）。
+       ============================================================= */
+
+    // 日本時間の「いま」（端末のタイムゾーン設定が日本以外でも、病院の時刻で判定するため）
+    function nowInJapan() {
+      const t = new Date(Date.now() + 9 * 60 * 60 * 1000);   // UTC+9
+      return new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate(), t.getUTCHours(), t.getUTCMinutes());
+    }
+
+    // 'HH:MM' → 0:00 からの分数（形式が違うときは -1 = 常に次回診療日から）
+    function toMinutes(hhmm) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '');
+      return m ? Number(m[1]) * 60 + Number(m[2]) : -1;
+    }
+
+    // 診療日か（希望日のカレンダーで申し込める日と同じ判定）
+    function isClinicDay(d) {
+      return !getClosedDayReason(formatDate(d));
+    }
+
+    // ご連絡の最短日（Date）を返す。見つからなければ null
+    function calcEarliestSmsDate(now) {
+      // 時刻は正午にしておく（1日ずつ進めるときに日付がずれないように）
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+      // 締め時刻を1分でも過ぎていたら（18:01〜）、翌日以降の次回診療日を探す
+      if (now.getHours() * 60 + now.getMinutes() > toMinutes(SMS_CONTACT_RULE.cutoff)) {
+        d.setDate(d.getDate() + 1);
+      }
+      for (let i = 0; i < 60; i++) {   // 念のため60日先で打ち切り
+        if (isClinicDay(d)) return d;
+        d.setDate(d.getDate() + 1);
+      }
+      return null;
+    }
+
+    // 完了画面の一番上の枠に表示する
+    function renderSmsEta() {
+      const box = document.getElementById('smsEta');
+      if (!box) return;
+      const now = nowInJapan();
+      const d = calcEarliestSmsDate(now);
+      if (!d) { box.hidden = true; return; }
+
+      // 当日 →「本日」、翌日 →「明日」、明後日以降 →「10月7日（水）」
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+      const diff = Math.round((d - today) / 86400000);   // 何日後か
+      const day = diff === 0 ? '本日'
+        : diff === 1 ? '明日'
+          : `${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAY_NAMES[d.getDay()]}）`;
+
+      document.getElementById('smsEtaDate').textContent = day;
+      document.getElementById('smsEtaTime').textContent = 'の' + SMS_CONTACT_RULE.timeLabel;
+      box.hidden = false;
     }
 
 
@@ -2262,6 +2402,9 @@
       submissionState.completed = true;
       formDirty = false;
       const m = FORM_MODES[currentMode] || FORM_MODES.flu;
+
+      // 一番上：ショートメールでご連絡する最短の日時
+      renderSmsEta();
 
       document.getElementById('completeBox').innerHTML =
         '✅ <strong>' + escapeHtml(m.done) + '</strong><br>' +
