@@ -22,6 +22,8 @@
        ④ 完了 の一番上には、ショートメールでご連絡する最短の日時
          （例：本日の午後 / 明日の午後 / 10月7日（水）の午後）を大きく表示します
          （締め時刻は JS の「設定」ブロックの SMS_CONTACT_RULE）。
+       ③ 入力 の「キャンセルする予約日」は、本日のご予約を選べません。17時以降は明日のご予約も選べません
+         （入力した場合はエラーでお電話でのご連絡を案内します。締め時刻は JS の「設定」ブロックの CANCEL_DATE_RULE）。
        ※ 送信先の GAS は1つです。送信時に URL の末尾へ ?type=flu / change / cancel を
          付けて、GAS 側でインフル予約・予約変更・キャンセルを振り分けます
          （JS の「▼ インフル予約・予約変更・キャンセルの振り分け」のコメント参照）。
@@ -1227,6 +1229,15 @@
       lastDate: '2027-03-31',   // 2027年3月31日まで（2027年4月1日以降はエラー）
     };
 
+    // キャンセルする予約日の制限（キャンセルのときだけ。予約変更の「変更前の予約日」は従来どおり本日から選べます）
+    //   本日のご予約は選べません。cutoff（'HH:MM'・日本時間）以降は、明日のご予約も選べません
+    //   （選べない日を入力した場合は、エラー表示でお電話でのご連絡をお願いします）
+    // ※ 「17時以降」なので、17:00ちょうどから明日も選べなくなります。
+    //    形式が違うときは、時刻にかかわらず明日も選べません。
+    const CANCEL_DATE_RULE = {
+      cutoff: '17:00',   // 16:59まで → 明日から選べる / 17:00以降 → 明後日から選べる
+    };
+
     // ① 申込画面の上段「ワクチン接種の予約申し込み」
     //   （見出しと「インフルエンザワクチンの接種をご希望の方」「インフルエンザワクチン以外をご希望の方」のボタン）を
     //   表示しなくなる日（'YYYY-MM-DD'）。この日からは下段の「予約変更・キャンセルのお申込み」だけになります。
@@ -1803,7 +1814,12 @@
 
 
     /* =============================================================
-       ご予約日チェック（予約変更・キャンセル：今日〜1年後）
+       ご予約日チェック
+         予約変更（変更前の予約日）     … 今日〜1年後
+         キャンセル（キャンセルする予約日）… 明日〜1年後
+           設定の CANCEL_DATE_RULE.cutoff（17:00）以降は 明後日〜1年後
+           選べない日を入力した場合は、エラーでお電話でのご連絡を案内します。
+           17:00 の判定は、端末のタイムゾーンにかかわらず日本時間（nowInJapan）で行います。
        ============================================================= */
 
     // 予約変更・キャンセルの「ご予約日」（いまの申込で使っていなければ空）
@@ -1812,11 +1828,40 @@
       return (el && !el.disabled) ? el.value : '';
     }
 
+    // キャンセルで選べる日の計算（日本時間）
+    //   today / tomorrow … 本日・明日（'YYYY-MM-DD'）
+    //   min              … 選べる最初の日（締め時刻前は明日、締め時刻以降は明後日）
+    function calcCancelBoundary() {
+      const now = nowInJapan();
+      const late = now.getHours() * 60 + now.getMinutes() >= toMinutes(CANCEL_DATE_RULE.cutoff);
+      // 時刻は正午にしておく（日付を進めるときにずれないように）
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      const min = new Date(today);
+      min.setDate(today.getDate() + (late ? 2 : 1));
+      return { today: formatDate(today), tomorrow: formatDate(tomorrow), min: formatDate(min) };
+    }
+
     function applyReservedDateBoundaries(b) {
       const el = document.getElementById('reservedDateInput');
       if (!el) return;
-      el.setAttribute('min', b.TODAY);
+      // キャンセルは本日（17:00以降は明日も）を選べない。予約変更は従来どおり本日から選べる
+      const c = calcCancelBoundary();
+      el.setAttribute('min', currentMode === 'cancel' ? c.min : b.TODAY);
       el.setAttribute('max', b.PREFERRED_MAX);
+
+      // 入力済みの日付を新しい範囲で見直す（申込の種類を切り替えたとき・開いたまま17時をまたいだときなど）
+      if (!el.disabled) validateReservedDate(el);
+    }
+
+    // ご予約日が選べる最初の日より前のときのエラー文言
+    function reservedDateTooEarlyMessage(v, min) {
+      if (currentMode !== 'cancel') return '本日以降の日付を入力してください';
+      const c = calcCancelBoundary();
+      const day = v === c.today ? '本日' : v === c.tomorrow ? '明日' : '';
+      if (!day) return `${toSlashDate(min)}以降の日付を入力してください`;   // 過去の日付
+      return `${day}のご予約はこちらからはキャンセルできません。お電話（${CLINIC_INFO.phoneDisplay}）でご連絡ください`;
     }
 
     // 問題がなければ true
@@ -1833,7 +1878,7 @@
       const min = input.getAttribute('min');
       const max = input.getAttribute('max');
       if (min && v < min) {
-        showInlineError(input, 'reservedDateError', '本日以降の日付を入力してください');
+        showInlineError(input, 'reservedDateError', reservedDateTooEarlyMessage(v, min));
         return false;
       }
       if (max && v > max) {
@@ -1895,8 +1940,10 @@
       });
 
       // ご予約日（予約変更・キャンセル）
+      //   開いたまま17時をまたいだ場合に備えて、選べる範囲を取り直してからチェックします
+      //   （チェックは applyReservedDateBoundaries の中で行います）
       const reservedInput = document.getElementById('reservedDateInput');
-      reservedInput.addEventListener('change', () => validateReservedDate(reservedInput));
+      reservedInput.addEventListener('change', () => applyReservedDateBoundaries(calcDateBoundaries()));
 
       // 診療科・検査名（予約変更・キャンセル）
       document.querySelectorAll(`${cfg.sel} input[name="department"]`).forEach(radio => {
@@ -2113,7 +2160,10 @@
       result.className = 'result-box';
       result.textContent = '';
       // 希望日の上限・案内文を今の種類に合わせる（インフル予約は木曜日のみ・受付最終日まで）
-      applyPreferredDateBoundaries(FORM_CFG, calcDateBoundaries());
+      const b = calcDateBoundaries();
+      applyPreferredDateBoundaries(FORM_CFG, b);
+      // ご予約日の下限も今の種類に合わせる（キャンセルは本日、17時以降は明日も選べない）
+      applyReservedDateBoundaries(b);
       applyClosedDayNotice();
       revalidateAllPreferredDates(FORM_CFG);
     }
