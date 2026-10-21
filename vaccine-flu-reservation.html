@@ -24,6 +24,8 @@
          （締め時刻は JS の「設定」ブロックの SMS_CONTACT_RULE）。
        ③ 入力 の「キャンセルする予約日」は、本日のご予約を選べません。17時以降は明日のご予約も選べません
          （入力した場合はエラーでお電話でのご連絡を案内します。締め時刻は JS の「設定」ブロックの CANCEL_DATE_RULE）。
+       ③ 入力 の生年月日が小学生以下（中学校に入学する前）の方は、インフルエンザワクチンの予約申込を送信できません
+         （生年月日を選んだ時点でエラーを出し、お電話でのお申込みを案内します。JS の「設定」ブロックの FLU_ELEMENTARY_PHONE_ONLY）。
        ※ 送信先の GAS は1つです。送信時に URL の末尾へ ?type=flu / change / cancel を
          付けて、GAS 側でインフル予約・予約変更・キャンセルを振り分けます
          （JS の「▼ インフル予約・予約変更・キャンセルの振り分け」のコメント参照）。
@@ -552,6 +554,13 @@
 
     .inline-error.show {
       display: block;
+    }
+
+    /* エラー文の中の電話番号（tel:リンク）。番号の途中では改行しない */
+    .inline-error a {
+      color: inherit;
+      font-weight: bold;
+      white-space: nowrap;
     }
 
     /* ▼ 送信結果 */
@@ -1188,6 +1197,8 @@
     const MESSAGES = {
       CONTACT_NOTICE: 'お申し込み内容を確認のうえ、月曜日～土曜日（祝日を除く）の午後に、ご入力いただいた携帯電話番号へショートメールにて順次ご連絡いたします。お申し込みいただいた時間帯によっては、翌診療日以降のご連絡となる場合がありますので、あらかじめご了承ください。',
       URGENT_PHONE_NOTICE: 'お急ぎの場合や内容の変更・キャンセルをご希望の場合は、お電話（{phone}）にてご連絡ください。',
+      // ③ 入力（インフル予約）で、生年月日が小学生以下（FLU_ELEMENTARY_PHONE_ONLY）のときに生年月日の下へ出すエラー
+      CHILD_PHONE_NOTICE: '小学生以下の方のお申込みは、お手数をおかけしますが、お電話（{phone}）にてお願いいたします。',
     };
 
     // ④ 完了画面の一番上に大きく出す「ショートメールでのご連絡は、最短で ○○の午後」の計算ルール
@@ -1228,6 +1239,16 @@
       weekdays: [4],            // 木曜日のみ
       lastDate: '2027-03-31',   // 2027年3月31日まで（2027年4月1日以降はエラー）
     };
+
+    // インフル予約で、小学生以下の方はお電話でのお申込みにする（③ 入力の生年月日でチェックします）
+    //   true  … 小学生以下（中学校に入学する前）の方は、こちらからお申し込みできません。
+    //           生年月日を選ぶと MESSAGES の CHILD_PHONE_NOTICE をエラーとして表示し、送信できなくなります。
+    //   false … 制限なし
+    // ※ 学年は、本日（日本時間）を含む年度（4月〜翌年3月）で判定します。4月1日に自動で次の年度に切り替わります。
+    //    例）2026年度（2026年4月〜2027年3月）→ 2014年4月2日以降に生まれた方が小学生以下でエラー
+    //        （2014年4月1日以前に生まれた方は中学生以上なので、12歳でもお申し込みできます）
+    // ※ 予約変更・キャンセルには適用しません。
+    const FLU_ELEMENTARY_PHONE_ONLY = true;
 
     // キャンセルする予約日の制限（キャンセルのときだけ。予約変更の「変更前の予約日」は従来どおり本日から選べます）
     //   本日のご予約は選べません。cutoff（'HH:MM'・日本時間）以降は、明日のご予約も選べません
@@ -1621,6 +1642,7 @@
       const errEl = document.getElementById(set.error);
       if (errEl) {
         errEl.textContent = msg;
+        delete errEl.dataset.kind;
         errEl.classList.add('show');
       }
     }
@@ -1631,7 +1653,66 @@
         if (el) el.classList.remove('has-error');
       });
       const errEl = document.getElementById(set.error);
-      if (errEl) errEl.classList.remove('show');
+      if (errEl) {
+        errEl.classList.remove('show');
+        delete errEl.dataset.kind;
+      }
+    }
+
+
+    /* =============================================================
+       小学生以下のチェック（インフル予約のみ）
+         生年月日が小学生以下（中学校に入学する前）なら、生年月日の下にお電話でのお申込みのお願い
+         （MESSAGES の CHILD_PHONE_NOTICE）を表示し、送信できないようにします（設定の FLU_ELEMENTARY_PHONE_ONLY）。
+         学年は、本日（日本時間）を含む年度（4月〜翌年3月）で判定します。
+           例）2026年度 → 2014年4月2日以降に生まれた方が小学生以下でエラー
+                         （小学6年生は 2014年4月2日〜2015年4月1日生まれ）
+                         2014年4月1日以前に生まれた方は中学生以上なのでOK（12歳の中学1年生もOK）
+         チェックするのは、生年月日の年・月・日がそろったとき、申込の種類を切り替えたとき、送信するときです。
+         予約変更・キャンセルではチェックしません（インフル予約で出ていたエラーは消します）。
+       ============================================================= */
+
+    // 今年度（日本時間の本日を含む4月〜翌年3月）に小学生以下となる、生年月日の最初の日（'YYYY-MM-DD'）
+    //   この日以降に生まれた方が小学生以下です。例）2026年度 → '2014-04-02'
+    //   4月1日生まれは前の学年（早生まれ）になるため、境目は4月2日です。
+    function elementaryBirthdayFrom() {
+      const now = nowInJapan();
+      // 1〜3月は、前の年の4月から始まる年度
+      const schoolYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+      return `${schoolYear - 12}-04-02`;
+    }
+
+    // インフル予約で、小学生以下（お電話でのお申込み）の生年月日なら true
+    function isPhoneOnlyChild(birthdayIso) {
+      if (currentMode !== 'flu' || !FLU_ELEMENTARY_PHONE_ONLY) return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdayIso || '')) return false;
+      // 未来の生年月日は、送信時の生年月日の範囲チェックのエラーに任せる
+      if (birthdayIso > formatDate(nowInJapan())) return false;
+      return birthdayIso >= elementaryBirthdayFrom();
+    }
+
+    // 小学生以下のエラーを生年月日の下に表示する（電話番号は tel: リンク）
+    function setBirthdayChildError(set) {
+      setBirthdayError(set, '');
+      const errEl = document.getElementById(set.error);
+      if (errEl) {
+        errEl.innerHTML = getMessage('CHILD_PHONE_NOTICE');
+        errEl.dataset.kind = 'child';   // 小学生以下のエラーの目印（このエラーだけを消すときに使います）
+      }
+    }
+
+    // 問題がなければ true
+    //   小学生以下         … エラーを表示して false
+    //   小学生以下ではない … 小学生以下のエラーが出ていれば消して true（ほかの生年月日のエラーはそのまま）
+    function validateBirthdayChild(set) {
+      const birthday = getBirthdayFromSelects(set);
+      if (birthday && isPhoneOnlyChild(birthday)) {
+        setBirthdayChildError(set);
+        return false;
+      }
+      const errEl = document.getElementById(set.error);
+      if (errEl && errEl.dataset.kind === 'child') clearBirthdayError(set);
+      return true;
     }
 
 
@@ -1917,17 +1998,21 @@
         if (phoneInput.classList.contains('has-error')) clearInlineError(phoneInput, 'phoneError');
       });
 
-      // 生年月日
+      // 生年月日（年・月・日がそろったら、すぐにチェック。インフル予約で小学生以下ならエラーを表示）
       populateBirthdaySelects(cfg.birthday);
+      const onBirthdayChange = () => {
+        clearBirthdayError(cfg.birthday);
+        validateBirthdayChild(cfg.birthday);
+      };
       [cfg.birthday.year, cfg.birthday.month].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', () => {
           updateBirthdayDayOptions(cfg.birthday);
-          clearBirthdayError(cfg.birthday);
+          onBirthdayChange();
         });
       });
       const daySel = document.getElementById(cfg.birthday.day);
-      if (daySel) daySel.addEventListener('change', () => clearBirthdayError(cfg.birthday));
+      if (daySel) daySel.addEventListener('change', onBirthdayChange);
 
       // 性別
       document.querySelectorAll(`${cfg.sel} input[name="gender"]`).forEach(radio => {
@@ -2166,6 +2251,8 @@
       applyReservedDateBoundaries(b);
       applyClosedDayNotice();
       revalidateAllPreferredDates(FORM_CFG);
+      // 生年月日の小学生以下のチェックも今の種類に合わせる（インフル予約ならエラー。予約変更・キャンセルではエラーを消す）
+      validateBirthdayChild(FORM_CFG.birthday);
     }
 
     function submitLabel() {
@@ -2284,6 +2371,13 @@
 
     function validateVaccineForm(form) {
       const bset = FORM_CFG.birthday;
+
+      // インフル予約：小学生以下の方はお電話でのお申込み（FLU_ELEMENTARY_PHONE_ONLY）。
+      //   ほかの欄より先に判定し、未入力の欄があってもこのエラーを優先して送信しません
+      if (!validateBirthdayChild(bset)) {
+        document.getElementById(bset.year).focus();
+        return null;
+      }
 
       if (!form.checkValidity()) {
         form.reportValidity();
