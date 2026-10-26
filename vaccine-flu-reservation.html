@@ -22,10 +22,17 @@
        ④ 完了 の一番上には、ショートメールでご連絡する最短の日時
          （例：本日の午後 / 明日の午後 / 10月7日（水）の午後）を大きく表示します
          （締め時刻は JS の「設定」ブロックの SMS_CONTACT_RULE）。
+       ③ 入力 の「キャンセルする診療科・検査名」（キャンセルのときだけ）は複数選択でき、
+         選んだ診療科・検査ごとに「キャンセルする予約日」の欄を表示します（どちらも必須）。
+         GAS が「フォームの回答 1」の G列＝診療科・検査名、F列＝予約日 に、それぞれ「、」でつないで書き込みます。
        ③ 入力 の「キャンセルする予約日」は、本日のご予約を選べません。17時以降は明日のご予約も選べません
          （入力した場合はエラーでお電話でのご連絡を案内します。締め時刻は JS の「設定」ブロックの CANCEL_DATE_RULE）。
        ③ 入力 の生年月日が小学生以下（中学校に入学する前）の方は、インフルエンザワクチンの予約申込を送信できません
          （生年月日を選んだ時点でエラーを出し、お電話でのお申込みを案内します。JS の「設定」ブロックの FLU_ELEMENTARY_PHONE_ONLY）。
+       ③ 入力 の「キャンセル理由」（キャンセルのときだけ・必須）は「都合がつかなかったため」「症状が改善したため」
+         「他の病院を受診することになったため」「その他」から選びます。
+         「その他」を選ぶと記入欄が出て、内容の記入も必須になります
+         （GAS がスプレッドシート「フォームの回答 1」の Z列＝キャンセル理由、AA列＝「その他」の内容 に書き込みます）。
        ※ 送信先の GAS は1つです。送信時に URL の末尾へ ?type=flu / change / cancel を
          付けて、GAS 側でインフル予約・予約変更・キャンセルを振り分けます
          （JS の「▼ インフル予約・予約変更・キャンセルの振り分け」のコメント参照）。
@@ -207,6 +214,13 @@
       font-size: 0.8rem;
       color: #888;
       margin-top: 4px;
+    }
+
+    /* ▼ キャンセルする予約日の欄（選んだ診療科・検査ごと）の上に出す診療科・検査名 */
+    .dept-tag {
+      display: block;
+      color: var(--accent-dark);
+      margin-bottom: 2px;
     }
 
     input[type="text"],
@@ -1013,17 +1027,17 @@
           <span data-modes="cancel">② キャンセルするご予約</span>
         </h2>
 
-        <div class="field">
-          <label class="label" for="reservedDateInput"><span data-modes="change">変更前の予約日</span><span
-              data-modes="cancel">キャンセルする予約日</span><span class="required">必須</span></label>
+        <!-- 予約変更：変更前の予約日
+             （キャンセルの予約日は、下の「キャンセルする診療科・検査名」で選んだ分だけ JS が欄を作ります） -->
+        <div class="field" data-modes="change">
+          <label class="label" for="reservedDateInput">変更前の予約日<span class="required">必須</span></label>
           <input type="date" id="reservedDateInput" name="reservedDate" required>
           <div class="inline-error" id="reservedDateError" role="alert"></div>
         </div>
 
-        <!-- 診療科・検査名／予約医師は予約変更・キャンセル共通（選択肢も共通。項目名だけ切り替え） -->
-        <div class="field" data-modes="change cancel">
-          <div class="label" id="departmentLabel"><span data-modes="change">現在の予約診療科・検査名</span><span
-              data-modes="cancel">キャンセルする診療科・検査名</span><span class="required">必須</span></div>
+        <!-- 予約変更：現在の予約診療科・検査名（1つだけ選ぶ） -->
+        <div class="field" data-modes="change">
+          <div class="label" id="departmentLabel">現在の予約診療科・検査名<span class="required">必須</span></div>
           <div class="checkboxes" role="radiogroup" aria-labelledby="departmentLabel">
             <label><input type="radio" name="department" value="消化器外科" required>消化器外科</label>
             <label><input type="radio" name="department" value="整形外科" required>整形外科</label>
@@ -1043,10 +1057,59 @@
           <div class="inline-error" id="departmentError" role="alert"></div>
         </div>
 
+        <!-- キャンセル：キャンセルする診療科・検査名（複数選択可・1つ以上必須）
+             チェックした診療科・検査ごとに、すぐ下へ「キャンセルする予約日」の欄を JS が表示します（表示中の欄はすべて必須）。
+             GAS が「フォームの回答 1」の G列（診療科・検査名）・F列（予約日）に、それぞれ「、」でつないで書き込みます。
+             ※ 選択肢は予約変更（上のラジオボタン）と同じです。増やす・減らすときは両方を直してください -->
+        <div class="field" data-modes="cancel">
+          <div class="label" id="cancelDepartmentLabel">キャンセルする診療科・検査名<span class="required">必須</span></div>
+          <div class="help" id="cancelDepartmentHelp">※ 複数選択できます。選んだ診療科・検査ごとに、予約日の欄が表示されます。</div>
+          <div class="checkboxes" role="group" aria-labelledby="cancelDepartmentLabel" aria-describedby="cancelDepartmentHelp">
+            <label><input type="checkbox" name="cancelDepartment" value="消化器外科">消化器外科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="整形外科">整形外科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="消化器内科">消化器内科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="糖尿病内科">糖尿病内科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="脳神経内科">脳神経内科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="循環器内科">循環器内科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="呼吸器内科">呼吸器内科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="緩和ケア">緩和ケア</label>
+            <label><input type="checkbox" name="cancelDepartment" value="血管外科">血管外科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="肝臓内科">肝臓内科</label>
+            <label><input type="checkbox" name="cancelDepartment" value="乳腺外来">乳腺外来</label>
+            <label><input type="checkbox" name="cancelDepartment" value="総合外来">総合外来</label>
+            <label><input type="checkbox" name="cancelDepartment" value="内視鏡検査（上部内視鏡・下部内視鏡）">内視鏡検査（上部内視鏡・下部内視鏡）</label>
+            <label><input type="checkbox" name="cancelDepartment" value="不明">不明</label>
+          </div>
+          <div class="inline-error" id="cancelDepartmentError" role="alert"></div>
+        </div>
+
+        <!-- キャンセル：キャンセルする予約日（チェックした診療科・検査の数だけ表示。中身は JS の setupCancelDepartments が作ります） -->
+        <div id="cancelDateRows" data-modes="cancel"></div>
+
         <div class="field" data-modes="change cancel">
           <label class="label" for="doctorInput"><span data-modes="change">現在の予約医師</span><span
               data-modes="cancel">キャンセルする予約医師</span><span class="optional">任意</span></label>
           <input type="text" id="doctorInput" name="doctor" autocomplete="off" maxlength="100" placeholder="医師名">
+        </div>
+
+        <!-- キャンセル理由（キャンセルのみ・必須）
+             「その他」を選んだときだけ記入欄を表示し、記入も必須にします。
+             GAS が「フォームの回答 1」の Z列（キャンセル理由）・AA列（「その他」の内容）に書き込みます。
+             ※ value の文字は GAS の CANCEL_REASONS と同じにしてください -->
+        <div class="field" data-modes="cancel">
+          <div class="label" id="cancelReasonLabel">キャンセル理由<span class="required">必須</span></div>
+          <div class="checkboxes" role="radiogroup" aria-labelledby="cancelReasonLabel">
+            <label><input type="radio" name="cancelReason" value="都合がつかなかったため" required>都合がつかなかったため</label>
+            <label><input type="radio" name="cancelReason" value="症状が改善したため" required>症状が改善したため</label>
+            <label><input type="radio" name="cancelReason" value="他の病院を受診することになったため" required>他の病院を受診することになったため</label>
+            <label><input type="radio" name="cancelReason" value="その他" id="cancelReasonOtherCheck" required>その他</label>
+          </div>
+          <div class="other-detail" id="cancelReasonOtherDetail">
+            <input type="text" name="cancelReasonOther" id="cancelReasonOtherInput" placeholder="その他の場合は理由をご記入ください"
+              aria-label="キャンセル理由「その他」の内容" autocomplete="off" maxlength="200" style="margin-top:8px;">
+            <div class="inline-error" id="cancelReasonOtherError" role="alert"></div>
+          </div>
+          <div class="inline-error" id="cancelReasonError" role="alert"></div>
         </div>
       </div>
 
@@ -1897,13 +1960,13 @@
     /* =============================================================
        ご予約日チェック
          予約変更（変更前の予約日）     … 今日〜1年後
-         キャンセル（キャンセルする予約日）… 明日〜1年後
+         キャンセル（診療科・検査ごとのキャンセルする予約日。表示中の欄すべて）… 明日〜1年後
            設定の CANCEL_DATE_RULE.cutoff（17:00）以降は 明後日〜1年後
            選べない日を入力した場合は、エラーでお電話でのご連絡を案内します。
            17:00 の判定は、端末のタイムゾーンにかかわらず日本時間（nowInJapan）で行います。
        ============================================================= */
 
-    // 予約変更・キャンセルの「ご予約日」（いまの申込で使っていなければ空）
+    // 予約変更の「変更前の予約日」（いまの申込で使っていなければ空）
     function activeReservedDate() {
       const el = document.getElementById('reservedDateInput');
       return (el && !el.disabled) ? el.value : '';
@@ -1925,15 +1988,24 @@
     }
 
     function applyReservedDateBoundaries(b) {
+      // 予約変更：変更前の予約日（従来どおり本日から選べる）
       const el = document.getElementById('reservedDateInput');
-      if (!el) return;
-      // キャンセルは本日（17:00以降は明日も）を選べない。予約変更は従来どおり本日から選べる
+      if (el) {
+        el.setAttribute('min', b.TODAY);
+        el.setAttribute('max', b.PREFERRED_MAX);
+      }
+      // キャンセル：診療科・検査ごとの予約日（本日、17:00以降は明日も選べない）
       const c = calcCancelBoundary();
-      el.setAttribute('min', currentMode === 'cancel' ? c.min : b.TODAY);
-      el.setAttribute('max', b.PREFERRED_MAX);
+      cancelRows.forEach(r => {
+        r.input.setAttribute('min', c.min);
+        r.input.setAttribute('max', b.PREFERRED_MAX);
+      });
 
       // 入力済みの日付を新しい範囲で見直す（申込の種類を切り替えたとき・開いたまま17時をまたいだときなど）
-      if (!el.disabled) validateReservedDate(el);
+      if (el && !el.disabled) validateReservedDate(el, 'reservedDateError');
+      cancelRows.forEach(r => {
+        if (!r.input.disabled) validateReservedDate(r.input, r.errorId);
+      });
     }
 
     // ご予約日が選べる最初の日より前のときのエラー文言
@@ -1946,28 +2018,124 @@
     }
 
     // 問題がなければ true
-    function validateReservedDate(input) {
+    //   errorId … エラーを出す場所の id（変更前の予約日は 'reservedDateError'、キャンセルは欄ごと）
+    function validateReservedDate(input, errorId) {
+      errorId = errorId || 'reservedDateError';
       const v = input.value;
       if (!v) {
-        clearInlineError(input, 'reservedDateError');
+        clearInlineError(input, errorId);
         return true;
       }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-        showInlineError(input, 'reservedDateError', '年は4桁で入力してください(例:2026)');
+        showInlineError(input, errorId, '年は4桁で入力してください(例:2026)');
         return false;
       }
       const min = input.getAttribute('min');
       const max = input.getAttribute('max');
       if (min && v < min) {
-        showInlineError(input, 'reservedDateError', reservedDateTooEarlyMessage(v, min));
+        showInlineError(input, errorId, reservedDateTooEarlyMessage(v, min));
         return false;
       }
       if (max && v > max) {
-        showInlineError(input, 'reservedDateError', `${toSlashDate(max)}以前の日付を入力してください`);
+        showInlineError(input, errorId, `${toSlashDate(max)}以前の日付を入力してください`);
         return false;
       }
-      clearInlineError(input, 'reservedDateError');
+      clearInlineError(input, errorId);
       return true;
+    }
+
+
+    /* =============================================================
+       キャンセルする診療科・検査名（複数選択）と、選んだ分の予約日（キャンセルのみ）
+         チェックボックス1つにつき「キャンセルする予約日」の欄を1つ作り、
+         チェックした診療科・検査の欄だけを表示します（表示中の欄はすべて必須）。
+         欄の並びはチェックボックスと同じです。送信時は cancelItems
+         （[{ department: 診療科・検査名, reservedDate: 予約日 }, …]）にまとめて送ります。
+         選べる日の制限（本日不可・17時以降は明日も不可）は、上の「ご予約日チェック」と同じです。
+       ============================================================= */
+
+    let cancelRows = [];   // [{ checkbox, row, input, errorId }, …]（チェックボックスの並び順）
+
+    function setupCancelDepartments() {
+      const container = document.getElementById('cancelDateRows');
+      const boxes = document.querySelectorAll('#form input[name="cancelDepartment"]');
+
+      cancelRows = Array.from(boxes).map((checkbox, i) => {
+        const inputId = 'cancelDate' + (i + 1);
+        const errorId = inputId + 'Error';
+
+        // 作る欄：
+        //   <div class="field">
+        //     <label class="label"><span class="dept-tag">整形外科</span>キャンセルする予約日<span class="required">必須</span></label>
+        //     <input type="date" required>
+        //     <div class="inline-error"></div>
+        //   </div>
+        const row = document.createElement('div');
+        row.className = 'field';
+        row.hidden = true;
+
+        const label = document.createElement('label');
+        label.className = 'label';
+        label.htmlFor = inputId;
+        const tag = document.createElement('span');
+        tag.className = 'dept-tag';
+        tag.textContent = checkbox.value;
+        const required = document.createElement('span');
+        required.className = 'required';
+        required.textContent = '必須';
+        label.append(tag, 'キャンセルする予約日', required);
+
+        const input = document.createElement('input');
+        input.type = 'date';
+        input.id = inputId;
+        input.required = true;
+        input.disabled = true;           // 表示するまでは入力チェック・送信の対象外
+        input.dataset.error = errorId;   // name は付けません（送信は cancelItems にまとめるため）
+
+        const error = document.createElement('div');
+        error.className = 'inline-error';
+        error.id = errorId;
+        error.setAttribute('role', 'alert');
+
+        row.append(label, input, error);
+        container.appendChild(row);
+
+        checkbox.addEventListener('change', () => {
+          syncCancelDateRows();
+          clearInlineError(null, 'cancelDepartmentError');
+        });
+        // 開いたまま17時をまたいだ場合に備えて、選べる範囲を取り直してからチェックします
+        input.addEventListener('change', () => applyReservedDateBoundaries(calcDateBoundaries()));
+
+        return { checkbox, row, input, errorId };
+      });
+
+      applyReservedDateBoundaries(calcDateBoundaries());   // 作った欄に選べる範囲（min・max）を入れる
+      syncCancelDateRows();
+    }
+
+    // チェックの状態に合わせて、予約日の欄を出し入れする（申込の種類を切り替えたときにも呼びます）
+    function syncCancelDateRows() {
+      cancelRows.forEach(r => {
+        // キャンセル以外の申込ではチェックボックスごと無効なので、欄も出しません
+        const show = r.checkbox.checked && !r.checkbox.disabled;
+        r.row.hidden = !show;
+        r.input.disabled = !show;
+        if (!show) clearInlineError(r.input, r.errorId);
+      });
+      // 「1つ以上選ぶ」をブラウザの入力チェックに乗せる
+      //   1つも選んでいないときだけ、先頭のチェックボックスをエラー扱いにします
+      if (cancelRows.length) {
+        const any = cancelRows.some(r => r.checkbox.checked);
+        cancelRows[0].checkbox.setCustomValidity(any ? '' : 'キャンセルする診療科・検査名を1つ以上選択してください');
+      }
+    }
+
+    // チェックした診療科・検査名と、その予約日の組（画面の並び順）
+    function getCancelItems() {
+      return cancelRows
+        .filter(r => r.checkbox.checked && !r.checkbox.disabled)
+        .map(r => ({ department: r.checkbox.value, reservedDate: r.input.value }));
     }
 
 
@@ -2024,15 +2192,40 @@
         input.addEventListener('change', () => revalidateAllPreferredDates(cfg));
       });
 
-      // ご予約日（予約変更・キャンセル）
+      // 変更前の予約日（予約変更）
       //   開いたまま17時をまたいだ場合に備えて、選べる範囲を取り直してからチェックします
       //   （チェックは applyReservedDateBoundaries の中で行います）
       const reservedInput = document.getElementById('reservedDateInput');
       reservedInput.addEventListener('change', () => applyReservedDateBoundaries(calcDateBoundaries()));
 
-      // 診療科・検査名（予約変更・キャンセル）
+      // 診療科・検査名（予約変更）
       document.querySelectorAll(`${cfg.sel} input[name="department"]`).forEach(radio => {
         radio.addEventListener('change', () => clearInlineError(null, 'departmentError'));
+      });
+
+      // キャンセルする診療科・検査名（複数選択）と、選んだ分の予約日の欄（キャンセル）
+      setupCancelDepartments();
+
+      // キャンセル理由（キャンセルのみ）。「その他」を選んだときだけ記入欄を表示する
+      const cancelReasonOtherCheck = document.getElementById('cancelReasonOtherCheck');
+      const cancelReasonOtherDetail = document.getElementById('cancelReasonOtherDetail');
+      const cancelReasonOtherInput = document.getElementById('cancelReasonOtherInput');
+      document.querySelectorAll(`${cfg.sel} input[name="cancelReason"]`).forEach(radio => {
+        radio.addEventListener('change', () => {
+          if (cancelReasonOtherCheck.checked) {
+            cancelReasonOtherDetail.classList.add('show');
+          } else {
+            cancelReasonOtherDetail.classList.remove('show');
+            cancelReasonOtherInput.value = '';
+            clearInlineError(cancelReasonOtherInput, 'cancelReasonOtherError');
+          }
+          clearInlineError(null, 'cancelReasonError');
+        });
+      });
+      cancelReasonOtherInput.addEventListener('input', () => {
+        if (cancelReasonOtherInput.classList.contains('has-error')) {
+          clearInlineError(cancelReasonOtherInput, 'cancelReasonOtherError');
+        }
       });
 
       // 申込者「その他」（記入欄はインフル予約のみ。予約変更・キャンセルでは欄ごと隠れています）
@@ -2058,11 +2251,13 @@
       });
     }
 
-    // 送信用に <form> の値を集める（生年月日の生のセレクト値は除外）
+    // 送信用に <form> の値を集める（生年月日の生のセレクト値と、キャンセルの診療科のチェックは除外）
+    //   キャンセルの診療科・予約日は、buildVaccinePayload で cancelItems にまとめます
     function collectFormData(form) {
       const formData = {};
       new FormData(form).forEach((v, k) => {
         if (k === 'birthdayYear' || k === 'birthdayMonth' || k === 'birthdayDay') return;
+        if (k === 'cancelDepartment') return;
         formData[k] = v;
       });
       return formData;
@@ -2233,6 +2428,8 @@
       document.querySelectorAll('#form input, #form select, #form textarea').forEach(el => {
         el.disabled = !!el.closest('[hidden]');
       });
+      // キャンセルの予約日の欄は、チェックした診療科・検査の分だけ出す（キャンセル以外では出さない）
+      syncCancelDateRows();
 
       document.getElementById('formTitle').textContent = m.title;
       document.getElementById('formBackBtn').textContent = m.back;
@@ -2424,18 +2621,58 @@
         return null;
       }
 
-      // 予約変更・キャンセル：ご予約日
+      // 予約変更：変更前の予約日
       const reservedInput = document.getElementById('reservedDateInput');
-      if (!reservedInput.disabled && !validateReservedDate(reservedInput)) {
+      if (!reservedInput.disabled && !validateReservedDate(reservedInput, 'reservedDateError')) {
         reservedInput.focus();
         return null;
       }
 
-      // 予約変更・キャンセル：診療科・検査名
+      // 予約変更：診療科・検査名
       if (isActiveField(form, 'department') && !form.querySelector('input[name="department"]:checked')) {
         showInlineError(null, 'departmentError', '診療科・検査名を選択してください');
         const first = form.querySelector('input[name="department"]');
         if (first) first.focus();
+        return null;
+      }
+
+      // キャンセル：キャンセルする診療科・検査名（1つ以上）と、選んだ分の予約日（すべて必須）
+      if (isActiveField(form, 'cancelDepartment')) {
+        if (!getCancelItems().length) {
+          showInlineError(null, 'cancelDepartmentError', 'キャンセルする診療科・検査名を1つ以上選択してください');
+          cancelRows[0].checkbox.focus();
+          return null;
+        }
+        for (const r of cancelRows) {
+          if (r.input.disabled) continue;
+          if (!r.input.value) {
+            showInlineError(r.input, r.errorId, 'キャンセルする予約日を入力してください');
+            r.input.focus();
+            return null;
+          }
+          if (!validateReservedDate(r.input, r.errorId)) {
+            r.input.focus();
+            return null;
+          }
+        }
+      }
+
+      // キャンセル：キャンセル理由
+      if (isActiveField(form, 'cancelReason') && !form.querySelector('input[name="cancelReason"]:checked')) {
+        showInlineError(null, 'cancelReasonError', 'キャンセル理由を選択してください');
+        const first = form.querySelector('input[name="cancelReason"]');
+        if (first) first.focus();
+        return null;
+      }
+
+      // キャンセル：キャンセル理由が「その他」なら内容も必要（インフル予約・予約変更では欄ごと無効なので対象外）
+      const cancelReasonOtherInput = document.getElementById('cancelReasonOtherInput');
+      if (!cancelReasonOtherInput.disabled && document.getElementById('cancelReasonOtherCheck').checked &&
+        !cancelReasonOtherInput.value.trim()) {
+        // 画面の復元などで記入欄が隠れたままのときも、エラーが見えるように開く
+        document.getElementById('cancelReasonOtherDetail').classList.add('show');
+        showInlineError(cancelReasonOtherInput, 'cancelReasonOtherError', '「その他」の理由をご記入ください');
+        cancelReasonOtherInput.focus();
         return null;
       }
 
@@ -2474,6 +2711,8 @@
       if (currentMode === 'flu') formData.type = PAYLOAD_TYPE;   // type・vaccine はインフル予約のときだけ（従来どおり）
       formData.birthday = validated.birthday;
       if (currentMode === 'flu') formData.vaccine = { vaccineName: VACCINE_NAME, consult: false };
+      // キャンセル：診療科・検査名と予約日の組（チェックした分だけ・画面の並び順）
+      if (currentMode === 'cancel') formData.cancelItems = getCancelItems();
       formData.submissionId = submissionState.id;
       return formData;
     }
@@ -2509,11 +2748,16 @@
                          doctor（現在の予約医師・空欄あり）,
                          preferredDate1〜3（第1〜第3希望日。2・3は空欄あり）,
                          applicant（申込者。値はインフル予約と同じ）
-           キャンセル … reservedDate（キャンセルする予約日）,
-                         department（キャンセルする診療科・検査名）,
+           キャンセル … cancelItems（キャンセルするご予約。チェックした診療科・検査の数だけ、画面の並び順で
+                           [{ department: 診療科・検査名, reservedDate: 予約日 'YYYY-MM-DD' }, …]）,
                          doctor（キャンセルする予約医師・空欄あり）,
+                         cancelReason（キャンセル理由。'都合がつかなかったため' / '症状が改善したため' /
+                           '他の病院を受診することになったため' / 'その他'）,
+                         cancelReasonOther（キャンセル理由「その他」の内容。その他以外は空欄）,
                          applicant（申込者。値はインフル予約と同じ）
            ※ 予約変更・キャンセルには type・vaccine・gender・applicantOther は付きません
+             （cancelItems・cancelReason・cancelReasonOther はキャンセルのときだけ付きます。
+               キャンセルには reservedDate・department は付かず、cancelItems にまとめて入ります）
          GAS を先に更新してから、このページを公開してください
          （古い GAS は ?type を見ないため、予約変更・キャンセルがエラーになります）。
          応答は3種類とも { ok: true } / { ok: false, error: '…' } です。
@@ -2563,7 +2807,18 @@
       ];
       if (formData.reservedDate) rows.push([m.reservedLabel || 'ご予約日', toJpDate(formData.reservedDate)]);
       if (formData.department) rows.push(['診療科・検査', formData.department]);
+      // キャンセル：診療科・検査ごとの予約日（2件以上なら ご予約日1・ご予約日2 …）
+      const cancelItems = formData.cancelItems || [];
+      cancelItems.forEach((item, i) => {
+        rows.push([(m.reservedLabel || 'ご予約日') + (cancelItems.length > 1 ? String(i + 1) : ''),
+          toJpDate(item.reservedDate) + '　' + item.department]);
+      });
       if (formData.doctor) rows.push(['予約医師', formData.doctor]);
+      if (formData.cancelReason) {
+        const other = String(formData.cancelReasonOther || '').trim();
+        rows.push(['キャンセル理由',
+          (formData.cancelReason === 'その他' && other) ? 'その他（' + other + '）' : formData.cancelReason]);
+      }
       FORM_CFG.preferred.forEach(p => {
         if (formData[p.name]) rows.push([p.label, toJpDate(formData[p.name])]);
       });
